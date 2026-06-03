@@ -12,7 +12,7 @@ validation contracts before implementation.
 | --- | --- | --- | --- |
 | MVP 0 | Foundation | **Implemented** | US-001 |
 | MVP 1 | Manual CMS + public pages | **Implemented** | US-005–US-022 |
-| MVP 2 | AI-assisted blog | Planned | — |
+| MVP 2 | AI-assisted blog | **In progress** | US-025–US-030 |
 | MVP 3 | AI News (official sources) | Planned | — |
 | MVP 4 | User-submitted links | Planned | — |
 | MVP 5 | X/Twitter intelligence | Blocked | — |
@@ -89,18 +89,26 @@ scripts/bin/harness-cli.exe story verify US-023
 
 ## MVP 2: AI-Assisted Blog Workflow
 
-**Status: Planned** — start after MVP 1 close.
+**Status: In progress** — core idea → outline → draft → technical review flow is implemented; polish and remaining contract items are still active.
 
 Objective: add AI assistance while keeping humans in control.
 
-Features:
+Delivered:
 
-- Blog idea creation.
-- Structured outline and draft generation.
-- Technical review and marketing review agents.
+- Blog idea creation and admin review API/UI.
+- Structured outline generation from approved ideas.
+- Draft writer generation from approved outlines.
+- Technical review generation from approved drafts.
+- Marketing metadata generation support.
+- Human approve/reject controls for each generated stage.
+- Regenerate affordances for rejected outline, draft, technical review, and marketing outputs.
+
+Remaining:
+
 - Claim extraction/evidence ledger.
-- Human review and approval.
-- Prompt version and AI run tracking.
+- Full publish-from-approved-AI-flow bridge into blog posts.
+- Prompt version and AI run metadata persistence.
+- Stronger operational status/error reporting for queued or failed worker tasks.
 
 ---
 

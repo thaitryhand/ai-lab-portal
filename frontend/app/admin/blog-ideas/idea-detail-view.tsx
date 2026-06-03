@@ -398,7 +398,7 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
           <EmptyState
             message={
               idea.status === "approved"
-                ? "No outline generated yet."
+                ? "No outline generated yet. Generation requires the worker and OpenAI key to be configured."
                 : "Approve the idea first to enable outline generation."
             }
             action={
@@ -425,6 +425,13 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
             )}
             {idea.outline_status === "approved" && (
               <StatusDone label="Outline approved" />
+            )}
+            {idea.outline_status === "rejected" && idea.status === "approved" && (
+              <RegenerateAction
+                actionName={actions.generateOutline}
+                ideaId={idea.id}
+                label="Regenerate outline"
+              />
             )}
             <div className="grid gap-5">
               {idea.outline_sections.map((section, i) => (
@@ -464,7 +471,7 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
           <EmptyState
             message={
               idea.outline_status === "approved"
-                ? "No draft generated yet."
+                ? "No draft generated yet. Generation requires the worker and OpenAI key to be configured."
                 : "Approve the outline first to enable draft generation."
             }
             action={
@@ -491,6 +498,13 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
             )}
             {idea.draft_status === "approved" && (
               <StatusDone label="Draft approved" />
+            )}
+            {idea.draft_status === "rejected" && idea.outline_status === "approved" && (
+              <RegenerateAction
+                actionName={actions.generateDraft}
+                ideaId={idea.id}
+                label="Regenerate draft"
+              />
             )}
             <div className="prose prose-sm prose-green max-w-none rounded-xl border border-border bg-muted/30 p-5">
               {idea.draft_markdown.split("\n").map((line, i) => {
@@ -562,7 +576,7 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
           <EmptyState
             message={
               idea.draft_status === "approved"
-                ? "No technical review yet."
+                ? "No technical review yet. Generation requires the worker and OpenAI key to be configured."
                 : "Approve the draft first to enable technical review."
             }
             action={
@@ -610,6 +624,13 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
             )}
             {idea.technical_review_status === "approved" && (
               <StatusDone label="Review accepted" />
+            )}
+            {idea.technical_review_status === "rejected" && idea.draft_status === "approved" && (
+              <RegenerateAction
+                actionName={actions.reviewTechnical}
+                ideaId={idea.id}
+                label="Run review again"
+              />
             )}
 
             {idea.technical_review.issues.length === 0 ? (
@@ -699,7 +720,7 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
           <EmptyState
             message={
               idea.draft_status === "approved"
-                ? "No marketing metadata yet."
+                ? "No marketing metadata yet. Generation requires the worker and OpenAI key to be configured."
                 : "Approve the draft first to enable marketing generation."
             }
             action={
@@ -726,6 +747,13 @@ export function BlogIdeaDetailView({ idea, actions }: Props) {
             )}
             {idea.marketing_status === "approved" && (
               <StatusDone label="Marketing approved" />
+            )}
+            {idea.marketing_status === "rejected" && idea.draft_status === "approved" && (
+              <RegenerateAction
+                actionName={actions.generateMarketing}
+                ideaId={idea.id}
+                label="Regenerate marketing"
+              />
             )}
 
             <div className="grid gap-5">
@@ -906,6 +934,34 @@ function StatusDone({ label }: { label: string }) {
       <CheckCircle className="size-3.5" aria-hidden />
       {label}
     </p>
+  );
+}
+
+function RegenerateAction({
+  actionName,
+  ideaId,
+  label,
+}: {
+  actionName: (formData: FormData) => Promise<void>;
+  ideaId: string;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/15 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm leading-snug text-amber-900 dark:text-amber-200">
+        This output was rejected. Regenerate it when the worker and OpenAI key are ready.
+      </p>
+      <form action={actionName}>
+        <input name="ideaId" type="hidden" value={ideaId} />
+        <button
+          className={cn(buttonVariants({ size: "sm", variant: "secondary" }), "gap-1.5 whitespace-nowrap")}
+          type="submit"
+        >
+          <Sparkles className="size-3.5" aria-hidden />
+          {label}
+        </button>
+      </form>
+    </div>
   );
 }
 
