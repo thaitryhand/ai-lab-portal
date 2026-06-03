@@ -13,7 +13,7 @@ validation contracts before implementation.
 | MVP 0 | Foundation | **Implemented** | US-001 |
 | MVP 1 | Manual CMS + public pages | **Implemented** | US-005–US-022 |
 | MVP 2 | AI-assisted blog | **In progress** | US-025–US-035 |
-| MVP 3 | AI News (official sources) | **In progress** | US-036+ (registry shipped) |
+| MVP 3 | AI News (official sources) | **Implemented** | US-036–US-041 |
 | MVP 4 | User-submitted links | Planned | — |
 | MVP 5 | X/Twitter intelligence | Blocked | — |
 
@@ -117,18 +117,26 @@ Remaining (post-MVP 2 polish):
 
 ## MVP 3: AI News from Official Sources
 
-**Status: In progress** — news source registry shipped (US-036). Crawling and review queue next.
+**Status: Implemented** (2026-06-03) — US-036 through US-041.
 
 Objective: prove the AI News pipeline with lower-risk sources before X/Twitter.
 
-Features:
+Delivered:
 
-- Source management for RSS, official blogs, GitHub releases, and selected websites.
-- Scheduled crawling and raw item storage.
-- Firecrawl extraction.
-- URL canonicalization, content hashing, and deduplication.
-- AI scoring and summary generation.
-- Candidate review queue and public `/ai-news` page.
+- Admin news source registry with credibility base scores (US-036).
+- RSS crawl, SSRF validation, and raw item storage (US-037).
+- Async article extraction with Firecrawl/fake provider (US-038).
+- URL canonicalization and exact URL/content-hash dedup (US-039).
+- Heuristic multi-dimension scoring and admin review queue API (US-040).
+- Publish approved items to public `/ai-news` feed (US-041).
+
+Deferred (post-MVP 3):
+
+- Public topic filtering on `/ai-news`.
+- LLM-based scoring prompts and AI summary generation.
+- GitHub/website crawl types beyond registry stubs.
+- Dedicated admin review-queue UI (API endpoints only).
+- `/ai-news/submit` (MVP 4).
 
 ---
 

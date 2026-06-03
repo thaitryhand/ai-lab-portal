@@ -81,3 +81,13 @@ The AI News MVP is complete when:
 - Firecrawl/provider runs record metadata, raw output, parsed output,
   validation status, latency, token usage, and cost estimate where applicable.
 - SSRF protections are enforced for submitted and crawled URLs.
+
+## Implementation Status (MVP 3)
+
+**Shipped (2026-06-03, US-036–US-041):** source registry, RSS crawl + raw storage,
+article extraction, exact dedup, heuristic scoring + review queue APIs,
+publish/unpublish, and public `/ai-news` list/detail pages.
+
+**Deferred:** topic filters on the public feed, LLM scoring prompts, semantic
+/event dedup, GitHub/website crawlers, dedicated admin review UI, and user link
+submission (`/ai-news/submit`, MVP 4).
