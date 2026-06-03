@@ -54,3 +54,4 @@ a durable place to land.
 | `US-037` | E04 AI News | implemented |
 | `US-038` | E04 AI News | implemented |
 | `US-039` | E04 AI News | implemented |
+| `US-040` | E04 AI News | implemented |

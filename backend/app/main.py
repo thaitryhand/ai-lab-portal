@@ -15,6 +15,7 @@ from backend.app.blog_ideas import BlogIdeaRepository, PostgresBlogIdeaRepositor
 from backend.app.generation_jobs import GenerationJobRepository, PostgresGenerationJobRepository
 from backend.app.news_crawl import NewsRawItemRepository, PostgresNewsRawItemRepository
 from backend.app.news_extraction import ExtractedArticleRepository, PostgresExtractedArticleRepository
+from backend.app.news_scoring import InMemoryNewsReviewRepository, NewsReviewRepository, PostgresNewsReviewRepository, create_news_review_routes
 from backend.app.news_sources import NewsSourceRepository, PostgresNewsSourceRepository, create_news_source_routes
 from backend.app.blog import (
     AdminBlogPostDetail,
@@ -64,6 +65,7 @@ def create_app(
     news_source_repository: NewsSourceRepository | None = None,
     news_raw_item_repository: NewsRawItemRepository | None = None,
     extracted_article_repository: ExtractedArticleRepository | None = None,
+    news_review_repository: NewsReviewRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -76,6 +78,7 @@ def create_app(
         news_sources_repo = news_source_repository or NewsSourceRepository()
         news_raw_repo = news_raw_item_repository or NewsRawItemRepository()
         extracted_repo = extracted_article_repository or ExtractedArticleRepository()
+        review_repo = news_review_repository or InMemoryNewsReviewRepository()
     else:
         engine = create_database_engine(resolved_settings)
         repository = blog_repository or PostgresBlogRepository(engine)
@@ -87,6 +90,7 @@ def create_app(
         news_sources_repo = news_source_repository or PostgresNewsSourceRepository(engine)
         news_raw_repo = news_raw_item_repository or PostgresNewsRawItemRepository(engine)
         extracted_repo = extracted_article_repository or PostgresExtractedArticleRepository(engine)
+        review_repo = news_review_repository or PostgresNewsReviewRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
     app.state.settings = resolved_settings
@@ -123,14 +127,18 @@ def create_app(
     app.include_router(ideas_router)
     crawl_enqueue = None
     extract_enqueue = None
+    rescore_enqueue = None
     if resolved_settings.environment != "test":
-        from backend.app.tasks import crawl_rss_source_task, extract_raw_item_task
+        from backend.app.tasks import crawl_rss_source_task, extract_raw_item_task, score_extracted_article_task
 
         def crawl_enqueue(source_id: str) -> str:
             return crawl_rss_source_task.delay(source_id).id
 
         def extract_enqueue(raw_item_id: str) -> str:
             return extract_raw_item_task.delay(raw_item_id).id
+
+        def rescore_enqueue(extracted_article_id: str) -> str:
+            return score_extracted_article_task.delay(extracted_article_id).id
 
     app.include_router(
         create_news_source_routes(
@@ -140,6 +148,17 @@ def create_app(
             enqueue_extract_raw_item=extract_enqueue,
             raw_items_repository=news_raw_repo,
             extracted_repository=extracted_repo,
+            review_repository=review_repo,
+        )
+    )
+    app.include_router(
+        create_news_review_routes(
+            review_repo,
+            resolved_settings,
+            extracted_repository=extracted_repo,
+            raw_items_repository=news_raw_repo,
+            sources_repository=news_sources_repo,
+            enqueue_rescore=rescore_enqueue,
         )
     )
 

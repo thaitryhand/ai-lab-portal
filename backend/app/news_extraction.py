@@ -8,7 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from uuid import uuid4
@@ -20,6 +20,10 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from backend.app.database import news_extracted_articles as extracted_table
 from backend.app.news_crawl import NewsRawItemRepository, NewsRawItemSummary, validate_fetch_url
 from backend.app.settings import Settings
+
+if TYPE_CHECKING:
+    from backend.app.news_scoring import NewsReviewRepository
+    from backend.app.news_sources import NewsSourceRepository
 
 ExtractionProvider = Literal["fake", "firecrawl"]
 ExtractionStatus = Literal["success", "failed"]
@@ -481,6 +485,8 @@ def run_extract_raw_item(
     raw_items: NewsRawItemRepository,
     extracted: ExtractedArticleRepository,
     extractor: ArticleExtractor,
+    sources: NewsSourceRepository | None = None,
+    review: NewsReviewRepository | None = None,
 ) -> ExtractionResult:
     raw_item = raw_items.get_by_id(raw_item_id)
     if raw_item is None:
@@ -495,6 +501,22 @@ def run_extract_raw_item(
         from backend.app.news_dedup import apply_dedup
 
         apply_dedup(row.id, extracted=extracted)
+        scored = extracted.get_by_id(row.id)
+        if (
+            scored is not None
+            and scored.duplicate_status == "unique"
+            and sources is not None
+            and review is not None
+        ):
+            from backend.app.news_scoring import run_score_extracted_article
+
+            run_score_extracted_article(
+                scored.id,
+                extracted=extracted,
+                raw_items=raw_items,
+                sources=sources,
+                review=review,
+            )
         return ExtractionResult(
             raw_item_id=raw_item_id,
             extraction_id=row.id,
@@ -520,6 +542,8 @@ def run_extract_pending_raw_items(
     extracted: ExtractedArticleRepository,
     extractor: ArticleExtractor,
     source_id: str | None = None,
+    sources: NewsSourceRepository | None = None,
+    review: NewsReviewRepository | None = None,
 ) -> list[ExtractionResult]:
     pending = raw_items.list_without_extraction(extracted, source_id=source_id)
     return [
@@ -528,6 +552,8 @@ def run_extract_pending_raw_items(
             raw_items=raw_items,
             extracted=extracted,
             extractor=extractor,
+            sources=sources,
+            review=review,
         )
         for item in pending
     ]

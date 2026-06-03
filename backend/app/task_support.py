@@ -18,6 +18,11 @@ from backend.app.news_extraction import (
     extractor_for_settings,
 )
 from backend.app.news_sources import NewsSourceRepository, PostgresNewsSourceRepository
+from backend.app.news_scoring import (
+    InMemoryNewsReviewRepository,
+    PostgresNewsReviewRepository,
+    NewsReviewRepository,
+)
 from backend.app.settings import Settings
 
 
@@ -46,6 +51,13 @@ def extracted_article_repository(
 
 def article_extractor(settings: Settings | None = None):
     return extractor_for_settings(settings or Settings())
+
+
+def news_review_repository(settings: Settings | None = None) -> NewsReviewRepository:
+    resolved = settings or Settings()
+    if resolved.environment == "test":
+        return InMemoryNewsReviewRepository()
+    return PostgresNewsReviewRepository(create_database_engine(resolved))
 
 
 def idea_repository(settings: Settings | None = None) -> BlogIdeaRepository:

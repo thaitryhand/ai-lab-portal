@@ -16,6 +16,7 @@ from backend.app.llm.schemas import MarketingMetadata
 from backend.app.llm.schemas import TechnicalReview
 from backend.app.news_crawl import run_crawl_due_rss_sources, run_rss_crawl
 from backend.app.news_extraction import run_extract_pending_raw_items, run_extract_raw_item
+from backend.app.news_scoring import run_score_extracted_article, run_score_pending_extractions
 from backend.app.task_support import (
     article_extractor,
     extracted_article_repository,
@@ -23,6 +24,7 @@ from backend.app.task_support import (
     idea_repository,
     llm_service_for_idea,
     news_raw_item_repository,
+    news_review_repository,
     news_source_repository,
     track_job_lifecycle,
 )
@@ -283,6 +285,8 @@ def extract_raw_item_task(raw_item_id: str) -> dict:
         raw_items=news_raw_item_repository(),
         extracted=extracted_article_repository(),
         extractor=article_extractor(),
+        sources=news_source_repository(),
+        review=news_review_repository(),
     )
     return result.model_dump()
 
@@ -293,6 +297,32 @@ def extract_pending_raw_items_task(source_id: str | None = None) -> list[dict]:
         raw_items=news_raw_item_repository(),
         extracted=extracted_article_repository(),
         extractor=article_extractor(),
+        source_id=source_id,
+        sources=news_source_repository(),
+        review=news_review_repository(),
+    )
+    return [r.model_dump() for r in results]
+
+
+@celery_app.task(name="news.score_extracted_article")
+def score_extracted_article_task(extracted_article_id: str) -> dict:
+    result = run_score_extracted_article(
+        extracted_article_id,
+        extracted=extracted_article_repository(),
+        raw_items=news_raw_item_repository(),
+        sources=news_source_repository(),
+        review=news_review_repository(),
+    )
+    return result.model_dump()
+
+
+@celery_app.task(name="news.score_pending_extractions")
+def score_pending_extractions_task(source_id: str | None = None) -> list[dict]:
+    results = run_score_pending_extractions(
+        extracted=extracted_article_repository(),
+        raw_items=news_raw_item_repository(),
+        sources=news_source_repository(),
+        review=news_review_repository(),
         source_id=source_id,
     )
     return [r.model_dump() for r in results]

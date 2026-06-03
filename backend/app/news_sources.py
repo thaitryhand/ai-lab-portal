@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from collections.abc import Callable
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -19,8 +19,11 @@ from backend.app.admin_boundary import (
 )
 from backend.app.database import news_sources as news_sources_table
 from backend.app.news_crawl import NewsRawItemRepository
-from backend.app.news_extraction import ExtractedArticleRepository
 from backend.app.settings import Settings
+
+if TYPE_CHECKING:
+    from backend.app.news_extraction import ExtractedArticleRepository
+    from backend.app.news_scoring import NewsReviewRepository
 
 NewsSourceType = Literal["rss", "github", "website"]
 NewsPriority = Literal["high", "medium", "low"]
@@ -273,7 +276,12 @@ def create_news_source_routes(
     enqueue_extract_raw_item: Callable[[str], str] | None = None,
     raw_items_repository: NewsRawItemRepository | None = None,
     extracted_repository: ExtractedArticleRepository | None = None,
+    review_repository: NewsReviewRepository | None = None,
 ) -> APIRouter:
+    def _review_repo(resolved_settings: Settings) -> NewsReviewRepository:
+        from backend.app.task_support import news_review_repository
+
+        return review_repository or news_review_repository(resolved_settings)
     def require_identity(
         identity_payload: Annotated[str | None, Header(alias=ADMIN_IDENTITY_HEADER)] = None,
         signature: Annotated[str | None, Header(alias=ADMIN_SIGNATURE_HEADER)] = None,
@@ -329,6 +337,8 @@ def create_news_source_routes(
             raw_items=raw_repo,
             extracted=extracted_repo,
             extractor=article_extractor(settings),
+            sources=repository,
+            review=review_repository or _review_repo(settings),
         )
 
     @router.get("/{source_id}/raw-items")

@@ -30,6 +30,7 @@ Maps MVP 1 product behavior to proof layers. Update when story contracts change.
 | US-037 | RSS crawl + raw item storage | yes | yes | no | no | implemented | `backend/tests/test_news_crawl.py` |
 | US-038 | Article extraction from raw news items | yes | yes | no | no | implemented | `backend/tests/test_news_extraction.py` |
 | US-039 | URL canonicalization + exact deduplication | yes | yes | no | no | implemented | `backend/tests/test_news_dedup.py` |
+| US-040 | Heuristic scoring + review queue | yes | yes | no | no | implemented | `backend/tests/test_news_scoring.py` |
 
 ## Evidence Rules
 
