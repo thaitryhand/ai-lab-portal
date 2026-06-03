@@ -197,6 +197,16 @@ news_extracted_articles = Table(
     Column("provider_latency_ms", Integer, nullable=True),
     Column("provider_payload", Text, nullable=True),
     Column("extracted_at", DateTime(timezone=True), nullable=False),
+    Column("canonical_url_normalized", String(1024), nullable=False, server_default=""),
+    Column("duplicate_status", String(32), nullable=False, server_default="unique"),
+    Column(
+        "duplicate_of_id",
+        String(64),
+        ForeignKey("news_extracted_articles.id", ondelete="SET NULL"),
+        nullable=True,
+    ),
     UniqueConstraint("raw_item_id", name="uq_news_extracted_articles_raw_item"),
     Index("ix_news_extracted_articles_status", "extraction_status"),
+    Index("ix_news_extracted_canonical_normalized", "canonical_url_normalized"),
+    Index("ix_news_extracted_content_hash", "content_hash"),
 )

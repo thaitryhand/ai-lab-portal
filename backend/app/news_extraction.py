@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 from uuid import uuid4
 
 from pydantic import BaseModel
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from backend.app.database import news_extracted_articles as extracted_table
@@ -23,6 +23,7 @@ from backend.app.settings import Settings
 
 ExtractionProvider = Literal["fake", "firecrawl"]
 ExtractionStatus = Literal["success", "failed"]
+DuplicateStatus = Literal["unique", "url_duplicate", "content_duplicate"]
 
 
 class ExtractionError(RuntimeError):
@@ -62,6 +63,9 @@ class ExtractedArticle(BaseModel):
     extraction_error: str | None = None
     provider_latency_ms: int | None = None
     extracted_at: datetime
+    canonical_url_normalized: str = ""
+    duplicate_status: DuplicateStatus = "unique"
+    duplicate_of_id: str | None = None
 
 
 class ExtractionResult(BaseModel):
@@ -174,6 +178,12 @@ def content_hash(markdown: str, text: str) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _best_article_url(
+    *, source_url: str, final_url: str | None, canonical_url: str | None
+) -> str:
+    return canonical_url or final_url or source_url
+
+
 class ExtractedArticleRepository:
     def __init__(self) -> None:
         self._rows: dict[str, ExtractedArticle] = {}
@@ -192,7 +202,14 @@ class ExtractedArticleRepository:
         raw_item: NewsRawItemSummary,
         output: ExtractionOutput,
     ) -> ExtractedArticle:
+        from backend.app.news_dedup import canonicalize_url
+
         extracted_at = datetime.now(UTC)
+        article_url = _best_article_url(
+            source_url=raw_item.link_url,
+            final_url=output.final_url,
+            canonical_url=output.canonical_url,
+        )
         row = ExtractedArticle(
             id=f"newsext_{uuid4().hex}",
             raw_item_id=raw_item.id,
@@ -210,6 +227,7 @@ class ExtractedArticleRepository:
             extraction_status="success",
             provider_latency_ms=output.provider_latency_ms,
             extracted_at=extracted_at,
+            canonical_url_normalized=canonicalize_url(article_url),
         )
         self._rows[row.id] = row
         return row
@@ -239,6 +257,54 @@ class ExtractedArticleRepository:
         )
         self._rows[row.id] = row
         return row
+
+    def find_earliest_by_canonical_url(
+        self, canonical_url_normalized: str, *, exclude_id: str
+    ) -> str | None:
+        matches = [
+            row
+            for row in self._rows.values()
+            if row.id != exclude_id
+            and row.extraction_status == "success"
+            and row.canonical_url_normalized == canonical_url_normalized
+        ]
+        if not matches:
+            return None
+        return min(matches, key=lambda r: r.extracted_at).id
+
+    def find_earliest_by_content_hash(self, content_hash_value: str, *, exclude_id: str) -> str | None:
+        matches = [
+            row
+            for row in self._rows.values()
+            if row.id != exclude_id
+            and row.extraction_status == "success"
+            and row.content_hash == content_hash_value
+            and row.duplicate_status == "unique"
+        ]
+        if not matches:
+            return None
+        return min(matches, key=lambda r: r.extracted_at).id
+
+    def update_dedup_fields(
+        self,
+        extraction_id: str,
+        *,
+        canonical_url_normalized: str,
+        duplicate_status: DuplicateStatus,
+        duplicate_of_id: str | None,
+    ) -> ExtractedArticle | None:
+        row = self._rows.get(extraction_id)
+        if row is None:
+            return None
+        updated = row.model_copy(
+            update={
+                "canonical_url_normalized": canonical_url_normalized,
+                "duplicate_status": duplicate_status,
+                "duplicate_of_id": duplicate_of_id,
+            }
+        )
+        self._rows[extraction_id] = updated
+        return updated
 
 
 class PostgresExtractedArticleRepository(ExtractedArticleRepository):
@@ -282,7 +348,14 @@ class PostgresExtractedArticleRepository(ExtractedArticleRepository):
         return ExtractedArticle(**values)
 
     def save_success(self, raw_item: NewsRawItemSummary, output: ExtractionOutput) -> ExtractedArticle:
+        from backend.app.news_dedup import canonicalize_url
+
         extracted_at = datetime.now(UTC)
+        article_url = _best_article_url(
+            source_url=raw_item.link_url,
+            final_url=output.final_url,
+            canonical_url=output.canonical_url,
+        )
         values = {
             "id": f"newsext_{uuid4().hex}",
             "raw_item_id": raw_item.id,
@@ -302,6 +375,9 @@ class PostgresExtractedArticleRepository(ExtractedArticleRepository):
             "provider_latency_ms": output.provider_latency_ms,
             "provider_payload": json.dumps(output.provider_payload or {}),
             "extracted_at": extracted_at,
+            "canonical_url_normalized": canonicalize_url(article_url),
+            "duplicate_status": "unique",
+            "duplicate_of_id": None,
         }
         existing = self.get_by_raw_item_id(raw_item.id)
         if existing is not None:
@@ -336,11 +412,67 @@ class PostgresExtractedArticleRepository(ExtractedArticleRepository):
             "provider_latency_ms": latency_ms,
             "provider_payload": None,
             "extracted_at": extracted_at,
+            "canonical_url_normalized": "",
+            "duplicate_status": "unique",
+            "duplicate_of_id": None,
         }
         existing = self.get_by_raw_item_id(raw_item.id)
         if existing is not None:
             values["id"] = existing.id
         return self._upsert(values)
+
+    def find_earliest_by_canonical_url(
+        self, canonical_url_normalized: str, *, exclude_id: str
+    ) -> str | None:
+        with self._engine.connect() as conn:
+            row = conn.execute(
+                select(extracted_table.c.id)
+                .where(
+                    extracted_table.c.id != exclude_id,
+                    extracted_table.c.extraction_status == "success",
+                    extracted_table.c.canonical_url_normalized == canonical_url_normalized,
+                )
+                .order_by(extracted_table.c.extracted_at.asc())
+                .limit(1)
+            ).first()
+            return row[0] if row else None
+
+    def find_earliest_by_content_hash(
+        self, content_hash_value: str, *, exclude_id: str
+    ) -> str | None:
+        with self._engine.connect() as conn:
+            row = conn.execute(
+                select(extracted_table.c.id)
+                .where(
+                    extracted_table.c.id != exclude_id,
+                    extracted_table.c.extraction_status == "success",
+                    extracted_table.c.content_hash == content_hash_value,
+                    extracted_table.c.duplicate_status == "unique",
+                )
+                .order_by(extracted_table.c.extracted_at.asc())
+                .limit(1)
+            ).first()
+            return row[0] if row else None
+
+    def update_dedup_fields(
+        self,
+        extraction_id: str,
+        *,
+        canonical_url_normalized: str,
+        duplicate_status: DuplicateStatus,
+        duplicate_of_id: str | None,
+    ) -> ExtractedArticle | None:
+        with self._engine.begin() as conn:
+            conn.execute(
+                update(extracted_table)
+                .where(extracted_table.c.id == extraction_id)
+                .values(
+                    canonical_url_normalized=canonical_url_normalized,
+                    duplicate_status=duplicate_status,
+                    duplicate_of_id=duplicate_of_id,
+                )
+            )
+        return self.get_by_id(extraction_id)
 
 
 def run_extract_raw_item(
@@ -360,6 +492,9 @@ def run_extract_raw_item(
     try:
         output = extractor.extract(raw_item)
         row = extracted.save_success(raw_item, output)
+        from backend.app.news_dedup import apply_dedup
+
+        apply_dedup(row.id, extracted=extracted)
         return ExtractionResult(
             raw_item_id=raw_item_id,
             extraction_id=row.id,
