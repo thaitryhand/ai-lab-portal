@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     )
     llm_openai_api_key: SecretStr = Field(default="")
     llm_model: str = Field(default="gpt-4o")
+    firecrawl_api_key: SecretStr = Field(default="")
 
 
 @lru_cache

@@ -175,3 +175,28 @@ news_raw_items = Table(
     Index("ix_news_raw_items_source", "source_id"),
     Index("ix_news_raw_items_fetched", "fetched_at"),
 )
+
+news_extracted_articles = Table(
+    "news_extracted_articles",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("raw_item_id", String(64), ForeignKey("news_raw_items.id", ondelete="CASCADE"), nullable=False),
+    Column("source_url", String(1024), nullable=False),
+    Column("final_url", String(1024), nullable=True),
+    Column("canonical_url", String(1024), nullable=True),
+    Column("title", String(512), nullable=False),
+    Column("author", String(256), nullable=True),
+    Column("site_name", String(256), nullable=True),
+    Column("published_at", DateTime(timezone=True), nullable=True),
+    Column("content_markdown", Text, nullable=False),
+    Column("content_text", Text, nullable=False),
+    Column("content_hash", String(64), nullable=False),
+    Column("provider", String(32), nullable=False),
+    Column("extraction_status", String(32), nullable=False),
+    Column("extraction_error", Text, nullable=True),
+    Column("provider_latency_ms", Integer, nullable=True),
+    Column("provider_payload", Text, nullable=True),
+    Column("extracted_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("raw_item_id", name="uq_news_extracted_articles_raw_item"),
+    Index("ix_news_extracted_articles_status", "extraction_status"),
+)

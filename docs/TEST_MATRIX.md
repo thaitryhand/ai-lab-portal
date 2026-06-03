@@ -28,6 +28,7 @@ Maps MVP 1 product behavior to proof layers. Update when story contracts change.
 | US-035 | Claim evidence ledger + publish guard | yes | yes | no | no | implemented | `backend/tests/test_blog_observability.py` (`-k claim`) |
 | US-036 | Admin news source registry | yes | yes | no | no | implemented | `backend/tests/test_news_sources.py` |
 | US-037 | RSS crawl + raw item storage | yes | yes | no | no | implemented | `backend/tests/test_news_crawl.py` |
+| US-038 | Article extraction from raw news items | yes | yes | no | no | implemented | `backend/tests/test_news_extraction.py` |
 
 ## Evidence Rules
 

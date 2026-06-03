@@ -15,7 +15,10 @@ from backend.app.llm.schemas import BlogOutline
 from backend.app.llm.schemas import MarketingMetadata
 from backend.app.llm.schemas import TechnicalReview
 from backend.app.news_crawl import run_crawl_due_rss_sources, run_rss_crawl
+from backend.app.news_extraction import run_extract_pending_raw_items, run_extract_raw_item
 from backend.app.task_support import (
+    article_extractor,
+    extracted_article_repository,
     generation_job_repository,
     idea_repository,
     llm_service_for_idea,
@@ -270,4 +273,26 @@ def crawl_due_rss_sources_task() -> list[dict]:
     sources = news_source_repository()
     raw_items = news_raw_item_repository()
     results = run_crawl_due_rss_sources(sources=sources, raw_items=raw_items)
+    return [r.model_dump() for r in results]
+
+
+@celery_app.task(name="news.extract_raw_item")
+def extract_raw_item_task(raw_item_id: str) -> dict:
+    result = run_extract_raw_item(
+        raw_item_id,
+        raw_items=news_raw_item_repository(),
+        extracted=extracted_article_repository(),
+        extractor=article_extractor(),
+    )
+    return result.model_dump()
+
+
+@celery_app.task(name="news.extract_pending_raw_items")
+def extract_pending_raw_items_task(source_id: str | None = None) -> list[dict]:
+    results = run_extract_pending_raw_items(
+        raw_items=news_raw_item_repository(),
+        extracted=extracted_article_repository(),
+        extractor=article_extractor(),
+        source_id=source_id,
+    )
     return [r.model_dump() for r in results]

@@ -18,6 +18,8 @@ from backend.app.admin_boundary import (
     require_admin_identity_with_settings,
 )
 from backend.app.database import news_sources as news_sources_table
+from backend.app.news_crawl import NewsRawItemRepository
+from backend.app.news_extraction import ExtractedArticleRepository
 from backend.app.settings import Settings
 
 NewsSourceType = Literal["rss", "github", "website"]
@@ -268,6 +270,9 @@ def create_news_source_routes(
     settings: Settings,
     *,
     enqueue_rss_crawl: Callable[[str], str] | None = None,
+    enqueue_extract_raw_item: Callable[[str], str] | None = None,
+    raw_items_repository: NewsRawItemRepository | None = None,
+    extracted_repository: ExtractedArticleRepository | None = None,
 ) -> APIRouter:
     def require_identity(
         identity_payload: Annotated[str | None, Header(alias=ADMIN_IDENTITY_HEADER)] = None,
@@ -282,6 +287,61 @@ def create_news_source_routes(
         _identity: AdminIdentity = Depends(require_identity),
     ) -> list[NewsSourceSummary]:
         return repository.list_all()
+
+    @router.get("/raw-items/{raw_item_id}/extraction")
+    async def get_raw_item_extraction(
+        raw_item_id: str,
+        _identity: AdminIdentity = Depends(require_identity),
+    ):
+        from backend.app.task_support import extracted_article_repository, news_raw_item_repository
+
+        raw_repo = raw_items_repository or news_raw_item_repository(settings)
+        extracted_repo = extracted_repository or extracted_article_repository(settings)
+        if raw_repo.get_by_id(raw_item_id) is None:
+            raise HTTPException(status_code=404, detail="Raw item not found")
+        row = extracted_repo.get_by_raw_item_id(raw_item_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Extraction not found for raw item")
+        return row
+
+    @router.post("/raw-items/{raw_item_id}/extract")
+    async def trigger_extract(
+        raw_item_id: str,
+        _identity: AdminIdentity = Depends(require_identity),
+    ):
+        from backend.app.news_extraction import ExtractionQueuedResponse, run_extract_raw_item
+        from backend.app.task_support import (
+            article_extractor,
+            extracted_article_repository,
+            news_raw_item_repository,
+        )
+
+        raw_repo = raw_items_repository or news_raw_item_repository(settings)
+        extracted_repo = extracted_repository or extracted_article_repository(settings)
+        if raw_repo.get_by_id(raw_item_id) is None:
+            raise HTTPException(status_code=404, detail="Raw item not found")
+
+        if enqueue_extract_raw_item is not None:
+            return ExtractionQueuedResponse(task_id=enqueue_extract_raw_item(raw_item_id))
+
+        return run_extract_raw_item(
+            raw_item_id,
+            raw_items=raw_repo,
+            extracted=extracted_repo,
+            extractor=article_extractor(settings),
+        )
+
+    @router.get("/{source_id}/raw-items")
+    async def list_raw_items(
+        source_id: str,
+        _identity: AdminIdentity = Depends(require_identity),
+    ):
+        from backend.app.task_support import news_raw_item_repository
+
+        if repository.get_by_id(source_id) is None:
+            raise HTTPException(status_code=404, detail="News source not found")
+        raw_repo = raw_items_repository or news_raw_item_repository(settings)
+        return raw_repo.list_for_source(source_id)
 
     @router.get("/{source_id}")
     async def get_source(

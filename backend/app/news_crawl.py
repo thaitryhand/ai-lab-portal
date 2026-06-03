@@ -265,12 +265,22 @@ class NewsRawItemRepository:
         )
         return is_new
 
+    def get_by_id(self, raw_item_id: str) -> NewsRawItemSummary | None:
+        for row in self._items.values():
+            if row.id == raw_item_id:
+                return row
+        return None
+
     def list_for_source(self, source_id: str) -> list[NewsRawItemSummary]:
         return [
             row
             for (sid, _), row in self._items.items()
             if sid == source_id
         ]
+
+    def list_without_extraction(self, extracted_repo, *, source_id: str | None = None) -> list[NewsRawItemSummary]:
+        rows = self.list_for_source(source_id) if source_id else list(self._items.values())
+        return [row for row in rows if extracted_repo.get_by_raw_item_id(row.id) is None]
 
 
 class PostgresNewsRawItemRepository(NewsRawItemRepository):
@@ -319,6 +329,19 @@ class PostgresNewsRawItemRepository(NewsRawItemRepository):
             conn.execute(stmt)
         return before is None
 
+    def get_by_id(self, raw_item_id: str) -> NewsRawItemSummary | None:
+        with self._engine.connect() as conn:
+            row = (
+                conn.execute(
+                    select(raw_items_table).where(raw_items_table.c.id == raw_item_id)
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if row is None:
+                return None
+            return NewsRawItemSummary(**dict(row))
+
     def list_for_source(self, source_id: str) -> list[NewsRawItemSummary]:
         with self._engine.connect() as conn:
             rows = conn.execute(
@@ -327,6 +350,26 @@ class PostgresNewsRawItemRepository(NewsRawItemRepository):
                 .order_by(raw_items_table.c.fetched_at.desc())
             ).mappings()
             return [NewsRawItemSummary(**dict(row)) for row in rows]
+
+    def list_without_extraction(self, extracted_repo, *, source_id: str | None = None) -> list[NewsRawItemSummary]:
+        from backend.app.database import news_extracted_articles as extracted_table
+
+        with self._engine.connect() as conn:
+            query = select(raw_items_table)
+            if source_id is not None:
+                query = query.where(raw_items_table.c.source_id == source_id)
+            rows = conn.execute(query.order_by(raw_items_table.c.fetched_at.desc())).mappings()
+            pending: list[NewsRawItemSummary] = []
+            for row in rows:
+                item = NewsRawItemSummary(**dict(row))
+                exists = conn.execute(
+                    select(extracted_table.c.id).where(
+                        extracted_table.c.raw_item_id == item.id
+                    )
+                ).first()
+                if exists is None:
+                    pending.append(item)
+            return pending
 
 
 def run_rss_crawl(
