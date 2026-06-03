@@ -73,3 +73,11 @@ scripts/bin/harness-cli story verify US-XXX
 scripts/bin/harness-cli query matrix
 git status --short   # requires a git worktree
 ```
+
+### Post-MVP4 audit (2026-06-03)
+
+- `python scripts/trace_quality.py`: **0 core gaps** (outcome/friction complete).
+- Advisory only: `missing_intake` on older traces; traces #85–92 are minimal tier
+  (closeout/docs slices) without Standard+ agent/actions/read/changed fields.
+- `scripts/bin/harness-cli story verify US-032` … `US-046` → all pass.
+- Harness backlog items #1–#9 → **implemented**; MVP 5 remains blocked (X/Twitter).
