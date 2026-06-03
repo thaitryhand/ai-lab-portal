@@ -12,9 +12,9 @@ a durable place to land.
 | --- | --- | --- |
 | E00 Foundation | Runtime scaffold, health, migrations, Redis/Celery, structured logs, local orchestration | selected |
 | E01 Manual CMS and Public Pages | Public AI Lab/showcase/blog pages plus manual admin publishing workflow | unsliced |
-| E02 AI-Assisted Blog Workflow | Blog idea, outline, draft, review, marketing metadata, and prompt/AI run tracking | unsliced |
+| E02 AI-Assisted Blog Workflow | Blog idea, outline, draft, review, marketing metadata, and prompt/AI run tracking | implemented (MVP 2) |
 | E03 AI News Official Sources | RSS/official/GitHub source ingestion, extraction, dedup, scoring, review queue, public feed | implemented (MVP 3) |
-| E04 User-Submitted Links | Safe link submission, SSRF-protected async fetch, duplicate detection, human approval | unsliced |
+| E04 User-Submitted Links | Safe link submission, SSRF-protected async fetch, duplicate detection, human approval | in progress (US-044) |
 | E05 X/Twitter Intelligence | Social ingestion after provider strategy and risk ownership are accepted | blocked |
 
 ## Selected Stories
@@ -57,3 +57,5 @@ a durable place to land.
 | `US-040` | E04 AI News | implemented |
 | `US-041` | E04 AI News | implemented |
 | `US-042` | E04 AI News | implemented |
+| `US-043` | E03 AI Blog Agent | implemented |
+| `US-044` | E04 User-Submitted Links | implemented |

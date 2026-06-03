@@ -12,9 +12,9 @@ validation contracts before implementation.
 | --- | --- | --- | --- |
 | MVP 0 | Foundation | **Implemented** | US-001 |
 | MVP 1 | Manual CMS + public pages | **Implemented** | US-005–US-022 |
-| MVP 2 | AI-assisted blog | **In progress** | US-025–US-035 |
+| MVP 2 | AI-assisted blog | **Implemented** | US-025–US-035, US-043 |
 | MVP 3 | AI News (official sources) | **Implemented** | US-036–US-041 |
-| MVP 4 | User-submitted links | Planned | — |
+| MVP 4 | User-submitted links | **In progress** | US-044 (submit flow shipped) |
 | MVP 5 | X/Twitter intelligence | Blocked | — |
 
 ---
@@ -89,26 +89,22 @@ scripts/bin/harness-cli.exe story verify US-023
 
 ## MVP 2: AI-Assisted Blog Workflow
 
-**Status: In progress** — core idea → outline → draft → technical review flow is implemented; polish and remaining contract items are still active.
+**Status: Implemented** (2026-06-03) — US-025 through US-035.
 
 Objective: add AI assistance while keeping humans in control.
 
 Delivered:
 
 - Blog idea creation and admin review API/UI.
-- Structured outline generation from approved ideas.
-- Draft writer generation from approved outlines.
-- Technical review generation from approved drafts.
+- Structured outline, draft, and technical review generation.
 - Marketing metadata generation support.
-- Human approve/reject controls for each generated stage.
-- Regenerate affordances for rejected outline, draft, technical review, and marketing outputs.
-- Basic queued/completed/error feedback after AI generation actions.
+- Human approve/reject controls and regenerate affordances.
 - Publish-from-approved-AI-flow bridge into blog posts (US-032).
-- AI run metadata persistence (`ai_runs` table, recording wrapper).
+- AI run metadata persistence (`ai_runs`, US-033).
 - Durable Celery generation job tracking and admin polling (US-034).
 - Claim extraction and evidence ledger with publish blocking (US-035).
 
-Remaining (post-MVP 2 polish):
+Deferred (post-MVP 2):
 
 - Richer claim review UI and editor integration.
 - Native Harness CLI integration for `ai_runs` / job queries.
@@ -142,16 +138,23 @@ Deferred (post-MVP 3):
 
 ## MVP 4: User-Submitted Links
 
-**Status: Planned**
+**Status: In progress** — US-044 submit + admin intake shipped; full pipeline merge TBD.
 
 Objective: allow safe user/internal team link submission.
 
-Features:
+Delivered (US-044):
 
-- `/ai-news/submit` form.
-- URL validation, rate limiting, idempotency, and SSRF-protected async fetching.
-- Duplicate detection and AI review.
-- Human approval before publish.
+- Public `/ai-news/submit` form.
+- `POST /public/submitted-links` with SSRF URL validation and canonical idempotency.
+- Per-IP/email rate limiting and async `news.process_submitted_link` worker.
+- Admin submitted-link list/get/process APIs.
+- Duplicate detection against existing extracted canonical URLs.
+
+Deferred:
+
+- Automatic merge into extract/score/review pipeline.
+- AI classification output on submissions.
+- Public appearance before human approval beyond existing review flow.
 
 ---
 
