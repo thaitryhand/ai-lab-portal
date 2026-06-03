@@ -23,6 +23,11 @@ Maps MVP 1 product behavior to proof layers. Update when story contracts change.
 | US-022 | Public shell polish, SEO metadata, theme tokens | no | no | yes | no | implemented | E2E home nav, `createPublicMetadata` |
 | US-023 | MVP 1 close-out, React Doctor, roadmap status | no | no | yes | no | implemented | React Doctor 100/100, `mvp-roadmap.md` |
 | US-032 | Publish approved blog idea to CMS blog post | yes | yes | no | no | implemented | `backend/tests/test_blog_publish.py` |
+| US-033 | AI run metadata (`ai_runs`) | yes | yes | no | no | implemented | `backend/tests/test_blog_observability.py` (`-k recording`) |
+| US-034 | Celery generation job polling | yes | yes | no | no | implemented | `backend/tests/test_blog_observability.py` (`-k generation_job`) |
+| US-035 | Claim evidence ledger + publish guard | yes | yes | no | no | implemented | `backend/tests/test_blog_observability.py` (`-k claim`) |
+| US-036 | Admin news source registry | yes | yes | no | no | implemented | `backend/tests/test_news_sources.py` |
+| US-037 | RSS crawl + raw item storage | yes | yes | no | no | implemented | `backend/tests/test_news_crawl.py` |
 
 ## Evidence Rules
 

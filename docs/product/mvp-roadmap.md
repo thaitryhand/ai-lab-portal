@@ -12,8 +12,8 @@ validation contracts before implementation.
 | --- | --- | --- | --- |
 | MVP 0 | Foundation | **Implemented** | US-001 |
 | MVP 1 | Manual CMS + public pages | **Implemented** | US-005–US-022 |
-| MVP 2 | AI-assisted blog | **In progress** | US-025–US-031 |
-| MVP 3 | AI News (official sources) | **In progress** | US-036+ |
+| MVP 2 | AI-assisted blog | **In progress** | US-025–US-035 |
+| MVP 3 | AI News (official sources) | **In progress** | US-036+ (registry shipped) |
 | MVP 4 | User-submitted links | Planned | — |
 | MVP 5 | X/Twitter intelligence | Blocked | — |
 

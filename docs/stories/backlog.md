@@ -51,3 +51,4 @@ a durable place to land.
 | `US-034` | E03 AI Blog Agent | implemented |
 | `US-035` | E03 AI Blog Agent | implemented |
 | `US-036` | E04 AI News | implemented |
+| `US-037` | E04 AI News | implemented |

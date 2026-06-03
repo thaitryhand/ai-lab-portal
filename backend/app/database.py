@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, MetaData, String, Table, Text, create_engine
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, MetaData, String, Table, Text, UniqueConstraint, create_engine
 from sqlalchemy.engine import Engine
 
 from backend.app.settings import Settings
@@ -157,4 +157,21 @@ news_sources = Table(
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Index("ix_news_sources_enabled", "is_enabled"),
     Index("ix_news_sources_type", "source_type"),
+)
+
+news_raw_items = Table(
+    "news_raw_items",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("source_id", String(64), ForeignKey("news_sources.id", ondelete="CASCADE"), nullable=False),
+    Column("external_id", String(512), nullable=False),
+    Column("title", String(512), nullable=False),
+    Column("link_url", String(1024), nullable=False),
+    Column("published_at", DateTime(timezone=True), nullable=True),
+    Column("raw_payload", Text, nullable=False),
+    Column("content_hash", String(64), nullable=False),
+    Column("fetched_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("source_id", "external_id", name="uq_news_raw_items_source_external"),
+    Index("ix_news_raw_items_source", "source_id"),
+    Index("ix_news_raw_items_fetched", "fetched_at"),
 )

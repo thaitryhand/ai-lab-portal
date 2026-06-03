@@ -11,7 +11,23 @@ from backend.app.generation_jobs import (
 )
 from backend.app.llm.recording import RecordingLLMService
 from backend.app.llm.service import LLMService, OpenAILLMService
+from backend.app.news_crawl import NewsRawItemRepository, PostgresNewsRawItemRepository
+from backend.app.news_sources import NewsSourceRepository, PostgresNewsSourceRepository
 from backend.app.settings import Settings
+
+
+def news_source_repository(settings: Settings | None = None) -> NewsSourceRepository:
+    resolved = settings or Settings()
+    if resolved.environment == "test":
+        return NewsSourceRepository()
+    return PostgresNewsSourceRepository(create_database_engine(resolved))
+
+
+def news_raw_item_repository(settings: Settings | None = None) -> NewsRawItemRepository:
+    resolved = settings or Settings()
+    if resolved.environment == "test":
+        return NewsRawItemRepository()
+    return PostgresNewsRawItemRepository(create_database_engine(resolved))
 
 
 def idea_repository(settings: Settings | None = None) -> BlogIdeaRepository:

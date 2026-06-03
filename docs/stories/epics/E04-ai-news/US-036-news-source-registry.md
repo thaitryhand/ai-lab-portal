@@ -8,8 +8,12 @@ implemented
 
 Admins can list, create, enable/disable, and configure crawl sources (RSS, GitHub, website) for AI News.
 
+## Validation
+
+`scripts/bin/harness-cli story verify US-036` → `python -m pytest backend/tests/test_news_sources.py`
+
 ## Evidence
 
 - `backend/app/news_sources.py`, migration `20260603_0013`
 - Admin UI `/admin/news-sources`
-- `backend/tests/test_news_sources.py`
+- `backend/tests/test_news_sources.py` (2 tests)

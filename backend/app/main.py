@@ -113,7 +113,20 @@ def create_app(
         ai_runs_repository=ai_runs_repo,
     )
     app.include_router(ideas_router)
-    app.include_router(create_news_source_routes(news_sources_repo, resolved_settings))
+    crawl_enqueue = None
+    if resolved_settings.environment != "test":
+        from backend.app.tasks import crawl_rss_source_task
+
+        def crawl_enqueue(source_id: str) -> str:
+            return crawl_rss_source_task.delay(source_id).id
+
+    app.include_router(
+        create_news_source_routes(
+            news_sources_repo,
+            resolved_settings,
+            enqueue_rss_crawl=crawl_enqueue,
+        )
+    )
 
     def record_showcase_audit(
         identity: AdminIdentity, action: str, showcase_id: str

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from collections.abc import Callable
 from typing import Annotated, Literal
 from uuid import uuid4
 
@@ -72,9 +73,8 @@ class NewsSourceSummary(BaseModel):
 
 class NewsSourceRepository:
     def __init__(self, sources: list[NewsSource] | None = None) -> None:
-        self._sources: dict[str, NewsSource] = {
-            s.id: s for s in (sources or _default_sources())
-        }
+        seeded = _default_sources() if sources is None else sources
+        self._sources: dict[str, NewsSource] = {s.id: s for s in seeded}
 
     def list_all(self) -> list[NewsSourceSummary]:
         items = sorted(self._sources.values(), key=lambda s: s.name.lower())
@@ -98,6 +98,27 @@ class NewsSourceRepository:
         )
         self._sources[source_id] = updated
         return updated
+
+    def list_due_rss(self, *, now: datetime | None = None) -> list[NewsSource]:
+        moment = now or datetime.now(UTC)
+        due: list[NewsSource] = []
+        for source in self._sources.values():
+            if not source.is_enabled or source.source_type != "rss":
+                continue
+            if source.last_crawled_at is None:
+                due.append(source)
+                continue
+            if source.last_crawled_at + timedelta(minutes=source.crawl_frequency_minutes) <= moment:
+                due.append(source)
+        return due
+
+    def touch_last_crawled(self, source_id: str, crawled_at: datetime) -> None:
+        existing = self._sources.get(source_id)
+        if existing is None:
+            return
+        self._sources[source_id] = existing.model_copy(
+            update={"last_crawled_at": crawled_at, "updated_at": crawled_at}
+        )
 
 
 class PostgresNewsSourceRepository(NewsSourceRepository):
@@ -163,6 +184,36 @@ class PostgresNewsSourceRepository(NewsSourceRepository):
             )
         return self.get_by_id(source_id)
 
+    def list_due_rss(self, *, now: datetime | None = None) -> list[NewsSource]:
+        self._ensure_seed()
+        moment = now or datetime.now(UTC)
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                select(news_sources_table).where(
+                    news_sources_table.c.is_enabled.is_(True),
+                    news_sources_table.c.source_type == "rss",
+                )
+            ).mappings()
+            due: list[NewsSource] = []
+            for row in rows:
+                source = NewsSource(**dict(row))
+                if source.last_crawled_at is None:
+                    due.append(source)
+                    continue
+                if source.last_crawled_at + timedelta(
+                    minutes=source.crawl_frequency_minutes
+                ) <= moment:
+                    due.append(source)
+            return due
+
+    def touch_last_crawled(self, source_id: str, crawled_at: datetime) -> None:
+        with self._engine.begin() as conn:
+            conn.execute(
+                update(news_sources_table)
+                .where(news_sources_table.c.id == source_id)
+                .values(last_crawled_at=crawled_at, updated_at=crawled_at)
+            )
+
 
 def _to_summary(source: NewsSource) -> NewsSourceSummary:
     return NewsSourceSummary(
@@ -215,6 +266,8 @@ def _default_sources() -> list[NewsSource]:
 def create_news_source_routes(
     repository: NewsSourceRepository,
     settings: Settings,
+    *,
+    enqueue_rss_crawl: Callable[[str], str] | None = None,
 ) -> APIRouter:
     def require_identity(
         identity_payload: Annotated[str | None, Header(alias=ADMIN_IDENTITY_HEADER)] = None,
@@ -257,5 +310,45 @@ def create_news_source_routes(
         if source is None:
             raise HTTPException(status_code=404, detail="News source not found")
         return source
+
+    @router.post("/{source_id}/crawl")
+    async def trigger_crawl(
+        source_id: str,
+        _identity: AdminIdentity = Depends(require_identity),
+    ):
+        from backend.app.news_crawl import (
+            CrawlQueuedResponse,
+            CrawlResult,
+            RssFetchError,
+            run_rss_crawl,
+        )
+
+        source = repository.get_by_id(source_id)
+        if source is None:
+            raise HTTPException(status_code=404, detail="News source not found")
+        if source.source_type != "rss":
+            raise HTTPException(
+                status_code=400,
+                detail="Only RSS sources can be crawled in this story",
+            )
+        if not source.is_enabled:
+            raise HTTPException(status_code=400, detail="News source is disabled")
+
+        if enqueue_rss_crawl is not None:
+            task_id = enqueue_rss_crawl(source_id)
+            return CrawlQueuedResponse(task_id=task_id)
+
+        from backend.app.task_support import news_raw_item_repository
+
+        try:
+            return run_rss_crawl(
+                source_id,
+                sources=repository,
+                raw_items=news_raw_item_repository(settings),
+            )
+        except RssFetchError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return router

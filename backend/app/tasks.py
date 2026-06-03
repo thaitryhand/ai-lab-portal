@@ -14,10 +14,13 @@ from backend.app.llm.schemas import BlogIdea as BlogIdeaSchema
 from backend.app.llm.schemas import BlogOutline
 from backend.app.llm.schemas import MarketingMetadata
 from backend.app.llm.schemas import TechnicalReview
+from backend.app.news_crawl import run_crawl_due_rss_sources, run_rss_crawl
 from backend.app.task_support import (
     generation_job_repository,
     idea_repository,
     llm_service_for_idea,
+    news_raw_item_repository,
+    news_source_repository,
     track_job_lifecycle,
 )
 
@@ -252,3 +255,19 @@ def generate_marketing_metadata_task(self, idea_id: str) -> dict:
     except Exception as exc:
         _finish_job(self, jobs, exc)
         raise self.retry(exc=exc)
+
+
+@celery_app.task(name="news.crawl_rss_source")
+def crawl_rss_source_task(source_id: str) -> dict:
+    sources = news_source_repository()
+    raw_items = news_raw_item_repository()
+    result = run_rss_crawl(source_id, sources=sources, raw_items=raw_items)
+    return result.model_dump()
+
+
+@celery_app.task(name="news.crawl_due_sources")
+def crawl_due_rss_sources_task() -> list[dict]:
+    sources = news_source_repository()
+    raw_items = news_raw_item_repository()
+    results = run_crawl_due_rss_sources(sources=sources, raw_items=raw_items)
+    return [r.model_dump() for r in results]
