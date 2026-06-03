@@ -24,7 +24,7 @@ print("backend settings ok:", settings.environment, str(settings.database_url)[:
 PY
 
 echo "==> frontend env inside container"
-docker compose run --rm --no-deps frontend node - <<'NODE'
+docker compose run --rm --no-deps --entrypoint node frontend - <<'NODE'
 const required = [
   "BETTER_AUTH_SECRET",
   "BETTER_AUTH_URL",

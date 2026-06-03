@@ -48,8 +48,9 @@ docker build -f backend/Dockerfile -t ai-lab-portal-backend .
 | `AI_LAB_DATABASE_URL` | SQLAlchemy Postgres URL (service hostname in deploy) |
 | `AI_LAB_REDIS_URL` | Redis URL |
 | `AI_LAB_ADMIN_BOUNDARY_SECRET` | Shared secret with frontend (`ADMIN_BOUNDARY_SECRET`) |
+| `AI_LAB_LLM_OPENAI_API_KEY` | OpenAI API key for AI Blog Agent generation tasks; may be empty only when AI generation is intentionally disabled locally |
 
-Optional: `AI_LAB_APP_NAME`, `AI_LAB_SERVICE_NAME`.
+Optional: `AI_LAB_APP_NAME`, `AI_LAB_SERVICE_NAME`, `AI_LAB_LLM_MODEL`.
 
 `backend/app/settings.py` loads root `.env` only when that file exists in the
 process working directory (typical for host-local runs from repo root). Inside a
@@ -126,7 +127,9 @@ docker run --rm -p 3000:3000 \
 On Kubernetes, ECS, Fly.io, etc., map the same names from secrets / config maps —
 do not mount `.env` into the container unless you intentionally manage secrets that way.
 
-## Verification script
+## Verification scripts
+
+### Container environment smoke
 
 From repo root after `docker compose up --build -d`:
 
@@ -137,6 +140,23 @@ bash scripts/docker-env-smoke.sh
 This checks that backend and frontend containers see the expected variables and that
 health endpoints respond.
 
+### Deployment HTTP smoke
+
+After any production-like deployment is up, run:
+
+```bash
+python scripts/deploy_smoke.py \
+  --backend-url http://127.0.0.1:18000 \
+  --frontend-url http://127.0.0.1:13000
+```
+
+For a real server, replace both URLs with the deployed origins. The smoke script
+checks:
+
+- backend `/health` returns JSON with `status: ok`
+- frontend `/` responds without a server error
+- frontend `/admin/login` responds without a server error
+
 ## Deploy checklist
 
 1. Build images in CI (`backend/Dockerfile`, `frontend/Dockerfile --target production`).
@@ -146,3 +166,19 @@ health endpoints respond.
 5. Ensure `ADMIN_BOUNDARY_SECRET` and `AI_LAB_ADMIN_BOUNDARY_SECRET` match.
 6. Use internal service DNS for `BACKEND_INTERNAL_URL`, `AI_LAB_DATABASE_URL`, and Postgres URLs.
 7. Set `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` to the public HTTPS origin.
+8. Set `AI_LAB_LLM_OPENAI_API_KEY` for worker-backed AI generation flows, or explicitly accept that generation endpoints will fail until it is configured.
+9. Run `python scripts/deploy_smoke.py` and inspect container logs before opening traffic.
+
+## Rollback checklist
+
+1. Stop new traffic or disable the release at the reverse proxy/load balancer if available.
+2. Redeploy the previous image tag or revert the deployment commit.
+3. Do **not** roll back database migrations blindly; first check whether the migration is backward-compatible or whether a data restore is required.
+4. Re-run `python scripts/deploy_smoke.py` against the rolled-back stack.
+5. Record the incident and any missing automation as Harness backlog.
+
+## Known local blocker
+
+Docker Desktop must be running before Compose or E2E deployment smoke can start
+Postgres/Redis. If `docker compose ps` cannot connect to the Docker engine,
+non-Docker checks can still pass but deployment/E2E smoke is environment-blocked.

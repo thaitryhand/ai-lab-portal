@@ -36,6 +36,8 @@ services:
       AI_LAB_DATABASE_URL: ${DOCKER_AI_LAB_DATABASE_URL:-postgresql+psycopg://ai_lab:ai_lab_dev_password@postgres:5432/ai_lab_portal}
       AI_LAB_REDIS_URL: ${DOCKER_AI_LAB_REDIS_URL:-redis://redis:6379/0}
       AI_LAB_ADMIN_BOUNDARY_SECRET: ${AI_LAB_ADMIN_BOUNDARY_SECRET:-replace-with-shared-server-secret-at-least-32-random-characters}
+      AI_LAB_LLM_OPENAI_API_KEY: ${AI_LAB_LLM_OPENAI_API_KEY:-}
+      AI_LAB_LLM_MODEL: ${AI_LAB_LLM_MODEL:-gpt-4o}
     volumes:
       - ./backend:/app/backend
       - ./pyproject.toml:/app/pyproject.toml
@@ -65,6 +67,8 @@ services:
       AI_LAB_SERVICE_NAME: ${AI_LAB_WORKER_SERVICE_NAME:-ai-lab-portal-worker}
       AI_LAB_DATABASE_URL: ${DOCKER_AI_LAB_DATABASE_URL:-postgresql+psycopg://ai_lab:ai_lab_dev_password@postgres:5432/ai_lab_portal}
       AI_LAB_REDIS_URL: ${DOCKER_AI_LAB_REDIS_URL:-redis://redis:6379/0}
+      AI_LAB_LLM_OPENAI_API_KEY: ${AI_LAB_LLM_OPENAI_API_KEY:-}
+      AI_LAB_LLM_MODEL: ${AI_LAB_LLM_MODEL:-gpt-4o}
     command: ["python", "-m", "celery", "-A", "backend.app.celery_app.celery_app", "worker", "--loglevel=info"]
     depends_on:
       redis:
@@ -82,6 +86,8 @@ services:
       AI_LAB_SERVICE_NAME: ${AI_LAB_SCHEDULER_SERVICE_NAME:-ai-lab-portal-scheduler}
       AI_LAB_DATABASE_URL: ${DOCKER_AI_LAB_DATABASE_URL:-postgresql+psycopg://ai_lab:ai_lab_dev_password@postgres:5432/ai_lab_portal}
       AI_LAB_REDIS_URL: ${DOCKER_AI_LAB_REDIS_URL:-redis://redis:6379/0}
+      AI_LAB_LLM_OPENAI_API_KEY: ${AI_LAB_LLM_OPENAI_API_KEY:-}
+      AI_LAB_LLM_MODEL: ${AI_LAB_LLM_MODEL:-gpt-4o}
     command: ["python", "-m", "celery", "-A", "backend.app.celery_app.celery_app", "beat", "--loglevel=info"]
     depends_on:
       redis:

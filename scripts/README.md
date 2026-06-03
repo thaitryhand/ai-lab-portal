@@ -21,6 +21,7 @@ scripts/bin/harness-cli score-trace   # Score a trace against TRACE_SPEC.md tier
 scripts/bin/harness-cli query ...     # Query harness data, including backlog --open/--closed
 scripts/bin/harness-cli query matrix --numeric  # Show proof flags as 1/0
 python scripts/trace_quality.py       # Audit incomplete trace fields
+python scripts/deploy_smoke.py        # Smoke-test deployed backend/frontend URLs
 scripts/bin/harness-cli migrate       # Apply pending schema migrations
 scripts/bin/harness-cli --version     # Print the installed CLI version
 ```
@@ -48,7 +49,9 @@ Requires: the prebuilt Rust CLI at `scripts/bin/harness-cli` on macOS/Linux or
 Direct database inspection may still use SQLite tools, but normal Harness use
 should go through the Rust CLI. For trace completeness audits, use
 `python scripts/trace_quality.py` instead of ad hoc SQL until this report is
-folded into the Rust CLI.
+folded into the Rust CLI. After a production-like deployment is up, use
+`python scripts/deploy_smoke.py --backend-url <url> --frontend-url <url>` to
+check backend health plus frontend and admin-login reachability.
 
 ### Rust CLI Commands
 
