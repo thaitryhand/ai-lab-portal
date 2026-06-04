@@ -7,8 +7,13 @@ from alembic.script import ScriptDirectory
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _migrations_dir() -> str:
+    return str(PROJECT_ROOT / "backend/migrations")
+
+
 def test_alembic_head_includes_user_follows() -> None:
     config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
+    config.set_main_option("script_location", _migrations_dir())
     script = ScriptDirectory.from_config(config)
 
     assert script.get_current_head() == "20260604_0031"
