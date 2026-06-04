@@ -56,10 +56,11 @@ function toDetail(post: ApiBlogPostDetail): BlogPostDetail {
   };
 }
 
-export async function listPublishedBlogPosts(options?: { tag?: string; feed?: BlogFeed; session?: Session | null }): Promise<BlogPostSummary[]> {
+export async function listPublishedBlogPosts(options?: { tag?: string; feed?: BlogFeed; session?: Session | null; q?: string }): Promise<BlogPostSummary[]> {
   const url = new URL(`${backendBaseUrl}/public/blog-posts`);
   if (options?.tag) url.searchParams.set("tag", options.tag);
   if (options?.feed) url.searchParams.set("feed", options.feed);
+  if (options?.q) url.searchParams.set("q", options.q);
   const response = await fetch(url.toString(), {
     cache: "no-store",
     headers: options?.session ? createUserBoundaryHeaders(options.session) : undefined,

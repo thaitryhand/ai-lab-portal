@@ -432,6 +432,7 @@ def create_app(
     async def public_blog_posts(
         tag: str | None = None,
         feed: str = "latest",
+        q: str | None = None,
         identity_payload: Annotated[str | None, Header(alias=USER_IDENTITY_HEADER)] = None,
         signature: Annotated[str | None, Header(alias=USER_SIGNATURE_HEADER)] = None,
     ) -> list[BlogPostSummary]:
@@ -442,7 +443,7 @@ def create_app(
             author_user_ids = follow_repo.followed_user_ids(identity.user_id)
         elif feed not in {"latest", "discover"}:
             raise HTTPException(status_code=422, detail="Unsupported feed")
-        return repository.list_published(post_ids=post_ids, author_user_ids=author_user_ids)
+        return repository.list_published(post_ids=post_ids, author_user_ids=author_user_ids, q=q)
 
     @app.get("/public/blog-posts/{slug}")
     async def public_blog_post(slug: str) -> BlogPostDetail:
@@ -463,12 +464,13 @@ def create_app(
         return item
 
     @app.get("/public/ai-news")
-    async def public_ai_news(topic: str | None = None) -> list[PublicAiNewsSummary]:
+    async def public_ai_news(topic: str | None = None, q: str | None = None) -> list[PublicAiNewsSummary]:
         return list_public_ai_news(
             review=review_repo,
             extracted=extracted_repo,
             sources=news_sources_repo,
             topic=topic,
+            q=q,
         )
 
     @app.get("/public/ai-news/{slug}")

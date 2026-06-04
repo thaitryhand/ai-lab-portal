@@ -56,10 +56,13 @@ function toDetail(item: ApiAiNewsDetail): AiNewsDetail {
   };
 }
 
-export async function listPublishedAiNews(topic?: string): Promise<AiNewsSummary[]> {
+export async function listPublishedAiNews(topic?: string, q?: string): Promise<AiNewsSummary[]> {
   const url = new URL("/public/ai-news", backendBaseUrl);
   if (topic) {
     url.searchParams.set("topic", topic);
+  }
+  if (q) {
+    url.searchParams.set("q", q);
   }
 
   const response = await fetch(url, { cache: "no-store" });

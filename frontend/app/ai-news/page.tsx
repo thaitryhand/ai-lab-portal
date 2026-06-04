@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
+
 import { PublicIndexEntry } from "@/components/public/public-index-entry";
 import { PublicIndexList } from "@/components/public/public-index-list";
 import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
+import { SearchInput } from "@/components/public/search-input";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { listPublishedAiNews } from "@/lib/ai-news/posts";
 import { createPublicMetadata } from "@/lib/seo/metadata";
@@ -30,11 +33,12 @@ const topicFilters = [
 export default async function AiNewsIndexPage({
   searchParams,
 }: {
-  searchParams: Promise<{ topic?: string }>;
+  searchParams: Promise<{ topic?: string; q?: string }>;
 }) {
   const query = await searchParams;
   const selectedTopic = topicFilters.some((filter) => filter.value === query.topic) ? query.topic : undefined;
-  const items = await listPublishedAiNews(selectedTopic);
+  const searchQuery = query.q;
+  const items = await listPublishedAiNews(selectedTopic, searchQuery);
 
   return (
     <PublicPageShell currentPath="/ai-news">
@@ -46,6 +50,9 @@ export default async function AiNewsIndexPage({
         />
 
         <div className="-mt-8 flex flex-col gap-6">
+          <Suspense fallback={null}>
+            <SearchInput placeholder="Search AI news…" />
+          </Suspense>
           <p className="text-sm text-muted-foreground">
             Have a link worth reviewing?{" "}
             <Link className="underline underline-offset-4" href="/ai-news/submit">

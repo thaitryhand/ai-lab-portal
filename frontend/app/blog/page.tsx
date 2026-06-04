@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { Plus, Rss } from "lucide-react";
+import { Suspense } from "react";
 
 import { BlogTagFilter } from "@/components/blog/blog-tag-filter";
 import { PublicIndexEntry } from "@/components/public/public-index-entry";
 import { PublicIndexList } from "@/components/public/public-index-list";
 import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
+import { SearchInput } from "@/components/public/search-input";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { listPublishedBlogPosts, type BlogFeed } from "@/lib/blog/posts";
@@ -29,14 +31,15 @@ export const dynamic = "force-dynamic";
 export default async function BlogIndexPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tag?: string; feed?: string }>;
+  searchParams?: Promise<{ tag?: string; feed?: string; q?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTag = resolvedSearchParams?.tag;
   const activeFeed: BlogFeed = resolvedSearchParams?.feed === "following" || resolvedSearchParams?.feed === "discover" ? resolvedSearchParams.feed : "latest";
+  const searchQuery = resolvedSearchParams?.q;
   const session = await auth.api.getSession({ headers: await headers() });
   const [posts, tags] = await Promise.all([
-    activeFeed === "following" && !session ? Promise.resolve([]) : listPublishedBlogPosts({ tag: activeTag, feed: activeFeed, session }),
+    activeFeed === "following" && !session ? Promise.resolve([]) : listPublishedBlogPosts({ tag: activeTag, feed: activeFeed, session, q: searchQuery }),
     listPublicBlogTags(),
   ]);
 
@@ -65,6 +68,12 @@ export default async function BlogIndexPage({
           eyebrow="AI Lab Blog"
           title="Practical AI engineering notes."
         />
+
+        <div className="-mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Suspense fallback={null}>
+            <SearchInput placeholder="Search blog posts…" />
+          </Suspense>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           {(["latest", "following", "discover"] as const).map((feed) => {
