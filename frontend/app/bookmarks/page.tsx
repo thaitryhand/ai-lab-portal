@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Bookmark, ExternalLink } from "lucide-react";
 
 import { PublicBackLink } from "@/components/public/public-back-link";
+import { PublicEmptyState } from "@/components/public/public-empty-state";
 import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { listUserBookmarks } from "@/lib/blog/social";
@@ -42,15 +43,11 @@ export default async function BookmarksPage() {
         </div>
 
         {bookmarks.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-xl border bg-card px-6 py-16 text-center">
-            <Bookmark className="size-10 text-muted-foreground/40" aria-hidden />
-            <div className="space-y-1">
-              <p className="text-base font-medium">No bookmarks yet</p>
-              <p className="text-sm text-muted-foreground">
-                Bookmark blog posts to read later — click the bookmark icon on any post.
-              </p>
-            </div>
-          </div>
+          <PublicEmptyState
+            description="Bookmark blog posts to read later — click the bookmark icon on any post."
+            icon={<Bookmark className="size-5" aria-hidden />}
+            title="No bookmarks yet"
+          />
         ) : (
           <div className="flex flex-col divide-y divide-border rounded-xl border bg-card">
             {bookmarks.map((bm) => (

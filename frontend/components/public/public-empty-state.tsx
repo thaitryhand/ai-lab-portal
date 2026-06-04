@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { motion, useReducedMotion } from "framer-motion";
 import { FileText } from "lucide-react";
 
@@ -9,10 +11,11 @@ import { cn } from "@/lib/utils";
 
 type PublicEmptyStateProps = {
   description: string;
+  icon?: ReactNode;
   title: string;
 };
 
-export function PublicEmptyState({ description, title }: PublicEmptyStateProps) {
+export function PublicEmptyState({ description, icon, title }: PublicEmptyStateProps) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -28,7 +31,7 @@ export function PublicEmptyState({ description, title }: PublicEmptyStateProps) 
       />
       <div className="relative">
         <span className="mx-auto flex size-12 items-center justify-center rounded-2xl border border-border/90 bg-card text-brand">
-          <FileText className="size-5" aria-hidden />
+          {icon ?? <FileText className="size-5" aria-hidden />}
         </span>
         <h2 className="mt-5 font-(family-name:--font-gt-super) text-2xl font-normal tracking-[-0.03em] text-foreground">
           {title}
