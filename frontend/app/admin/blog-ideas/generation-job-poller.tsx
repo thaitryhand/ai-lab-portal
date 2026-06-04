@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { pollGenerationJobAction } from "./actions";
@@ -12,21 +11,22 @@ type Props = {
 };
 
 export function GenerationJobPoller({ ideaId, taskId, opStatus }: Props) {
-  const router = useRouter();
   const polling = useRef(false);
 
   useEffect(() => {
     if (!taskId || opStatus !== "queued" || polling.current) return;
     polling.current = true;
 
-    let cancelled = false;
+    const abort = new AbortController();
+    const { signal } = abort;
 
     const poll = async () => {
-      for (let attempt = 0; attempt < 60 && !cancelled; attempt += 1) {
+      for (let attempt = 0; attempt < 60 && !signal.aborted; attempt += 1) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (signal.aborted) return;
         const job = await pollGenerationJobAction(taskId);
         if (job.status === "completed") {
-          router.refresh();
+          window.location.reload();
           return;
         }
         if (job.status === "failed") {
@@ -35,17 +35,15 @@ export function GenerationJobPoller({ ideaId, taskId, opStatus }: Props) {
             opStatus: "error",
             message: job.error_message ?? "Generation failed in the worker.",
           });
-          router.replace(`/admin/blog-ideas/${ideaId}?${params.toString()}`);
+          window.location.href = `/admin/blog-ideas/${ideaId}?${params.toString()}`;
           return;
         }
       }
     };
 
     void poll();
-    return () => {
-      cancelled = true;
-    };
-  }, [ideaId, taskId, opStatus, router]);
+    return () => abort.abort();
+  }, [ideaId, taskId, opStatus]);
 
   return null;
 }

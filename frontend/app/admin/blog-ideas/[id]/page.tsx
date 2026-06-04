@@ -86,9 +86,8 @@ export default async function AdminBlogIdeaDetailPage({
     blogSlug?: string;
   }>;
 }) {
-  const { id } = await params;
-  const query = await searchParams;
-  const idea = await getBlogIdea(id);
+  const id = (await params).id;
+  const [query, idea] = await Promise.all([searchParams, getBlogIdea(id)]);
   if (!idea) notFound();
 
   const publishedSlug =
