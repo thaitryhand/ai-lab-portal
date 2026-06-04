@@ -13,6 +13,7 @@ import {
   publicListRowClass,
   publicMetaClass,
 } from "@/components/public/public-ui";
+import { PublicBookmarkButton } from "@/components/public/public-bookmark-button";
 import { cn } from "@/lib/utils";
 
 type PublicIndexEntryProps = {
@@ -21,10 +22,24 @@ type PublicIndexEntryProps = {
   imageUrl?: string;
   meta: ReactNode;
   title: string;
+  /** Enable bookmark button on this entry */
+  showBookmark?: boolean;
+  slug?: string;
 };
 
-export function PublicIndexEntry({ excerpt, href, imageUrl, meta, title }: PublicIndexEntryProps) {
+export function PublicIndexEntry({
+  excerpt,
+  href,
+  imageUrl,
+  meta,
+  title,
+  showBookmark,
+  slug,
+}: PublicIndexEntryProps) {
   const reduceMotion = useReducedMotion();
+
+  // Derive slug from href if not provided
+  const entrySlug = slug ?? (href.startsWith("/blog/") ? href.replace("/blog/", "") : undefined);
 
   return (
     <motion.article variants={reduceMotion ? undefined : publicStaggerItem}>
@@ -49,12 +64,30 @@ export function PublicIndexEntry({ excerpt, href, imageUrl, meta, title }: Publi
               <p className={publicEntryExcerptClass}>{excerpt}</p>
             </div>
           </div>
-          <span
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/90 text-muted-foreground transition-[border-color,background-color,transform,color] duration-300 group-hover:border-brand/35 group-hover:bg-accent group-hover:text-brand group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            aria-hidden
-          >
-            <ArrowUpRight className="size-4" />
-          </span>
+
+          <div className="flex items-center gap-2">
+            {showBookmark && entrySlug && (
+              <span
+                className="relative z-10"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                role="presentation"
+              >
+                <PublicBookmarkButton slug={entrySlug} />
+              </span>
+            )}
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/90 text-muted-foreground transition-[border-color,background-color,transform,color] duration-300 group-hover:border-brand/35 group-hover:bg-accent group-hover:text-brand group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              aria-hidden
+            >
+              <ArrowUpRight className="size-4" />
+            </span>
+          </div>
         </div>
       </Link>
     </motion.article>

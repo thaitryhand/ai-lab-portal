@@ -56,12 +56,13 @@ export default async function BlogIndexPage({
               >
                 <Rss className="size-4 shrink-0" />
               </Link>
-              {session && (
-                <Link className={buttonVariants()} href="/blog/new">
-                  <Plus className="size-4 shrink-0" />
-                  Write a post
-                </Link>
-              )}
+              <Link
+                className={buttonVariants()}
+                href={session ? "/blog/new" : "/login"}
+              >
+                <Plus className="size-4 shrink-0" />
+                Write a post
+              </Link>
             </div>
           }
           description="Published posts from the AI Lab. Drafts and internal review material stay private."
@@ -96,10 +97,21 @@ export default async function BlogIndexPage({
           })}
         </div>
 
+        {activeFeed === "following" && !session && (
+          <div className="rounded-2xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              <Link href="/login" className="font-medium text-brand underline underline-offset-2 hover:text-brand/80">
+                Sign in
+              </Link>{" "}
+              to follow authors and build a personalized feed.
+            </p>
+          </div>
+        )}
+
         <BlogTagFilter tags={tags} activeTag={activeTag} />
 
         <PublicIndexList
-          emptyDescription={activeFeed === "following" && !session ? "Sign in to follow authors and build a personalized feed." : activeFeed === "following" ? "Follow authors to populate this feed." : "Published articles will appear here after an admin approves them."}
+          emptyDescription={activeFeed === "following" && !session ? "" : activeFeed === "following" ? "Follow authors to populate this feed." : "Published articles will appear here after an admin approves them."}
           emptyTitle={activeFeed === "following" ? "No following feed yet" : "No published articles yet"}
           isEmpty={posts.length === 0}
         >
@@ -114,6 +126,8 @@ export default async function BlogIndexPage({
                   {post.authorName} · {new Date(post.publishedAt).toLocaleDateString("en-US")}
                 </>
               }
+              showBookmark
+              slug={post.slug}
               title={post.title}
             />
           ))}

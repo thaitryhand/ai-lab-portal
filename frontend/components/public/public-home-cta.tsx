@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Mail, MessageSquare } from "lucide-react";
 
 import {
   publicEyebrowClass,
@@ -65,9 +65,10 @@ export function PublicHomeCta() {
               publicSecondaryCtaClass,
               "border-primary-foreground/25 bg-transparent text-primary-foreground hover:border-primary-foreground/50 hover:bg-primary-foreground/10"
             )}
-            href="/admin"
+            href="/contact"
           >
-            Admin sign in
+            <Mail className="size-4" />
+            Get in touch
           </Link>
         </div>
       </div>

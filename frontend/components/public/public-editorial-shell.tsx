@@ -21,10 +21,13 @@ function PublicEditorialFooter() {
   return (
     <footer className="mt-28 w-full border-t border-border/80 pt-14 sm:mt-36 sm:pt-16 lg:mt-40">
       <div className="flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between">
-        <p className="max-w-md text-sm leading-7 text-muted-foreground">
-          Human-reviewed publishing for AI Lab articles and client showcases. Drafts stay private until an admin
-          publishes.
-        </p>
+        <div className="max-w-md space-y-3">
+          <p className="text-sm font-semibold text-foreground">AI Lab Portal</p>
+          <p className="text-sm leading-7 text-muted-foreground">
+            Human-reviewed publishing for AI Lab articles and client showcases. Drafts stay private until an admin
+            publishes.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           <Link className="transition-colors hover:text-brand" href="/lab">
             AI Lab
@@ -41,12 +44,18 @@ function PublicEditorialFooter() {
           <Link className="transition-colors hover:text-brand" href="/ai-news">
             AI News
           </Link>
-          <Link className="transition-colors hover:text-brand" href="/contact">
-            Blog
+          <Link className="transition-colors hover:text-brand" href="/login">
+            Sign in
           </Link>
-          <Link className="transition-colors hover:text-brand" href="/contact">
+        </div>
+      </div>
+      <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-6 pb-2 sm:flex-row sm:items-center">
+        <p className="text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} AI Lab Portal. All rights reserved.
+        </p>
+        <div className="flex gap-6 text-xs text-muted-foreground">
+          <Link className="transition-colors hover:text-foreground" href="/contact">
             Contact
-            Blog
           </Link>
         </div>
       </div>
