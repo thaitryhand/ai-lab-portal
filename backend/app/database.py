@@ -20,6 +20,7 @@ blog_posts = Table(
     Column("status", String(32), nullable=False),
     Column("published_at", DateTime(timezone=True), nullable=True),
     Column("content_markdown", Text, nullable=False),
+    Column("image_url", String(2048), nullable=True),
 )
 
 showcases = Table(
@@ -34,6 +35,7 @@ showcases = Table(
     Column("status", String(32), nullable=False),
     Column("published_at", DateTime(timezone=True), nullable=True),
     Column("content_markdown", Text, nullable=False),
+    Column("image_url", String(2048), nullable=True),
     Index("ix_showcases_status_published_at", "status", "published_at"),
 )
 
