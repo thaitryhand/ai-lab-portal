@@ -25,6 +25,7 @@ from backend.app.database import (
     blog_reactions as reactions_table,
 )
 from backend.app.settings import Settings, get_settings
+from backend.app.user_profiles import UserProfileRepository, default_name_from_identity
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
@@ -75,7 +76,9 @@ class BlogCommentCreate(BaseModel):
 
 class BlogCommentPublic(BaseModel):
     id: str
+    user_id: str
     user_name: str | None = None
+    avatar_url: str | None = None
     content: str
     parent_id: str | None = None
     created_at: datetime
@@ -501,6 +504,7 @@ def create_blog_social_routes(
     social_repo: BlogSocialRepository,
     blog_repo: BlogRepositoryProtocol,
     settings: Settings,
+    profile_repo: UserProfileRepository | None = None,
 ) -> APIRouter:
     """Public routes for blog social features (requires user auth via signed identity)."""
 
@@ -567,24 +571,26 @@ def create_blog_social_routes(
         )
 
     @router.get("/{slug}/comments")
-    async def list_comments(
-        slug: str,
-        _identity: SignedIdentity = Depends(require_user),
-    ) -> list[BlogCommentPublic]:
+    async def list_comments(slug: str) -> list[BlogCommentPublic]:
         post = blog_repo.get_by_slug(slug)
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
         comments = social_repo.list_comments(post.id, status="approved")
-        return [
-            BlogCommentPublic(
-                id=c.id,
-                user_name=c.user_name,
-                content=c.content,
-                parent_id=c.parent_id,
-                created_at=c.created_at,
+        result: list[BlogCommentPublic] = []
+        for c in comments:
+            profile = profile_repo.get_by_user_id(c.user_id) if profile_repo else None
+            result.append(
+                BlogCommentPublic(
+                    id=c.id,
+                    user_id=c.user_id,
+                    user_name=profile.display_name if profile else c.user_name,
+                    avatar_url=profile.avatar_url if profile else None,
+                    content=c.content,
+                    parent_id=c.parent_id,
+                    created_at=c.created_at,
+                )
             )
-            for c in comments
-        ]
+        return result
 
     @router.post("/{slug}/comments")
     async def create_comment(
@@ -599,11 +605,15 @@ def create_blog_social_routes(
             parent = social_repo.get_comment_by_id(body.parent_id)
             if parent is None or parent.post_id != post.id:
                 raise HTTPException(status_code=422, detail="Invalid parent comment")
+        profile = profile_repo.get_or_create(
+            _identity.user_id,
+            default_name=default_name_from_identity(_identity),
+        ) if profile_repo else None
         return social_repo.create_comment(
             post_id=post.id,
             user_id=_identity.user_id,
             user_email=_identity.email,
-            user_name=_identity.email.split("@")[0] if _identity.email else None,
+            user_name=profile.display_name if profile else (_identity.email.split("@")[0] if _identity.email else None),
             content=body.content,
             parent_id=body.parent_id,
         )

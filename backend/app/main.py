@@ -476,6 +476,7 @@ def create_app(
             social_repo,
             repository,
             resolved_settings,
+            profile_repo,
         )
     )
     app.include_router(

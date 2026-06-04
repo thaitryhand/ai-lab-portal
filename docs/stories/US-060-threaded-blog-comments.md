@@ -2,7 +2,7 @@
 
 ## Status
 
-planned
+implemented
 
 ## Lane
 
@@ -83,4 +83,23 @@ None expected.
 
 ## Evidence
 
-Pending implementation.
+Implemented in code:
+
+- `GET /public/blog-posts/{slug}/comments` no longer requires signed user identity for approved comments.
+- `BlogCommentPublic` now includes `user_id` and optional `avatar_url`.
+- Comment creation uses `user_profiles` to persist profile display names.
+- `components/blog/blog-comments.tsx` renders comment trees using `parent_id`, nested visual grouping, profile links, avatars, and moderation notice for new comments.
+
+Validation run:
+
+```text
+python -m pytest backend/tests/test_blog_social_comments.py backend/tests/test_user_profiles.py -q
+# 6 passed
+
+cd frontend && npm run typecheck
+# passed
+
+cd frontend && npm run lint
+# passed
+```
+

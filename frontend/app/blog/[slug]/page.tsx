@@ -59,7 +59,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
   const [socialStats, comments, tags] = await Promise.all([
     session ? getSocialStats(slug, session).catch(() => null) : Promise.resolve(null),
-    session ? listComments(slug, session).catch(() => []) : Promise.resolve([]),
+    listComments(slug).catch(() => []),
     listPublicPostTags(slug).catch(() => []),
   ]);
 

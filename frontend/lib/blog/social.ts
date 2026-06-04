@@ -19,7 +19,9 @@ export type SocialStats = {
 
 export type BlogCommentPublic = {
   id: string;
+  user_id: string;
   user_name: string | null;
+  avatar_url: string | null;
   content: string;
   parent_id: string | null;
   created_at: string;
@@ -94,9 +96,11 @@ export async function toggleBookmark(slug: string, session: BetterAuthSession): 
 
 // ─── Comments ────────────────────────────────────────────────────────────────
 
-export async function listComments(slug: string, session: BetterAuthSession): Promise<BlogCommentPublic[]> {
+export async function listComments(slug: string): Promise<BlogCommentPublic[]> {
   try {
-    return await callApi<BlogCommentPublic[]>(`/public/blog-posts/${slug}/comments`, session);
+    const response = await fetch(`${backendBaseUrl}/public/blog-posts/${slug}/comments`, { cache: "no-store" });
+    if (!response.ok) return [];
+    return (await response.json()) as BlogCommentPublic[];
   } catch {
     return [];
   }
