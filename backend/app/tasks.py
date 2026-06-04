@@ -24,6 +24,7 @@ from backend.app.task_support import (
     generation_job_repository,
     idea_repository,
     llm_service_for_idea,
+    llm_service_for_news_item,
     news_raw_item_repository,
     news_review_repository,
     news_source_repository,
@@ -314,6 +315,7 @@ def score_extracted_article_task(extracted_article_id: str) -> dict:
         raw_items=news_raw_item_repository(),
         sources=news_source_repository(),
         review=news_review_repository(),
+        llm=llm_service_for_news_item(extracted_article_id),
     )
     return result.model_dump()
 

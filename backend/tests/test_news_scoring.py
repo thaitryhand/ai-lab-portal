@@ -12,6 +12,8 @@ from backend.app.admin_boundary import (
     ADMIN_SIGNATURE_HEADER,
     sign_admin_identity,
 )
+from backend.app.llm.schemas import NewsScoring
+from backend.app.llm.service import FakeLLMService, LLMGenerationError, LLMService
 from backend.app.main import create_app
 from backend.app.news_crawl import NewsRawItemRepository, run_rss_crawl
 from backend.app.news_extraction import (
@@ -20,6 +22,7 @@ from backend.app.news_extraction import (
     run_extract_raw_item,
 )
 from backend.app.news_scoring import (
+    LLM_SCORER_VERSION,
     InMemoryNewsReviewRepository,
     compute_heuristic_scores,
     run_score_extracted_article,
@@ -149,6 +152,66 @@ def test_run_score_marks_candidate_when_threshold_met() -> None:
     )
     assert result.review_status == "candidate"
     assert review.list_items(status="candidate")
+
+
+def test_run_score_uses_llm_scoring_when_available() -> None:
+    sources, raw, extracted, review, _source_id, article_id = _seed_extracted()
+    llm = FakeLLMService(
+        responses={
+            "ai_news_scoring": NewsScoring(
+                source_credibility_score=0.8,
+                engagement_score=0.6,
+                relevance_score=0.95,
+                novelty_score=0.7,
+                technical_depth_score=0.65,
+                business_value_score=0.55,
+                spam_risk_score=0.05,
+                final_publish_score=0.88,
+                summary="LLM summary for editors.",
+                why_it_matters="LLM why-it-matters note.",
+            )
+        }
+    )
+
+    result = run_score_extracted_article(
+        article_id,
+        extracted=extracted,
+        raw_items=raw,
+        sources=sources,
+        review=review,
+        threshold=0.5,
+        llm=llm,
+    )
+
+    row = review.get_by_id(result.review_item_id or "")
+    assert row is not None
+    assert result.final_publish_score == 0.88
+    assert row.summary == "LLM summary for editors."
+    assert row.why_it_matters == "LLM why-it-matters note."
+    assert row.scorer_version == LLM_SCORER_VERSION
+
+
+class FailingLLMService(LLMService):
+    def generate_with_usage(self, prompt_name, inputs, output_schema):  # noqa: ANN001, ANN201, ARG002
+        raise LLMGenerationError("boom")
+
+
+def test_run_score_falls_back_to_heuristic_when_llm_fails() -> None:
+    sources, raw, extracted, review, _source_id, article_id = _seed_extracted()
+    result = run_score_extracted_article(
+        article_id,
+        extracted=extracted,
+        raw_items=raw,
+        sources=sources,
+        review=review,
+        threshold=0.0,
+        llm=FailingLLMService(),
+    )
+
+    row = review.get_by_id(result.review_item_id or "")
+    assert row is not None
+    assert result.review_status == "candidate"
+    assert row.scorer_version == "heuristic_v1"
 
 
 def test_admin_review_queue_list_approve_reject() -> None:

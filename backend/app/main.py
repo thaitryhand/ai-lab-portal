@@ -372,11 +372,12 @@ def create_app(
         return item
 
     @app.get("/public/ai-news")
-    async def public_ai_news() -> list[PublicAiNewsSummary]:
+    async def public_ai_news(topic: str | None = None) -> list[PublicAiNewsSummary]:
         return list_public_ai_news(
             review=review_repo,
             extracted=extracted_repo,
             sources=news_sources_repo,
+            topic=topic,
         )
 
     @app.get("/public/ai-news/{slug}")

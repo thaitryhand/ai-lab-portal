@@ -95,6 +95,28 @@ def generation_job_repository(
     return PostgresGenerationJobRepository(create_database_engine(resolved))
 
 
+def llm_service_for_news_item(
+    review_entity_id: str,
+    settings: Settings | None = None,
+) -> LLMService | None:
+    resolved = settings or Settings()
+    api_key = resolved.llm_openai_api_key.get_secret_value()
+    if not api_key:
+        return None
+    inner = OpenAILLMService(api_key=api_key, model=resolved.llm_model)
+    recorder = ai_run_repository(resolved)
+    if recorder is None:
+        return inner
+    return RecordingLLMService(
+        inner,
+        recorder,
+        entity_type="ai_news_scoring",
+        entity_id=review_entity_id,
+        provider="openai",
+        model=resolved.llm_model,
+    )
+
+
 def llm_service_for_idea(
     idea_id: str,
     settings: Settings | None = None,

@@ -159,6 +159,29 @@ MARKETING_META_PROMPT = PromptTemplate(
 
 
 # ---------------------------------------------------------------------------
+# AI News scoring
+# ---------------------------------------------------------------------------
+
+AI_NEWS_SCORING_PROMPT = PromptTemplate(
+    system=(
+        "You are an AI news editor scoring official-source articles for a technical B2B audience. "
+        "Return calibrated scores from 0.0 to 1.0, a concise factual summary, and a why-it-matters note. "
+        "Avoid hype and do not invent facts beyond the provided article text. Penalize spam, vague promotion, "
+        "and weak AI relevance."
+    ),
+    user_template=(
+        "Score this extracted AI news article.\n\n"
+        "Source name: {source_name}\n"
+        "Source credibility base score: {source_credibility_score}\n"
+        "Title: {title}\n"
+        "Published at: {published_at}\n\n"
+        "Article text:\n{content_text}"
+    ),
+    version="1",
+)
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -184,4 +207,5 @@ PROMPT_REGISTRY: dict[str, PromptTemplate] = {
     "technical_review": TECHNICAL_REVIEW_PROMPT,
     "marketing_metadata": MARKETING_META_PROMPT,
     "claim_extraction": CLAIM_EXTRACTION_PROMPT,
+    "ai_news_scoring": AI_NEWS_SCORING_PROMPT,
 }

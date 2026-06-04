@@ -19,7 +19,7 @@ from backend.app.news_extraction import (
     FakeArticleExtractor,
     run_extract_raw_item,
 )
-from backend.app.news_publish import slugify_title
+from backend.app.news_publish import classify_public_topic, slugify_title
 from backend.app.news_scoring import InMemoryNewsReviewRepository, run_score_extracted_article
 from backend.app.news_sources import NewsSourceRepository
 from backend.app.settings import Settings
@@ -95,6 +95,27 @@ def test_slugify_title() -> None:
     assert slugify_title("OpenAI Ships New GPT Agent!") == "openai-ships-new-gpt-agent"
 
 
+def test_classify_public_topic() -> None:
+    assert (
+        classify_public_topic(
+            title="New GPT model benchmark",
+            summary="A frontier model improves eval scores",
+            why_it_matters="Teams can compare model quality",
+            source_name="OpenAI",
+        )
+        == "models"
+    )
+    assert (
+        classify_public_topic(
+            title="Quarterly note",
+            summary="Company update",
+            why_it_matters="Useful context",
+            source_name="Official source",
+        )
+        == "general"
+    )
+
+
 def test_publish_and_public_feed() -> None:
     sources, raw, extracted, review, review_id = _seed_approved_review()
     client = TestClient(
@@ -117,12 +138,23 @@ def test_publish_and_public_feed() -> None:
 
     listed = client.get("/public/ai-news")
     assert listed.status_code == 200
-    assert any(item["slug"] == slug for item in listed.json())
+    listed_body = listed.json()
+    assert any(item["slug"] == slug for item in listed_body)
+    assert listed_body[0]["topic"] == "general"
+
+    filtered = client.get("/public/ai-news?topic=general")
+    assert filtered.status_code == 200
+    assert any(item["slug"] == slug for item in filtered.json())
+
+    filtered_empty = client.get("/public/ai-news?topic=models")
+    assert filtered_empty.status_code == 200
+    assert filtered_empty.json() == []
 
     detail = client.get(f"/public/ai-news/{slug}")
     assert detail.status_code == 200
     body = detail.json()
     assert body["title"]
+    assert body["topic"] == "general"
     assert "Stub article body" in body["content_markdown"]
 
     unpublished = client.post(

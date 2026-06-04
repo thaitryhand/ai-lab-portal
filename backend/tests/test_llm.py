@@ -19,6 +19,7 @@ from backend.app.llm.schemas import (
     TechnicalReview,
     TechnicalReviewIssue,
     MarketingMetadata,
+    NewsScoring,
 )
 from backend.app.llm.service import (
     FakeLLMService,
@@ -42,6 +43,7 @@ class TestPromptRegistry:
             "technical_review",
             "marketing_metadata",
             "claim_extraction",
+            "ai_news_scoring",
         }
         assert expected.issubset(PROMPT_REGISTRY.keys())
 
@@ -179,6 +181,38 @@ class TestTechnicalReviewSchema:
                     ),
                 ],
                 approval_recommendation="approve",
+            )
+
+
+class TestNewsScoringSchema:
+    def test_valid_news_scoring(self) -> None:
+        scoring = NewsScoring(
+            source_credibility_score=0.8,
+            engagement_score=0.5,
+            relevance_score=0.9,
+            novelty_score=0.7,
+            technical_depth_score=0.6,
+            business_value_score=0.6,
+            spam_risk_score=0.1,
+            final_publish_score=0.78,
+            summary="OpenAI released a model update.",
+            why_it_matters="Practitioners should evaluate the API impact.",
+        )
+        assert scoring.final_publish_score == 0.78
+
+    def test_invalid_news_scoring_score_is_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            NewsScoring(
+                source_credibility_score=1.2,
+                engagement_score=0.5,
+                relevance_score=0.9,
+                novelty_score=0.7,
+                technical_depth_score=0.6,
+                business_value_score=0.6,
+                spam_risk_score=0.1,
+                final_publish_score=0.78,
+                summary="Summary",
+                why_it_matters="Why",
             )
 
 

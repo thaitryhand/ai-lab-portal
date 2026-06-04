@@ -126,13 +126,15 @@ Delivered:
 - Heuristic multi-dimension scoring and admin review queue API (US-040).
 - Publish approved items to public `/ai-news` feed (US-041).
 
-Deferred (post-MVP 3):
+Post-MVP 3 shipped:
 
-- Public topic filtering on `/ai-news`.
-- LLM-based scoring prompts and AI summary generation.
+- Public topic filtering on `/ai-news` (US-047).
+- Dedicated admin review-queue UI for approve/reject/publish/unpublish actions (US-048).
+- LLM-based scoring prompts and AI summary generation with heuristic fallback (US-049).
+
+Deferred:
+
 - GitHub/website crawl types beyond registry stubs.
-- Dedicated admin review-queue UI (API endpoints only).
-- `/ai-news/submit` (MVP 4).
 
 ---
 

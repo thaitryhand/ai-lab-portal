@@ -7,6 +7,7 @@ import {
   PencilLine,
   Shield,
   Sparkles,
+  Newspaper,
   Rss,
 } from "lucide-react";
 
@@ -51,6 +52,13 @@ const liveModules: AdminModuleCardProps[] = [
     description: "Publish client-ready delivery stories with industry metadata.",
     href: "/admin/showcases",
     icon: Briefcase,
+    status: "live",
+  },
+  {
+    title: "AI News review",
+    description: "Approve, reject, and publish scored intelligence candidates.",
+    href: "/admin/news-review",
+    icon: Newspaper,
     status: "live",
   },
   {

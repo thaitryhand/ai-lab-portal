@@ -18,6 +18,7 @@ class PublicAiNewsSummary(BaseModel):
     summary: str
     why_it_matters: str
     source_name: str
+    topic: str
     published_at: datetime
 
 
@@ -55,6 +56,24 @@ def ensure_unique_slug(review: NewsReviewRepository, base_slug: str) -> str:
     return slug
 
 
+TOPIC_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "models": ("model", "gpt", "claude", "gemini", "llama", "frontier"),
+    "agents": ("agent", "workflow", "automation", "tool use", "computer use"),
+    "research": ("research", "paper", "benchmark", "eval", "dataset"),
+    "policy": ("policy", "regulation", "safety", "governance", "law"),
+    "infrastructure": ("chip", "gpu", "datacenter", "cloud", "infrastructure"),
+    "product": ("launch", "release", "feature", "api", "app"),
+}
+
+
+def classify_public_topic(*, title: str, summary: str, why_it_matters: str, source_name: str) -> str:
+    text = f"{title} {summary} {why_it_matters} {source_name}".lower()
+    for topic, keywords in TOPIC_KEYWORDS.items():
+        if any(keyword in text for keyword in keywords):
+            return topic
+    return "general"
+
+
 def build_public_detail(
     *,
     review_item: NewsReviewItem,
@@ -78,6 +97,12 @@ def build_public_detail(
         summary=review_item.summary,
         why_it_matters=review_item.why_it_matters,
         source_name=source_name,
+        topic=classify_public_topic(
+            title=review_item.title,
+            summary=review_item.summary,
+            why_it_matters=review_item.why_it_matters,
+            source_name=source_name,
+        ),
         published_at=review_item.published_at,
         content_markdown=article.content_markdown,
         source_url=article_url,
@@ -92,11 +117,14 @@ def list_public_ai_news(
     extracted: ExtractedArticleRepository,
     sources: NewsSourceRepository,
     limit: int = 100,
+    topic: str | None = None,
 ) -> list[PublicAiNewsSummary]:
     items: list[PublicAiNewsSummary] = []
     for row in review.list_published(limit=limit):
         detail = build_public_detail(review_item=row, extracted=extracted, sources=sources)
         if detail is None:
+            continue
+        if topic and detail.topic != topic:
             continue
         items.append(
             PublicAiNewsSummary(
@@ -105,6 +133,7 @@ def list_public_ai_news(
                 summary=detail.summary,
                 why_it_matters=detail.why_it_matters,
                 source_name=detail.source_name,
+                topic=detail.topic,
                 published_at=detail.published_at,
             )
         )

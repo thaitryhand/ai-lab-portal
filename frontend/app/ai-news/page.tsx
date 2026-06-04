@@ -16,8 +16,25 @@ export const metadata = createPublicMetadata({
 
 export const dynamic = "force-dynamic";
 
-export default async function AiNewsIndexPage() {
-  const items = await listPublishedAiNews();
+const topicFilters = [
+  { label: "All", value: undefined },
+  { label: "Models", value: "models" },
+  { label: "Agents", value: "agents" },
+  { label: "Research", value: "research" },
+  { label: "Policy", value: "policy" },
+  { label: "Infrastructure", value: "infrastructure" },
+  { label: "Product", value: "product" },
+  { label: "General", value: "general" },
+];
+
+export default async function AiNewsIndexPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ topic?: string }>;
+}) {
+  const query = await searchParams;
+  const selectedTopic = topicFilters.some((filter) => filter.value === query.topic) ? query.topic : undefined;
+  const items = await listPublishedAiNews(selectedTopic);
 
   return (
     <PublicPageShell currentPath="/ai-news">
@@ -28,17 +45,44 @@ export default async function AiNewsIndexPage() {
           title="Human-reviewed AI intelligence."
         />
 
-        <p className="-mt-8 text-sm text-muted-foreground">
-          Have a link worth reviewing?{" "}
-          <Link className="underline underline-offset-4" href="/ai-news/submit">
-            Submit AI news
-          </Link>
-          .
-        </p>
+        <div className="-mt-8 flex flex-col gap-6">
+          <p className="text-sm text-muted-foreground">
+            Have a link worth reviewing?{" "}
+            <Link className="underline underline-offset-4" href="/ai-news/submit">
+              Submit AI news
+            </Link>
+            .
+          </p>
+
+          <nav aria-label="AI news topics" className="flex flex-wrap gap-2">
+            {topicFilters.map((filter) => {
+              const isSelected = selectedTopic === filter.value;
+              return (
+                <Link
+                  key={filter.label}
+                  aria-current={isSelected ? "page" : undefined}
+                  className={cn(
+                    "rounded-full border px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition-colors",
+                    isSelected
+                      ? "border-brand/40 bg-brand/10 text-brand"
+                      : "border-border/80 text-muted-foreground hover:border-brand/30 hover:text-foreground",
+                  )}
+                  href={filter.value ? `/ai-news?topic=${filter.value}` : "/ai-news"}
+                >
+                  {filter.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
         <PublicIndexList
-          emptyDescription="Published AI news will appear here after an editor approves and publishes a candidate."
-          emptyTitle="No published AI news yet"
+          emptyDescription={
+            selectedTopic
+              ? "No published AI news matches this topic yet. Try another topic or clear the filter."
+              : "Published AI news will appear here after an editor approves and publishes a candidate."
+          }
+          emptyTitle={selectedTopic ? "No AI news for this topic" : "No published AI news yet"}
           isEmpty={items.length === 0}
         >
           {items.map((item) => (
@@ -48,7 +92,7 @@ export default async function AiNewsIndexPage() {
               href={`/ai-news/${item.slug}`}
               meta={
                 <>
-                  {item.sourceName} · {new Date(item.publishedAt).toLocaleDateString("en-US")}
+                  {item.sourceName} · {item.topic} · {new Date(item.publishedAt).toLocaleDateString("en-US")}
                 </>
               }
               title={item.title}

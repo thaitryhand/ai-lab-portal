@@ -4,6 +4,7 @@ export type AiNewsSummary = {
   summary: string;
   whyItMatters: string;
   sourceName: string;
+  topic: string;
   publishedAt: string;
 };
 
@@ -20,6 +21,7 @@ type ApiAiNewsSummary = {
   summary: string;
   why_it_matters: string;
   source_name: string;
+  topic: string;
   published_at: string;
 };
 
@@ -39,6 +41,7 @@ function toSummary(item: ApiAiNewsSummary): AiNewsSummary {
     summary: item.summary,
     whyItMatters: item.why_it_matters,
     sourceName: item.source_name,
+    topic: item.topic,
     publishedAt: item.published_at,
   };
 }
@@ -53,8 +56,13 @@ function toDetail(item: ApiAiNewsDetail): AiNewsDetail {
   };
 }
 
-export async function listPublishedAiNews(): Promise<AiNewsSummary[]> {
-  const response = await fetch(`${backendBaseUrl}/public/ai-news`, { cache: "no-store" });
+export async function listPublishedAiNews(topic?: string): Promise<AiNewsSummary[]> {
+  const url = new URL("/public/ai-news", backendBaseUrl);
+  if (topic) {
+    url.searchParams.set("topic", topic);
+  }
+
+  const response = await fetch(url, { cache: "no-store" });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published AI news: ${response.status}`);

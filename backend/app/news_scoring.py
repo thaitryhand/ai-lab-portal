@@ -21,6 +21,9 @@ from backend.app.admin_boundary import (
     require_admin_identity_with_settings,
 )
 from backend.app.database import news_review_items as review_table
+from backend.app.llm.prompts import PROMPT_REGISTRY
+from backend.app.llm.schemas import NewsScoring
+from backend.app.llm.service import LLMGenerationError, LLMService
 from backend.app.news_crawl import NewsRawItemRepository
 from backend.app.news_extraction import ExtractedArticle, ExtractedArticleRepository
 from backend.app.news_sources import NewsSource, NewsSourceRepository
@@ -28,6 +31,8 @@ from backend.app.settings import Settings
 
 ReviewStatus = Literal["candidate", "approved", "rejected", "low_score", "skipped", "published"]
 SCORER_VERSION = "heuristic_v1"
+LLM_SCORER_PROMPT = "ai_news_scoring"
+LLM_SCORER_VERSION = f"llm_news_scoring_v{PROMPT_REGISTRY[LLM_SCORER_PROMPT].version}"
 DEFAULT_REVIEW_THRESHOLD = 0.55
 
 _AI_KEYWORDS = (
@@ -204,6 +209,42 @@ def _build_why_it_matters(scores: ScoreDimensions) -> str:
     return "Moderate signal; human review recommended before publishing."
 
 
+def _score_with_llm(
+    *,
+    article: ExtractedArticle,
+    source: NewsSource,
+    llm: LLMService,
+) -> tuple[ScoreDimensions, str, str, str]:
+    result = llm.generate(
+        LLM_SCORER_PROMPT,
+        inputs={
+            "source_name": source.name,
+            "source_credibility_score": source.credibility_base_score,
+            "title": article.title,
+            "published_at": article.published_at.isoformat() if article.published_at else "unknown",
+            "content_text": article.content_text[:8000],
+        },
+        output_schema=NewsScoring,
+    )
+    assert isinstance(result, NewsScoring)
+    scores = ScoreDimensions(
+        source_credibility_score=result.source_credibility_score,
+        engagement_score=result.engagement_score,
+        relevance_score=result.relevance_score,
+        novelty_score=result.novelty_score,
+        technical_depth_score=result.technical_depth_score,
+        business_value_score=result.business_value_score,
+        spam_risk_score=result.spam_risk_score,
+        final_publish_score=result.final_publish_score,
+    )
+    return scores, result.summary, result.why_it_matters, LLM_SCORER_VERSION
+
+
+def _score_with_heuristics(article: ExtractedArticle, source: NewsSource) -> tuple[ScoreDimensions, str, str, str]:
+    scores = compute_heuristic_scores(article=article, source=source)
+    return scores, _build_summary(article, scores), _build_why_it_matters(scores), SCORER_VERSION
+
+
 class NewsReviewRepository(ABC):
     @abstractmethod
     def get_by_id(self, review_id: str) -> NewsReviewItem | None:
@@ -229,6 +270,7 @@ class NewsReviewRepository(ABC):
         review_status: ReviewStatus,
         summary: str,
         why_it_matters: str,
+        scorer_version: str = SCORER_VERSION,
     ) -> NewsReviewItem:
         ...
 
@@ -290,6 +332,7 @@ class InMemoryNewsReviewRepository(NewsReviewRepository):
         review_status: ReviewStatus,
         summary: str,
         why_it_matters: str,
+        scorer_version: str = SCORER_VERSION,
     ) -> NewsReviewItem:
         now = datetime.now(UTC)
         existing = self.get_by_extracted_article_id(article.id)
@@ -308,7 +351,7 @@ class InMemoryNewsReviewRepository(NewsReviewRepository):
             "final_publish_score": scores.final_publish_score,
             "summary": summary,
             "why_it_matters": why_it_matters,
-            "scorer_version": SCORER_VERSION,
+            "scorer_version": scorer_version,
             "review_status": review_status,
             "review_notes": None,
             "scored_at": now,
@@ -443,6 +486,7 @@ class PostgresNewsReviewRepository(NewsReviewRepository):
         review_status: ReviewStatus,
         summary: str,
         why_it_matters: str,
+        scorer_version: str = SCORER_VERSION,
     ) -> NewsReviewItem:
         now = datetime.now(UTC)
         existing = self.get_by_extracted_article_id(article.id)
@@ -462,7 +506,7 @@ class PostgresNewsReviewRepository(NewsReviewRepository):
             "final_publish_score": scores.final_publish_score,
             "summary": summary,
             "why_it_matters": why_it_matters,
-            "scorer_version": SCORER_VERSION,
+            "scorer_version": scorer_version,
             "review_status": review_status,
             "review_notes": None,
             "scored_at": now,
@@ -575,6 +619,7 @@ def run_score_extracted_article(
     sources: NewsSourceRepository,
     review: NewsReviewRepository,
     threshold: float = DEFAULT_REVIEW_THRESHOLD,
+    llm: LLMService | None = None,
 ) -> ScoringResult:
     article = extracted.get_by_id(extracted_article_id)
     if article is None:
@@ -604,9 +649,18 @@ def run_score_extracted_article(
     if source is None:
         raise ValueError(f"News source not found: {raw_item.source_id}")
 
-    scores = compute_heuristic_scores(article=article, source=source)
-    summary = _build_summary(article, scores)
-    why = _build_why_it_matters(scores)
+    if llm is not None:
+        try:
+            scores, summary, why, scorer_version = _score_with_llm(
+                article=article,
+                source=source,
+                llm=llm,
+            )
+        except (LLMGenerationError, KeyError, ValueError):
+            scores, summary, why, scorer_version = _score_with_heuristics(article, source)
+    else:
+        scores, summary, why, scorer_version = _score_with_heuristics(article, source)
+
     review_status: ReviewStatus = (
         "candidate" if scores.final_publish_score >= threshold else "low_score"
     )
@@ -618,6 +672,7 @@ def run_score_extracted_article(
         review_status=review_status,
         summary=summary,
         why_it_matters=why,
+        scorer_version=scorer_version,
     )
     return ScoringResult(
         extracted_article_id=extracted_article_id,

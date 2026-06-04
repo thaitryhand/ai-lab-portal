@@ -88,6 +88,11 @@ The AI News MVP is complete when:
 article extraction, exact dedup, heuristic scoring + review queue APIs,
 publish/unpublish, and public `/ai-news` list/detail pages.
 
-**Deferred:** topic filters on the public feed, LLM scoring prompts, semantic
-/event dedup, GitHub/website crawlers, dedicated admin review UI, and user link
-submission (`/ai-news/submit`, MVP 4).
+**Shipped (2026-06-04, US-047–US-048):** public topic filtering on `/ai-news`
+using stable derived feed topics, plus a dedicated admin review queue UI for
+approve/reject/publish/unpublish actions.
+
+**Shipped (2026-06-04, US-049):** structured LLM scoring for AI News review
+items with heuristic fallback when provider configuration or generation fails.
+
+**Deferred:** semantic/event dedup and GitHub/website crawlers.
