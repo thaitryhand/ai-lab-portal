@@ -392,3 +392,20 @@ projects = Table(
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Index("ix_projects_status_published_at", "status", "published_at"),
 )
+
+notifications = Table(
+    "notifications",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("user_id", String(255), nullable=False),
+    Column("type", String(32), nullable=False),
+    Column("actor_user_id", String(255), nullable=False),
+    Column("actor_email", String(320), nullable=True),
+    Column("actor_display_name", String(160), nullable=True),
+    Column("resource_id", String(64), nullable=False, server_default=""),
+    Column("resource_type", String(32), nullable=False, server_default=""),
+    Column("read", Boolean, nullable=False, server_default=text("FALSE")),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Index("ix_notifications_user_read", "user_id", "read"),
+    Index("ix_notifications_user_created", "user_id", "created_at"),
+)

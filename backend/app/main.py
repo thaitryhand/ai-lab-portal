@@ -21,6 +21,11 @@ from backend.app.contact import (
     InMemoryContactMessageRepository,
     PostgresContactMessageRepository,
 )
+from backend.app.notifications import (
+    InMemoryNotificationRepository,
+    PostgresNotificationRepository,
+    create_notification_routes,
+)
 from backend.app.blog import (
     AdminBlogPostDetail,
     AdminBlogPostSummary,
@@ -156,6 +161,7 @@ def create_app(
     user_follow_repository: UserFollowRepository | None = None,
     contact_repository: ContactMessageRepository | None = None,
     project_repository: InMemoryProjectRepository | None = None,
+    notification_repository: InMemoryNotificationRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -176,6 +182,7 @@ def create_app(
         follow_repo = user_follow_repository or InMemoryUserFollowRepository()
         contact_repo: ContactMessageRepository = contact_repository or InMemoryContactMessageRepository()
         projects_repo = project_repository or InMemoryProjectRepository()
+        notif_repo = notification_repository or InMemoryNotificationRepository()
     else:
         engine = create_database_engine(resolved_settings)
         repository = blog_repository or PostgresBlogRepository(engine)
@@ -203,6 +210,7 @@ def create_app(
         follow_repo = user_follow_repository or PostgresUserFollowRepository(engine)
         contact_repo: ContactMessageRepository = contact_repository or PostgresContactMessageRepository(engine)
         projects_repo = project_repository or PostgresProjectRepository(engine)
+        notif_repo = notification_repository or PostgresNotificationRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
     app.state.settings = resolved_settings
@@ -518,7 +526,19 @@ def create_app(
     # User profiles
     app.include_router(create_user_profile_routes(profile_repo, resolved_settings))
     app.include_router(create_user_profile_admin_routes(profile_repo, resolved_settings))
-    app.include_router(create_user_follow_routes(follow_repo, resolved_settings))
+    # Notification hook for follow events
+    def notify_on_follow(followed_user_id: str, actor_user_id: str, actor_email: str | None) -> None:
+        notif_repo.create(
+            user_id=followed_user_id,
+            type="follow",
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+            resource_id=actor_user_id,
+            resource_type="user",
+        )
+
+    app.include_router(create_user_follow_routes(follow_repo, resolved_settings, on_follow=notify_on_follow))
+    app.include_router(create_notification_routes(notif_repo, resolved_settings))
 
     # Blog social features (reactions, bookmarks, comments)
     app.include_router(

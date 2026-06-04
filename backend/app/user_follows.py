@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -129,7 +130,11 @@ class PostgresUserFollowRepository(UserFollowRepository):
         )
 
 
-def create_user_follow_routes(repo: UserFollowRepository, settings: Settings) -> APIRouter:
+def create_user_follow_routes(
+    repo: UserFollowRepository,
+    settings: Settings,
+    on_follow: Callable[[str, str, str | None], None] | None = None,
+) -> APIRouter:
     def require_user(
         identity_payload: Annotated[str | None, Header(alias=USER_IDENTITY_HEADER)] = None,
         signature: Annotated[str | None, Header(alias=USER_SIGNATURE_HEADER)] = None,
@@ -148,6 +153,8 @@ def create_user_follow_routes(repo: UserFollowRepository, settings: Settings) ->
             repo.follow(identity.user_id, user_id)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if on_follow is not None:
+            on_follow(user_id, identity.user_id, identity.email)
         return repo.state_for(user_id, viewer_user_id=identity.user_id)
 
     @router.delete("/{user_id}/follow")
