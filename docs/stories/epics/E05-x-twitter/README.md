@@ -100,8 +100,8 @@ These are candidates, not approved implementation stories:
 1. **US-052 Provider strategy acceptance / sample-run approval**
    - Accept or revise `docs/decisions/0008-x-twitter-provider-strategy.md`, name budget/terms owner, and approve or reject a tiny Apify sample run.
 
-2. **US-053 X/Twitter source contract and fake fixtures**
-   - Define source config shape, normalized raw item contract, Apify-like fake provider fixtures, and no-real-provider tests.
+2. **US-053 X/Twitter source contract and fake fixtures** — implemented
+   - Defined normalized social post contract, Apify Xquik-like fake provider fixtures, and no-real-provider tests in `backend/app/social_x.py` / `backend/tests/test_social_x.py`.
 
 3. **US-054 AI social link filter contract**
    - Define structured output for `should_ingest`, `reason`, `topic`, `priority`, `risk_flags`, `urls_to_extract`, and `requires_human_review`.
