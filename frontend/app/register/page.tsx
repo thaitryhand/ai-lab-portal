@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PublicPageShell } from "@/components/public/public-page-shell";
 
 export default function PublicRegisterPage() {
   const router = useRouter();
@@ -60,19 +60,27 @@ export default function PublicRegisterPage() {
   }
 
   return (
-    <PublicPageShell>
-      <div className="mx-auto flex min-h-[70dvh] max-w-md flex-col justify-center px-4 py-12">
-        <div className="space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto flex min-h-[80dvh] max-w-sm flex-col justify-center px-4 py-12">
+        <div className="space-y-8">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand/30 bg-accent text-brand">
+              <PenLine className="size-4" aria-hidden />
+            </span>
+            <span className="text-sm font-semibold text-foreground">AI Lab Portal</span>
+          </Link>
+
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Create an account</h1>
             <p className="text-sm text-muted-foreground">
               Register to react to posts, leave comments, and save your favorites.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
+              <label htmlFor="name" className="text-sm font-medium text-foreground">
                 Name
               </label>
               <Input
@@ -84,12 +92,13 @@ export default function PublicRegisterPage() {
                 placeholder="Your name"
                 required
                 type="text"
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
+                Email address
               </label>
               <Input
                 autoComplete="email"
@@ -99,11 +108,12 @@ export default function PublicRegisterPage() {
                 placeholder="you@example.com"
                 required
                 type="email"
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
                 Password
               </label>
               <Input
@@ -114,12 +124,13 @@ export default function PublicRegisterPage() {
                 name="password"
                 required
                 type="password"
+                className="h-11"
               />
               <p className="text-xs text-muted-foreground">At least 8 characters</p>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                 Confirm password
               </label>
               <Input
@@ -130,28 +141,29 @@ export default function PublicRegisterPage() {
                 name="confirmPassword"
                 required
                 type="password"
+                className="h-11"
               />
             </div>
 
             {error && (
-              <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm" role="alert">
+              <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
                 {error}
               </p>
             )}
 
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+            <Button className="h-11 w-full text-sm" disabled={isSubmitting} type="submit">
               {isSubmitting ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-brand underline underline-offset-2 hover:text-brand/80">
+            <Link href="/login" className="font-semibold text-brand underline underline-offset-2 hover:text-brand/80">
               Sign in
             </Link>
           </p>
         </div>
       </div>
-    </PublicPageShell>
+    </div>
   );
 }
