@@ -376,3 +376,19 @@ contact_messages = Table(
     Column("read_at", DateTime(timezone=True), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
+
+projects = Table(
+    "projects",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("slug", String(160), nullable=False, unique=True),
+    Column("title", String(240), nullable=False),
+    Column("description", Text, nullable=False),
+    Column("content_markdown", Text, nullable=False),
+    Column("image_url", String(2048), nullable=True),
+    Column("status", String(32), nullable=False),
+    Column("published_at", DateTime(timezone=True), nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Index("ix_projects_status_published_at", "status", "published_at"),
+)

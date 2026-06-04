@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/lab", label: "AI Lab" },
   { href: "/showcases", label: "Showcases" },
+  { href: "/projects", label: "Projects" },
   { href: "/blog", label: "Blog" },
   { href: "/ai-news", label: "AI News" },
   { href: "/contact", label: "Contact" },

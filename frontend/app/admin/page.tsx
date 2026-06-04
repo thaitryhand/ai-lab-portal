@@ -48,6 +48,13 @@ const liveModules: AdminModuleCardProps[] = [
     status: "live",
   },
   {
+    title: "Projects",
+    description: "Showcase company projects and internal tools with full CRUD workflow.",
+    href: "/admin/projects",
+    icon: Briefcase,
+    status: "live",
+  },
+  {
     title: "Showcases",
     description: "Publish client-ready delivery stories with industry metadata.",
     href: "/admin/showcases",

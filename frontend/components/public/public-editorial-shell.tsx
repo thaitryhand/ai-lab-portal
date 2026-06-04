@@ -32,7 +32,16 @@ function PublicEditorialFooter() {
           <Link className="transition-colors hover:text-brand" href="/showcases">
             Showcases
           </Link>
+          <Link className="transition-colors hover:text-brand" href="/projects">
+            Projects
+          </Link>
           <Link className="transition-colors hover:text-brand" href="/blog">
+            Blog
+          </Link>
+          <Link className="transition-colors hover:text-brand" href="/ai-news">
+            AI News
+          </Link>
+          <Link className="transition-colors hover:text-brand" href="/contact">
             Blog
           </Link>
           <Link className="transition-colors hover:text-brand" href="/contact">

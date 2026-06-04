@@ -115,6 +115,17 @@ from backend.app.showcase import (
     ShowcaseSummary,
     ShowcaseUpdate,
 )
+from backend.app.projects import (
+    AdminProjectDetail,
+    AdminProjectSummary,
+    InMemoryProjectRepository,
+    PostgresProjectRepository,
+    Project,
+    ProjectCreate,
+    ProjectDetail,
+    ProjectSummary,
+    ProjectUpdate,
+)
 
 
 def health(request: Request) -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
@@ -144,6 +155,7 @@ def create_app(
     user_profile_repository: UserProfileRepository | None = None,
     user_follow_repository: UserFollowRepository | None = None,
     contact_repository: ContactMessageRepository | None = None,
+    project_repository: InMemoryProjectRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -163,6 +175,7 @@ def create_app(
         profile_repo = user_profile_repository or InMemoryUserProfileRepository()
         follow_repo = user_follow_repository or InMemoryUserFollowRepository()
         contact_repo: ContactMessageRepository = contact_repository or InMemoryContactMessageRepository()
+        projects_repo = project_repository or InMemoryProjectRepository()
     else:
         engine = create_database_engine(resolved_settings)
         repository = blog_repository or PostgresBlogRepository(engine)
@@ -189,6 +202,7 @@ def create_app(
         profile_repo = user_profile_repository or PostgresUserProfileRepository(engine)
         follow_repo = user_follow_repository or PostgresUserFollowRepository(engine)
         contact_repo: ContactMessageRepository = contact_repository or PostgresContactMessageRepository(engine)
+        projects_repo = project_repository or PostgresProjectRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
     app.state.settings = resolved_settings
@@ -562,6 +576,90 @@ def create_app(
             raise HTTPException(status_code=404, detail="Contact message not found")
         return msg
 
+    # Project routes (admin)
+    def record_project_audit(identity: AdminIdentity, action: str, project_id: str) -> None:
+        projects_repo.record_audit(
+            actor_user_id=identity.user_id,
+            actor_email=identity.email,
+            action=action,
+            entity_id=project_id,
+        )
+
+    @app.get("/admin/projects")
+    async def admin_projects(
+        _identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> list[AdminProjectSummary]:
+        return projects_repo.list_all()
+
+    @app.get("/admin/projects/{project_id}")
+    async def admin_project(
+        project_id: str,
+        _identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> AdminProjectDetail:
+        item = projects_repo.get_by_id(project_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return item
+
+    @app.post("/admin/projects")
+    async def create_project(
+        request: ProjectCreate,
+        identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> Project:
+        if projects_repo.slug_exists(request.slug):
+            raise HTTPException(status_code=409, detail="Project slug already exists")
+        item = projects_repo.create(request)
+        record_project_audit(identity, "project.created", item.id)
+        return item
+
+    @app.patch("/admin/projects/{project_id}")
+    async def update_project(
+        project_id: str,
+        request: ProjectUpdate,
+        identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> Project:
+        if request.slug and projects_repo.slug_exists(request.slug, exclude_id=project_id):
+            raise HTTPException(status_code=409, detail="Project slug already exists")
+        item = projects_repo.update(project_id, request)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        record_project_audit(identity, "project.updated", item.id)
+        return item
+
+    @app.post("/admin/projects/{project_id}/publish")
+    async def publish_project(
+        project_id: str,
+        identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> Project:
+        item = projects_repo.publish(project_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        record_project_audit(identity, "project.published", item.id)
+        return item
+
+    @app.post("/admin/projects/{project_id}/unpublish")
+    async def unpublish_project(
+        project_id: str,
+        identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> Project:
+        item = projects_repo.unpublish(project_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        record_project_audit(identity, "project.unpublished", item.id)
+        return item
+
+    # Project routes (public)
+    @app.get("/public/projects")
+    async def public_projects() -> list[ProjectSummary]:
+        return projects_repo.list_published()
+
+    @app.get("/public/projects/{slug}")
+    async def public_project(slug: str) -> ProjectDetail:
+        item = projects_repo.get_published_by_slug(slug)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Published project not found")
+        return item
+
     # Dashboard stats
     @app.get("/admin/dashboard/stats")
     async def admin_dashboard_stats(
@@ -581,6 +679,10 @@ def create_app(
 
         news_list = review_repo.list_published() if hasattr(review_repo, "list_published") else []
 
+        projects_list = projects_repo.list_all() if hasattr(projects_repo, "list_all") else []
+        projects_published = sum(1 for p in projects_list if p.status == "published")
+        projects_drafts = len(projects_list) - projects_published
+
         audit_list = repository.list_audit_events() if hasattr(repository, "list_audit_events") else []
         recent_activity = [
             {"action": e.action, "actor_email": e.actor_email, "created_at": e.created_at.isoformat()}
@@ -597,9 +699,9 @@ def create_app(
             "showcases_drafts": showcases_drafts,
             "showcases_published": showcases_published,
             "showcases_total": len(showcases_list),
-            "projects_drafts": 0,
-            "projects_published": 0,
-            "projects_total": 0,
+            "projects_drafts": projects_drafts,
+            "projects_published": projects_published,
+            "projects_total": len(projects_list),
             "news_published": len(news_list),
             "recent_activity": recent_activity,
         }
