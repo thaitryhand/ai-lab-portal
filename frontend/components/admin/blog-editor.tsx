@@ -24,6 +24,7 @@ type BlogEditorProps = {
   initialExcerpt?: string;
   initialImageUrl?: string;
   initialPostId?: string;
+  initialTagNames?: string[];
   initialSlug?: string;
   initialTitle?: string;
   saveDraftAction: (previous: EditorActionState, formData: FormData) => Promise<EditorActionState>;
@@ -88,6 +89,7 @@ export function BlogEditor({
   initialExcerpt = "A practical draft about pairing AI assistance with human approval, evidence, and measurable workflow design.",
   initialImageUrl = "",
   initialPostId = "",
+  initialTagNames = [],
   initialSlug,
   initialTitle = "Building useful AI agents without losing review control",
   saveDraftAction,
@@ -212,6 +214,16 @@ export function BlogEditor({
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://example.com/hero-image.jpg"
             />
+          </AdminFormField>
+
+          <AdminFormField className="md:col-span-2" htmlFor="blog-tags" label="Tags">
+            <AdminInput
+              id="blog-tags"
+              name="tagNames"
+              defaultValue={initialTagNames.join(", ")}
+              placeholder="Agents, LLM Ops, AI Tools"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Separate tags with commas. New tags are created automatically.</p>
           </AdminFormField>
         </AdminCardBody>
 

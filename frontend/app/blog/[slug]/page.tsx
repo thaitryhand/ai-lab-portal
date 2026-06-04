@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 
 import { BlogComments } from "@/components/blog/blog-comments";
 import { BlogSocialBar } from "@/components/blog/blog-social-bar";
+import { BlogTagChips } from "@/components/blog/blog-tag-chips";
 import { PublicArticleHeader } from "@/components/public/public-article-header";
 import { PublicBackLink } from "@/components/public/public-back-link";
 import { PublicPageShell } from "@/components/public/public-page-shell";
@@ -15,6 +16,7 @@ import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { getPublishedBlogPost } from "@/lib/blog/posts";
 import { getSocialStats, listComments } from "@/lib/blog/social";
+import { listPublicPostTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
@@ -55,12 +57,11 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     notFound();
   }
 
-  const [socialStats, comments] = session
-    ? await Promise.all([
-        getSocialStats(slug, session).catch(() => null),
-        listComments(slug, session).catch(() => []),
-      ])
-    : [null, []];
+  const [socialStats, comments, tags] = await Promise.all([
+    session ? getSocialStats(slug, session).catch(() => null) : Promise.resolve(null),
+    session ? listComments(slug, session).catch(() => []) : Promise.resolve([]),
+    listPublicPostTags(slug).catch(() => []),
+  ]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -109,16 +110,19 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           </div>
         )}
 
-        <PublicArticleHeader
-          dateLabel={new Date(post.publishedAt).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-          eyebrow={post.authorName}
-          excerpt={post.excerpt}
-          title={post.title}
-        />
+        <div className="space-y-5">
+          <PublicArticleHeader
+            dateLabel={new Date(post.publishedAt).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            eyebrow={post.authorName}
+            excerpt={post.excerpt}
+            title={post.title}
+          />
+          <BlogTagChips tags={tags} />
+        </div>
 
         <PublicProse contentMarkdown={post.contentMarkdown} />
 

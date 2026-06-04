@@ -8,6 +8,7 @@ import { publicMainWidthClass } from "@/components/public/public-ui";
 import { publishAction, saveDraftAction } from "@/app/admin/blog/editor/actions";
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
+import { listAdminPostTags } from "@/lib/blog/tags";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export default async function BlogEditPage({
     redirect("/admin/login?redirect=/blog/edit/" + id);
   }
 
-  const post = await getAdminBlogPost(id);
+  const [post, tags] = await Promise.all([getAdminBlogPost(id), listAdminPostTags(session, id).catch(() => [])]);
   if (!post) notFound();
 
   return (
@@ -75,6 +76,7 @@ export default async function BlogEditPage({
           initialExcerpt={post.excerpt}
           initialImageUrl={post.image_url ?? undefined}
           initialPostId={post.id}
+          initialTagNames={tags.map((tag) => tag.name)}
           initialSlug={post.slug}
           initialTitle={post.title}
           publishAction={publishAction}

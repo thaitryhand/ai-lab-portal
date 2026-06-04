@@ -47,8 +47,10 @@ function toDetail(post: ApiBlogPostDetail): BlogPostDetail {
   };
 }
 
-export async function listPublishedBlogPosts(): Promise<BlogPostSummary[]> {
-  const response = await fetch(`${backendBaseUrl}/public/blog-posts`, { cache: "no-store" });
+export async function listPublishedBlogPosts(options?: { tag?: string }): Promise<BlogPostSummary[]> {
+  const url = new URL(`${backendBaseUrl}/public/blog-posts`);
+  if (options?.tag) url.searchParams.set("tag", options.tag);
+  const response = await fetch(url.toString(), { cache: "no-store" });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published blog posts: ${response.status}`);

@@ -8,6 +8,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { BlogEditor } from "@/components/admin/blog-editor";
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
+import { listAdminPostTags } from "@/lib/blog/tags";
 import { publishAction, saveDraftAction } from "../../editor/actions";
 
 const backendBaseUrl =
@@ -25,9 +26,14 @@ type AdminBlogPostDetail = {
   image_url?: string | null;
 };
 
-async function getAdminBlogPost(id: string) {
+async function getAdminSession() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/admin/login");
+  return session;
+}
+
+async function getAdminBlogPost(id: string) {
+  const session = await getAdminSession();
 
   const response = await fetch(`${backendBaseUrl}/admin/blog-posts/${id}`, {
     headers: createAdminBoundaryHeaders({
@@ -48,7 +54,8 @@ export default async function AdminBlogEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const post = await getAdminBlogPost(id);
+  const session = await getAdminSession();
+  const [post, tags] = await Promise.all([getAdminBlogPost(id), listAdminPostTags(session, id).catch(() => [])]);
 
   if (!post) notFound();
 
@@ -70,6 +77,7 @@ export default async function AdminBlogEditPage({
           initialExcerpt={post.excerpt}
           initialImageUrl={post.image_url ?? undefined}
           initialPostId={post.id}
+          initialTagNames={tags.map((tag) => tag.name)}
           initialSlug={post.slug}
           initialTitle={post.title}
           publishAction={publishAction}

@@ -23,6 +23,25 @@ blog_posts = Table(
     Column("image_url", String(2048), nullable=True),
 )
 
+blog_tags = Table(
+    "blog_tags",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("slug", String(80), nullable=False, unique=True),
+    Column("name", String(120), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Index("ix_blog_tags_slug", "slug"),
+)
+
+blog_post_tags = Table(
+    "blog_post_tags",
+    metadata,
+    Column("post_id", String(64), ForeignKey("blog_posts.id", ondelete="CASCADE"), primary_key=True),
+    Column("tag_id", String(64), ForeignKey("blog_tags.id", ondelete="CASCADE"), primary_key=True),
+    Index("ix_blog_post_tags_post_id", "post_id"),
+    Index("ix_blog_post_tags_tag_id", "tag_id"),
+)
+
 showcases = Table(
     "showcases",
     metadata,

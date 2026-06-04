@@ -38,6 +38,13 @@ from backend.app.blog_social import (
     create_blog_social_admin_routes,
     create_user_bookmarks_routes,
 )
+from backend.app.blog_tags import (
+    BlogTagRepository,
+    InMemoryBlogTagRepository,
+    PostgresBlogTagRepository,
+    create_blog_tag_admin_routes,
+    create_blog_tag_routes,
+)
 from backend.app.database import create_database_engine
 from backend.app.generation_jobs import (
     GenerationJobRepository,
@@ -110,6 +117,7 @@ def create_app(
     news_review_repository: NewsReviewRepository | None = None,
     submitted_link_repository: SubmittedLinkRepository | None = None,
     blog_social_repository: BlogSocialRepository | None = None,
+    blog_tag_repository: BlogTagRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -125,6 +133,7 @@ def create_app(
         review_repo = news_review_repository or InMemoryNewsReviewRepository()
         submitted_repo = submitted_link_repository or InMemorySubmittedLinkRepository()
         social_repo = blog_social_repository or InMemoryBlogSocialRepository()
+        tag_repo = blog_tag_repository or InMemoryBlogTagRepository()
     else:
         engine = create_database_engine(resolved_settings)
         repository = blog_repository or PostgresBlogRepository(engine)
@@ -147,6 +156,7 @@ def create_app(
             engine
         )
         social_repo = blog_social_repository or PostgresBlogSocialRepository(engine)
+        tag_repo = blog_tag_repository or PostgresBlogTagRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
     app.state.settings = resolved_settings
@@ -397,8 +407,9 @@ def create_app(
         return repository.list_audit_events()
 
     @app.get("/public/blog-posts")
-    async def public_blog_posts() -> list[BlogPostSummary]:
-        return repository.list_published()
+    async def public_blog_posts(tag: str | None = None) -> list[BlogPostSummary]:
+        post_ids = tag_repo.get_post_ids_for_tag_slug(tag) if tag else None
+        return repository.list_published(post_ids=post_ids)
 
     @app.get("/public/blog-posts/{slug}")
     async def public_blog_post(slug: str) -> BlogPostDetail:
@@ -440,6 +451,10 @@ def create_app(
                 status_code=404, detail="Published AI news item not found"
             )
         return item
+
+    # Blog tag taxonomy
+    app.include_router(create_blog_tag_routes(tag_repo, repository))
+    app.include_router(create_blog_tag_admin_routes(tag_repo, resolved_settings))
 
     # Blog social features (reactions, bookmarks, comments)
     app.include_router(

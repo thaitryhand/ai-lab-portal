@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { Plus, Rss } from "lucide-react";
 
+import { BlogTagFilter } from "@/components/blog/blog-tag-filter";
 import { PublicIndexEntry } from "@/components/public/public-index-entry";
 import { PublicIndexList } from "@/components/public/public-index-list";
 import { PublicPageHero } from "@/components/public/public-page-hero";
@@ -10,6 +11,7 @@ import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { listPublishedBlogPosts } from "@/lib/blog/posts";
+import { listPublicBlogTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
@@ -24,9 +26,15 @@ export const metadata = createPublicMetadata({
 
 export const dynamic = "force-dynamic";
 
-export default async function BlogIndexPage() {
-  const [posts, session] = await Promise.all([
-    listPublishedBlogPosts(),
+export default async function BlogIndexPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tag?: string }>;
+}) {
+  const activeTag = (await searchParams)?.tag;
+  const [posts, tags, session] = await Promise.all([
+    listPublishedBlogPosts({ tag: activeTag }),
+    listPublicBlogTags(),
     auth.api.getSession({ headers: await headers() }),
   ]);
 
@@ -55,6 +63,8 @@ export default async function BlogIndexPage() {
           eyebrow="AI Lab Blog"
           title="Practical AI engineering notes."
         />
+
+        <BlogTagFilter tags={tags} activeTag={activeTag} />
 
         <PublicIndexList
           emptyDescription="Published articles will appear here after an admin approves them."

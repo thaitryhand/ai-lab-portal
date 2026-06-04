@@ -82,9 +82,11 @@ class AuditEvent(BaseModel):
 class BlogRepositoryProtocol(Protocol):
     def get_by_id(self, post_id: str) -> AdminBlogPostDetail | None: ...
 
+    def get_by_slug(self, slug: str) -> AdminBlogPostDetail | None: ...
+
     def list_all(self) -> list[AdminBlogPostSummary]: ...
 
-    def list_published(self) -> list[BlogPostSummary]: ...
+    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]: ...
 
     def get_published_by_slug(self, slug: str) -> BlogPostDetail | None: ...
 
@@ -124,6 +126,12 @@ class BlogRepository:
             content_markdown=post.content_markdown,
         )
 
+    def get_by_slug(self, slug: str) -> AdminBlogPostDetail | None:
+        for post in self.posts.values():
+            if post.slug == slug:
+                return self.get_by_id(post.id)
+        return None
+
     def list_all(self) -> list[AdminBlogPostSummary]:
         posts = sorted(
             self.posts.values(),
@@ -141,11 +149,11 @@ class BlogRepository:
             for post in posts
         ]
 
-    def list_published(self) -> list[BlogPostSummary]:
+    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]:
         posts = [
             post
             for post in self.posts.values()
-            if post.status == "published" and post.published_at
+            if post.status == "published" and post.published_at and (post_ids is None or post.id in post_ids)
         ]
         posts.sort(
             key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC),
@@ -283,6 +291,28 @@ class PostgresBlogRepository:
                 content_markdown=row["content_markdown"],
             )
 
+    def get_by_slug(self, slug: str) -> AdminBlogPostDetail | None:
+        self.seed_defaults_when_empty()
+        with self.engine.begin() as connection:
+            row = (
+                connection.execute(select(blog_posts).where(blog_posts.c.slug == slug))
+                .mappings()
+                .first()
+            )
+            if row is None:
+                return None
+            return AdminBlogPostDetail(
+                id=row["id"],
+                slug=row["slug"],
+                title=row["title"],
+                status=row["status"],
+                published_at=row["published_at"],
+                excerpt=row["excerpt"],
+                author_name=row["author_name"],
+                content_markdown=row["content_markdown"],
+                image_url=row.get("image_url") if hasattr(row, "get") else row["image_url"],
+            )
+
     def list_all(self) -> list[AdminBlogPostSummary]:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
@@ -302,15 +332,20 @@ class PostgresBlogRepository:
                 for row in rows
             ]
 
-    def list_published(self) -> list[BlogPostSummary]:
+    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
+            filters = [
+                blog_posts.c.status == "published",
+                blog_posts.c.published_at.is_not(None),
+            ]
+            if post_ids is not None:
+                if not post_ids:
+                    return []
+                filters.append(blog_posts.c.id.in_(post_ids))
             rows = connection.execute(
                 select(blog_posts)
-                .where(
-                    blog_posts.c.status == "published",
-                    blog_posts.c.published_at.is_not(None),
-                )
+                .where(*filters)
                 .order_by(blog_posts.c.published_at.desc())
             ).mappings()
             return [

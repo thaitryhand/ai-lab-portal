@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
+import { createAdminBlogTag, listAdminBlogTags, setAdminPostTags, type BlogTag } from "@/lib/blog/tags";
 
 const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
@@ -33,6 +34,51 @@ async function callAdminApi(path: string, init: RequestInit, session: AdminSessi
   return response.json() as Promise<{ id: string; status: "draft" | "published" }>;
 }
 
+function readTagNames(formData: FormData): string[] {
+  const value = formData.get("tagNames");
+  if (typeof value !== "string") return [];
+  return Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function normalizeTagName(name: string): string {
+  return name.toLowerCase().trim();
+}
+
+async function resolveTags(session: AdminSession, tagNames: string[]): Promise<BlogTag[]> {
+  let existing = await listAdminBlogTags(session);
+  const resolved: BlogTag[] = [];
+  for (const name of tagNames) {
+    const match = existing.find((tag) => normalizeTagName(tag.name) === normalizeTagName(name));
+    if (match) {
+      resolved.push(match);
+      continue;
+    }
+    try {
+      const created = await createAdminBlogTag(session, name);
+      existing = [...existing, created];
+      resolved.push(created);
+    } catch {
+      existing = await listAdminBlogTags(session);
+      const retry = existing.find((tag) => normalizeTagName(tag.name) === normalizeTagName(name));
+      if (retry) resolved.push(retry);
+    }
+  }
+  return resolved;
+}
+
+async function savePostTags(formData: FormData, postId: string, session: AdminSession) {
+  const tagNames = readTagNames(formData);
+  const tags = await resolveTags(session, tagNames);
+  await setAdminPostTags(session, postId, tags.map((tag) => tag.id));
+}
+
 async function saveDraft(formData: FormData, session: AdminSession) {
   const postId = formData.get("postId");
   const imageUrlValue = formData.get("imageUrl");
@@ -47,9 +93,13 @@ async function saveDraft(formData: FormData, session: AdminSession) {
     payload.image_url = imageUrlValue.trim();
   }
   if (typeof postId === "string" && postId.trim().length > 0) {
-    return callAdminApi(`/admin/blog-posts/${postId.trim()}`, { method: "PATCH", body: JSON.stringify(payload) }, session);
+    const post = await callAdminApi(`/admin/blog-posts/${postId.trim()}`, { method: "PATCH", body: JSON.stringify(payload) }, session);
+    await savePostTags(formData, post.id, session);
+    return post;
   }
-  return callAdminApi("/admin/blog-posts", { method: "POST", body: JSON.stringify(payload) }, session);
+  const post = await callAdminApi("/admin/blog-posts", { method: "POST", body: JSON.stringify(payload) }, session);
+  await savePostTags(formData, post.id, session);
+  return post;
 }
 
 export async function saveDraftAction(previous: EditorActionState, formData: FormData): Promise<EditorActionState> {
@@ -69,6 +119,7 @@ export async function publishAction(previous: EditorActionState, formData: FormD
   if (!session) redirect("/admin/login");
   try {
     const saved = previous.postId ? { id: previous.postId, status: previous.status } : await saveDraft(formData, session);
+    if (previous.postId) await savePostTags(formData, saved.id, session);
     const published = await callAdminApi(`/admin/blog-posts/${saved.id}/publish`, { method: "POST" }, session);
     return { message: "Post published", postId: published.id, status: "published" };
   } catch (error) {
