@@ -46,3 +46,4 @@ When a blog idea has passed draft, technical review, and marketing approval, an 
 ## Evidence
 
 - 2026-06-03: `python -m pytest backend/tests/test_blog_publish.py` → 7 passed.
+- E2E is marked `n/a` per this story's validation contract: publish bridge proof is backend/API integration, not a browser slice.

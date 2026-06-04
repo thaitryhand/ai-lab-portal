@@ -255,7 +255,19 @@ passed, the trace still records but prints an advisory warning before close.
 `story verify` accepts only the story id. Configure the command with
 `story add --verify` or `story update --verify`. Record proof booleans with
 `story update`, using numeric values: `1` means yes and `0` means no. The Rust
-CLI rejects text values such as `yes` and `no`.
+CLI rejects text values such as `yes`, `no`, and `n/a`.
+
+When a proof layer intentionally does not apply to a story, keep the numeric
+flag at `0` and add a marker to story evidence or notes:
+
+```text
+unit:n/a integration:n/a e2e:n/a platform:n/a
+```
+
+Use `no` only for proof that is missing, not yet run, or still expected later.
+Use `n/a` only when that layer is outside the story contract. Run
+`python scripts/proof_matrix_gaps.py` to audit missing proof while respecting
+these markers.
 
 Use `scripts/bin/harness-cli query matrix --numeric` when copying proof values
 back into `story update`. The default matrix output is human-readable

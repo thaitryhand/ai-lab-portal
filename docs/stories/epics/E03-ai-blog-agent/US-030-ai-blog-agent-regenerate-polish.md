@@ -55,7 +55,8 @@ None expected.
 ## Evidence
 
 - 2026-06-03:
-  - `python -m pytest backend/tests/test_blog_ideas.py` → 32 passed.
-  - `cd frontend && npm run lint && npm run typecheck && npm run build` → passed.
-  - UI adds regeneration affordances for rejected outline, draft, technical review, and marketing stages.
-  - Product roadmap updated to mark MVP 2 as in progress with delivered AI-assisted blog workflow pieces.
+    - `python -m pytest backend/tests/test_blog_ideas.py` → 32 passed.
+    - `cd frontend && npm run lint && npm run typecheck && npm run build` → passed.
+    - UI adds regeneration affordances for rejected outline, draft, technical review, and marketing stages.
+    - Product roadmap updated to mark MVP 2 as in progress with delivered AI-assisted blog workflow pieces.
+    - E2E is marked `n/a` per this story's validation contract: selector-changing browser proof was not required for this bounded UI polish.

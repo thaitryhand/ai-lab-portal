@@ -31,3 +31,4 @@ scripts/bin/harness-cli story verify US-040
 
 - 2026-06-03: `python -m pytest backend/tests/test_news_scoring.py` → 4 passed.
 - 2026-06-03: `scripts/bin/harness-cli story verify US-040` → pass.
+- E2E is marked `n/a`: this story proves scoring and review queue API/data behavior; admin browser review UI is covered by later UI stories.

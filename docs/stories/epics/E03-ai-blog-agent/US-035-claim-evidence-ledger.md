@@ -17,3 +17,6 @@ Admins extract claims from approved drafts, attach evidence or waive items, and 
 - `backend/app/blog_claims.py`, publish validation in `blog_publish.py`
 - Admin claims section in `idea-detail-view.tsx`
 - `backend/tests/test_blog_observability.py` (publish guard + extract claims)
+- 2026-06-04 E2E closeout:
+  - `frontend/tests/e2e/admin-proof-gaps.spec.ts` covers claim extraction and claim evidence controls on the admin blog idea detail page.
+  - `npm run test:e2e` → 10 passed.

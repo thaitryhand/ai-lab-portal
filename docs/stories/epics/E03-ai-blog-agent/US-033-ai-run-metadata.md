@@ -16,3 +16,4 @@ Each important LLM call for a blog idea records provider, model, prompt name/ver
 
 - `backend/app/ai_runs.py`, `backend/app/llm/recording.py`, migration `20260603_0012`
 - `backend/tests/test_blog_observability.py` (`test_recording_service_persists_run`)
+- E2E is marked `n/a`: this persistence contract has no browser-visible workflow by itself.

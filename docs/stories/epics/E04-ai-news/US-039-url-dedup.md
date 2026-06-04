@@ -35,3 +35,4 @@ scripts/bin/harness-cli story verify US-039
 
 - 2026-06-03: `python -m pytest backend/tests/test_news_dedup.py` → 5 passed.
 - 2026-06-03: `scripts/bin/harness-cli story verify US-039` → pass.
+- E2E is marked `n/a`: canonicalization and exact deduplication are backend data-processing rules.

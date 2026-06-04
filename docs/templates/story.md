@@ -35,6 +35,9 @@ Describe the behavior this story must make true.
 
 When updating durable proof status, use numeric booleans:
 `scripts/bin/harness-cli story update --id <id> --unit 1 --integration 1 --e2e 0 --platform 0`.
+If a layer does not apply, keep its numeric flag at `0` and add an evidence or
+notes marker such as `platform:n/a`. Use `no` for missing or expected proof, and
+`n/a` only when the layer is outside this story's contract.
 
 | Layer | Expected proof |
 | --- | --- |

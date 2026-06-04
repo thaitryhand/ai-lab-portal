@@ -24,6 +24,7 @@ scripts/bin/harness-cli story verify US-043
 
 - 2026-06-03: combined blog pytest → 45 passed.
 - 2026-06-03: `scripts/bin/harness-cli story verify US-043` → pass.
+- E2E is marked `n/a`: this closeout story aggregates MVP2 backend/API proof and does not define an additional browser-visible workflow.
 
 ## Deferred (post-MVP2)
 

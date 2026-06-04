@@ -26,3 +26,7 @@ scripts/bin/harness-cli.exe story verify US-024
   - `python -m pytest backend/tests` → 32 passed.
   - `cd frontend && npm run typecheck && npm run lint && npm run build` → pass.
   - `scripts/bin/harness-cli.exe story verify US-024` → pass.
+- 2026-06-04 E2E proof gap closeout:
+  - Docker Desktop started successfully and `docker compose up -d postgres redis` started local infrastructure.
+  - `docker compose config --quiet` → pass.
+  - `CI=1 E2E_PORT=13100 npm run test:e2e` from `frontend/` → 7 passed.

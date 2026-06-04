@@ -29,3 +29,4 @@ scripts/bin/harness-cli story verify US-045
 
 - 2026-06-03: `python -m pytest backend/tests/test_news_submitted_links.py` → 5 passed.
 - 2026-06-03: `scripts/bin/harness-cli story verify US-045` → pass.
+- E2E is marked `n/a`: this story covers backend processing from submitted link to raw item, extraction, scoring, and review linkage.

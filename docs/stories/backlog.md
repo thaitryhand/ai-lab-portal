@@ -15,7 +15,7 @@ a durable place to land.
 | E02 AI-Assisted Blog Workflow | Blog idea, outline, draft, review, marketing metadata, and prompt/AI run tracking | implemented (MVP 2) |
 | E03 AI News Official Sources | RSS/official/GitHub source ingestion, extraction, dedup, scoring, review queue, public feed | implemented (MVP 3) |
 | E04 User-Submitted Links | Safe link submission, SSRF-protected async fetch, duplicate detection, human approval | implemented (MVP 4) |
-| E05 X/Twitter Intelligence | Social ingestion after provider strategy and risk ownership are accepted | blocked |
+| E05 X/Twitter Intelligence | Social ingestion after provider strategy and risk ownership are accepted | stories implemented (5/6 entry criteria met, waiting budget/terms) |
 
 ## Selected Stories
 
@@ -61,3 +61,7 @@ a durable place to land.
 | `US-044` | E04 User-Submitted Links | implemented |
 | `US-045` | E04 User-Submitted Links | implemented |
 | `US-046` | E04 User-Submitted Links | implemented |
+| `US-055` | E05 X/Twitter | implemented |
+| `US-056` | E05 X/Twitter | implemented |
+| `US-057` | E05 X/Twitter | implemented |
+| `US-058` | Blog creation from public page | implemented |

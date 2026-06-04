@@ -34,3 +34,4 @@ scripts/bin/harness-cli story verify US-038
 ## Evidence
 
 - 2026-06-03: `python -m pytest backend/tests/test_news_extraction.py` → 3 passed.
+- E2E is marked `n/a`: extraction runs asynchronously in workers and has no browser-visible workflow by itself.

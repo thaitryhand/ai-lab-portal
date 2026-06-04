@@ -74,3 +74,4 @@ python -m pytest backend/tests/test_news_crawl.py
 - 2026-06-03: `python -m pytest backend/tests/test_news_crawl.py` → 6 passed.
 - Celery: `news.crawl_rss_source`, `news.crawl_due_sources`.
 - Admin: `POST /admin/news-sources/{id}/crawl` (async queue in non-test env).
+- E2E is marked `n/a` per this story's validation contract: browser proof was not required for RSS crawl/raw storage.

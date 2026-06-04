@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Companion audit commands for the prebuilt Harness CLI.
+#
+# Usage:
+#   scripts/bin/harness-audit traces    — Audit all trace records for completeness
+#   scripts/bin/harness-audit matrix    — Audit proof matrix for missing evidence
+#   scripts/bin/harness-audit help      — Show this help
+#
+# The prebuilt harness-cli cannot be extended with new subcommands.
+# These wrappers delegate to the Python audit scripts so the workflow
+# stays CLI-like instead of switching to "python scripts/trace_quality.py".
+
+set -euo pipefail
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# Prefer python3, fall back to python
+if command -v python3 &>/dev/null; then
+  PYTHON="${PYTHON:-python3}"
+elif command -v python &>/dev/null; then
+  PYTHON="${PYTHON:-python}"
+else
+  echo "Error: python not found" >&2
+  exit 1
+fi
+
+case "${1:-help}" in
+  traces)
+    shift
+    exec "$PYTHON" "$REPO_ROOT/scripts/trace_quality.py" "$@"
+    ;;
+  matrix)
+    shift
+    exec "$PYTHON" "$REPO_ROOT/scripts/proof_matrix_gaps.py" "$@"
+    ;;
+  help|"")
+    echo "Harness audit companion commands"
+    echo ""
+    echo "Usage:"
+    echo "  scripts/bin/harness-audit traces    Audit trace completeness"
+    echo "  scripts/bin/harness-audit matrix    Audit proof matrix gaps"
+    echo ""
+    echo "These are lightweight wrappers around the Python audit scripts."
+    echo "See scripts/README.md and scripts/trace_quality.py for details."
+    ;;
+  *)
+    echo "Unknown subcommand: $1"
+    echo "Run scripts/bin/harness-audit help for usage."
+    exit 1
+    ;;
+esac

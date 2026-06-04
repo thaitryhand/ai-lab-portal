@@ -20,7 +20,10 @@ scripts/bin/harness-cli trace ...     # Record and auto-score an agent execution
 scripts/bin/harness-cli score-trace   # Score a trace against TRACE_SPEC.md tiers
 scripts/bin/harness-cli query ...     # Query harness data, including backlog --open/--closed
 scripts/bin/harness-cli query matrix --numeric  # Show proof flags as 1/0
-python scripts/trace_quality.py       # Audit incomplete trace fields
+scripts/bin/harness-audit traces     # Audit all trace records for completeness (companion wrapper)
+scripts/bin/harness-audit matrix     # Audit proof matrix for missing evidence (companion wrapper)
+python scripts/trace_quality.py       # Direct access to trace completeness audit
+python scripts/proof_matrix_gaps.py   # Direct access to proof matrix gap audit
 node scripts/setup-git-hooks.mjs      # Enable repo-root Husky hooks (also runs on frontend npm install)
 python scripts/deploy_smoke.py        # Smoke-test deployed backend/frontend URLs
 scripts/bin/harness-cli migrate       # Apply pending schema migrations
@@ -32,9 +35,13 @@ full usage. On Windows, use the same commands through
 `.\scripts\bin\harness-cli.exe`.
 
 Proof flags on `story update` are numeric booleans: use `1` for yes and `0` for
-no. `story verify <id>` runs the configured `verify_command`; it does not accept
-proof flags. Configure the command with `story add/update --verify`, run
-`story verify <id>`, then update proof flags with `story update`.
+no. If a proof layer does not apply to a story, keep the numeric flag at `0` and
+add a marker such as `platform:n/a` or `unit:n/a` to the story evidence or notes.
+`python scripts/proof_matrix_gaps.py` treats those markers as not applicable
+instead of actionable missing proof. `story verify <id>` runs the configured
+`verify_command`; it does not accept proof flags. Configure the command with
+`story add/update --verify`, run `story verify <id>`, then update proof flags
+with `story update`.
 
 Backlog `--risk` uses Harness lanes, not severity words: use `tiny`, `normal`,
 or `high-risk`. Use `tiny` instead of `low`. `query matrix` defaults to
@@ -50,7 +57,9 @@ Requires: the prebuilt Rust CLI at `scripts/bin/harness-cli` on macOS/Linux or
 Direct database inspection may still use SQLite tools, but normal Harness use
 should go through the Rust CLI. For trace completeness audits, use
 `python scripts/trace_quality.py` instead of ad hoc SQL until this report is
-folded into the Rust CLI. After a production-like deployment is up, use
+folded into the Rust CLI. For proof-gap audits that distinguish missing proof
+from `n/a`, use `python scripts/proof_matrix_gaps.py`. After a production-like
+deployment is up, use
 `python scripts/deploy_smoke.py --backend-url <url> --frontend-url <url>` to
 check backend health plus frontend and admin-login reachability.
 

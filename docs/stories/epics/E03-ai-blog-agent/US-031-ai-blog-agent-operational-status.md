@@ -53,7 +53,8 @@ None expected.
 ## Evidence
 
 - 2026-06-03:
-  - `python -m pytest backend/tests/test_blog_ideas.py` → 32 passed.
-  - `cd frontend && npm run lint && npm run typecheck && npm run build` → passed.
-  - Generation server actions now redirect back with `queued`, `completed`, or `error` status messages.
-  - Idea detail page displays safe operational feedback with stage and task id when available.
+    - `python -m pytest backend/tests/test_blog_ideas.py` → 32 passed.
+    - `cd frontend && npm run lint && npm run typecheck && npm run build` → passed.
+    - Generation server actions now redirect back with `queued`, `completed`, or `error` status messages.
+    - Idea detail page displays safe operational feedback with stage and task id when available.
+    - E2E is marked `n/a` per this story's validation contract: this bounded feedback slice did not require browser E2E.

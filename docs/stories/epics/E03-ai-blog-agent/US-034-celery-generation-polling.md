@@ -16,3 +16,6 @@ Queued Celery generations persist `blog_generation_jobs` with status transitions
 
 - `backend/app/generation_jobs.py`, `frontend/app/admin/blog-ideas/generation-job-poller.tsx`
 - `backend/tests/test_blog_observability.py` (`test_job_lifecycle`, `test_generation_job_api`)
+- 2026-06-04 E2E closeout:
+  - `frontend/tests/e2e/admin-proof-gaps.spec.ts` covers queued generation job status on the admin blog idea detail page.
+  - `npm run test:e2e` → 10 passed.

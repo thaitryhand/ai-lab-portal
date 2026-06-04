@@ -44,3 +44,8 @@ Maps MVP 1 product behavior to proof layers. Update when story contracts change.
 - Integration proof covers backend enforcement, data integrity, provider behavior, jobs, or service contracts.
 - E2E proof covers user-visible browser flows.
 - Platform proof covers shell, deployment, or runtime behavior not proven in lower layers.
+- `no` means proof is missing, not yet run, or still expected later.
+- `n/a` means the proof layer is outside the story contract. The current Rust
+  CLI still stores proof flags as `1` or `0`; record `n/a` with markers such as
+  `platform:n/a` in story evidence or notes, then run
+  `python scripts/proof_matrix_gaps.py` for a gap report that respects them.
