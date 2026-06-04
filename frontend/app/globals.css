@@ -115,6 +115,55 @@ a[class*="bg-primary"] {
   --radius-admin-3xl: var(--radius-admin-3xl);
 }
 
+/* ── Comment Tiptap Editor ── */
+.comment-tiptap .ProseMirror {
+  min-height: 80px;
+  outline: none;
+}
+.comment-tiptap .ProseMirror p { margin: 0; }
+.comment-tiptap .ProseMirror p + p { margin-top: 0.75em; }
+.comment-tiptap .ProseMirror ul { list-style-type: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.comment-tiptap .ProseMirror ol { list-style-type: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.comment-tiptap .ProseMirror li { margin: 0.15em 0; }
+.comment-tiptap .ProseMirror li p { margin: 0; }
+.comment-tiptap .ProseMirror blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.comment-tiptap .ProseMirror h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.75em 0 0.25em;
+  line-height: 1.4;
+}
+.comment-tiptap .ProseMirror code {
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+  font-size: 0.9em;
+}
+.comment-tiptap .ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.comment-tiptap .ProseMirror a:hover { opacity: 0.8; }
+.comment-tiptap .ProseMirror s { text-decoration: line-through; }
+.comment-tiptap .ProseMirror strong { font-weight: 600; }
+.comment-tiptap .ProseMirror em { font-style: italic; }
+
+/* Placeholder */
+.comment-tiptap .ProseMirror p.is-editor-empty:first-child::before {
+  color: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 .dark {
   --background: var(--color-charcoal-black);
   --foreground: var(--color-parchment-white);

@@ -25,6 +25,8 @@ export type BlogCommentPublic = {
   content: string;
   parent_id: string | null;
   created_at: string;
+  reaction_count?: number;
+  user_reacted?: boolean;
 };
 
 export type BlogBookmark = {
@@ -136,4 +138,53 @@ export async function checkBookmark(slug: string, session: BetterAuthSession): P
   } catch {
     return false;
   }
+}
+
+// ─── Comment reactions ───────────────────────────────────────────────────
+
+export type CommentReactionResponse = {
+  reacted: boolean;
+  count: number;
+};
+
+export async function toggleCommentReaction(
+  slug: string,
+  commentId: string,
+  session: BetterAuthSession,
+): Promise<CommentReactionResponse> {
+  return await callApi<CommentReactionResponse>(
+    `/public/blog-posts/${slug}/comments/${commentId}/react`,
+    session,
+    { method: "POST" },
+  );
+}
+
+// ─── Comment edit/delete ─────────────────────────────────────────────────
+
+export async function editComment(
+  slug: string,
+  commentId: string,
+  content: string,
+  session: BetterAuthSession,
+): Promise<BlogCommentPublic> {
+  return await callApi<BlogCommentPublic>(
+    `/public/blog-posts/${slug}/comments/${commentId}`,
+    session,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ content }),
+    },
+  );
+}
+
+export async function deleteComment(
+  slug: string,
+  commentId: string,
+  session: BetterAuthSession,
+): Promise<{ deleted: boolean }> {
+  return await callApi<{ deleted: boolean }>(
+    `/public/blog-posts/${slug}/comments/${commentId}`,
+    session,
+    { method: "DELETE" },
+  );
 }

@@ -21,7 +21,14 @@ import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 
-import { toggleReactionAction, toggleBookmarkAction, createCommentAction } from "../actions";
+import {
+  toggleReactionAction,
+  toggleBookmarkAction,
+  createCommentAction,
+  toggleCommentReactionAction,
+  editCommentAction,
+  deleteCommentAction,
+} from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -139,7 +146,11 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           initialComments={comments}
           isAuthenticated={!!session}
           slug={slug}
+          session={session}
           onCreateComment={session ? createCommentAction : undefined}
+          onToggleCommentReaction={session ? toggleCommentReactionAction : undefined}
+          onEditComment={session ? editCommentAction : undefined}
+          onDeleteComment={session ? deleteCommentAction : undefined}
         />
       </article>
     </PublicPageShell>
