@@ -1,17 +1,23 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
-import { AdminBackLink } from "@/components/admin/admin-back-link";
-import { AdminCmsShell } from "@/components/admin/admin-cms-shell";
-import { adminPageStackClass } from "@/components/admin/admin-ui";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { BlogEditor } from "@/components/admin/blog-editor";
+import { PublicBackLink } from "@/components/public/public-back-link";
+import { PublicPageShell } from "@/components/public/public-page-shell";
+import { publicMainWidthClass } from "@/components/public/public-ui";
+import { publishAction, saveDraftAction } from "@/app/admin/blog/editor/actions";
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
-import { publishAction, saveDraftAction } from "../../editor/actions";
+import { cn } from "@/lib/utils";
 
-const backendBaseUrl =
-  process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Edit blog post | AI Lab Portal",
+  description: "Edit an existing blog post.",
+};
+
+const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
 type AdminBlogPostDetail = {
   id: string;
@@ -27,7 +33,7 @@ type AdminBlogPostDetail = {
 
 async function getAdminBlogPost(id: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/admin/login");
+  if (!session) return undefined;
 
   const response = await fetch(`${backendBaseUrl}/admin/blog-posts/${id}`, {
     headers: createAdminBoundaryHeaders({
@@ -37,32 +43,31 @@ async function getAdminBlogPost(id: string) {
   });
 
   if (response.status === 404) return undefined;
-  if (!response.ok)
-    throw new Error(`Failed to fetch admin blog post: ${response.status}`);
+  if (!response.ok) throw new Error(`Failed to fetch admin blog post: ${response.status}`);
   return (await response.json()) as AdminBlogPostDetail;
 }
 
-export default async function AdminBlogEditPage({
+export default async function BlogEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const post = await getAdminBlogPost(id);
+  const [{ id }, session] = await Promise.all([
+    params,
+    auth.api.getSession({ headers: await headers() }),
+  ]);
 
+  if (!session) {
+    redirect("/admin/login?redirect=/blog/edit/" + id);
+  }
+
+  const post = await getAdminBlogPost(id);
   if (!post) notFound();
 
   return (
-    <AdminCmsShell active="blog">
-      <div className={adminPageStackClass}>
-        <AdminPageHeader
-          actions={<AdminBackLink href="/admin/blog">Back to posts</AdminBackLink>}
-          description={`Editing “${post.title}”.`}
-          eyebrow="Content workspace"
-          metaText={`/${post.slug}`}
-          status={post.status}
-          title="Edit blog post"
-        />
+    <PublicPageShell>
+      <section className={cn(publicMainWidthClass, "flex flex-col gap-8 py-10 sm:py-14")}>
+        <PublicBackLink href="/blog">Blog</PublicBackLink>
 
         <BlogEditor
           initialAuthorName={post.author_name}
@@ -75,7 +80,7 @@ export default async function AdminBlogEditPage({
           publishAction={publishAction}
           saveDraftAction={saveDraftAction}
         />
-      </div>
-    </AdminCmsShell>
+      </section>
+    </PublicPageShell>
   );
 }

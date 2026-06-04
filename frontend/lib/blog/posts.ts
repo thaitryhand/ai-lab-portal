@@ -4,9 +4,11 @@ export type BlogPostSummary = {
   excerpt: string;
   authorName: string;
   publishedAt: string;
+  imageUrl?: string | null;
 };
 
 export type BlogPostDetail = BlogPostSummary & {
+  id: string;
   contentMarkdown: string;
 };
 
@@ -16,9 +18,11 @@ type ApiBlogPostSummary = {
   excerpt: string;
   author_name: string;
   published_at: string;
+  image_url?: string | null;
 };
 
 type ApiBlogPostDetail = ApiBlogPostSummary & {
+  id: string;
   content_markdown: string;
 };
 
@@ -31,12 +35,14 @@ function toSummary(post: ApiBlogPostSummary): BlogPostSummary {
     excerpt: post.excerpt,
     authorName: post.author_name,
     publishedAt: post.published_at,
+    imageUrl: post.image_url,
   };
 }
 
 function toDetail(post: ApiBlogPostDetail): BlogPostDetail {
   return {
     ...toSummary(post),
+    id: post.id,
     contentMarkdown: post.content_markdown,
   };
 }

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, Protocol
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -19,6 +19,7 @@ class BlogPost(BaseModel):
     status: BlogStatus
     published_at: datetime | None
     content_markdown: str
+    image_url: str | None = None
 
 
 class BlogPostCreate(BaseModel):
@@ -27,6 +28,7 @@ class BlogPostCreate(BaseModel):
     excerpt: str = Field(min_length=1)
     author_name: str = Field(min_length=1, max_length=120)
     content_markdown: str = Field(min_length=1)
+    image_url: str | None = Field(default=None, max_length=2048)
 
 
 class BlogPostUpdate(BaseModel):
@@ -35,6 +37,7 @@ class BlogPostUpdate(BaseModel):
     excerpt: str | None = Field(default=None, min_length=1)
     author_name: str | None = Field(default=None, min_length=1, max_length=120)
     content_markdown: str | None = Field(default=None, min_length=1)
+    image_url: str | None = Field(default=None, max_length=2048)
 
 
 class BlogPostSummary(BaseModel):
@@ -43,9 +46,11 @@ class BlogPostSummary(BaseModel):
     excerpt: str
     author_name: str
     published_at: datetime
+    image_url: str | None = None
 
 
 class BlogPostDetail(BlogPostSummary):
+    id: str
     content_markdown: str
 
 
@@ -55,6 +60,7 @@ class AdminBlogPostSummary(BaseModel):
     title: str
     status: BlogStatus
     published_at: datetime | None
+    image_url: str | None = None
 
 
 class AdminBlogPostDetail(AdminBlogPostSummary):
@@ -71,6 +77,30 @@ class AuditEvent(BaseModel):
     entity_type: str
     entity_id: str
     created_at: datetime
+
+
+class BlogRepositoryProtocol(Protocol):
+    def get_by_id(self, post_id: str) -> AdminBlogPostDetail | None: ...
+
+    def list_all(self) -> list[AdminBlogPostSummary]: ...
+
+    def list_published(self) -> list[BlogPostSummary]: ...
+
+    def get_published_by_slug(self, slug: str) -> BlogPostDetail | None: ...
+
+    def create(self, request: BlogPostCreate) -> BlogPost: ...
+
+    def update(self, post_id: str, request: BlogPostUpdate) -> BlogPost | None: ...
+
+    def publish(self, post_id: str) -> BlogPost | None: ...
+
+    def unpublish(self, post_id: str) -> BlogPost | None: ...
+
+    def record_audit(
+        self, actor_user_id: str, actor_email: str, action: str, entity_id: str
+    ) -> AuditEvent: ...
+
+    def list_audit_events(self) -> list[AuditEvent]: ...
 
 
 class BlogRepository:
@@ -95,7 +125,11 @@ class BlogRepository:
         )
 
     def list_all(self) -> list[AdminBlogPostSummary]:
-        posts = sorted(self.posts.values(), key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC), reverse=True)
+        posts = sorted(
+            self.posts.values(),
+            key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC),
+            reverse=True,
+        )
         return [
             AdminBlogPostSummary(
                 id=post.id,
@@ -108,8 +142,15 @@ class BlogRepository:
         ]
 
     def list_published(self) -> list[BlogPostSummary]:
-        posts = [post for post in self.posts.values() if post.status == "published" and post.published_at]
-        posts.sort(key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC), reverse=True)
+        posts = [
+            post
+            for post in self.posts.values()
+            if post.status == "published" and post.published_at
+        ]
+        posts.sort(
+            key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC),
+            reverse=True,
+        )
         return [
             BlogPostSummary(
                 slug=post.slug,
@@ -124,19 +165,41 @@ class BlogRepository:
 
     def get_published_by_slug(self, slug: str) -> BlogPostDetail | None:
         for post in self.posts.values():
-            if post.slug == slug and post.status == "published" and post.published_at is not None:
+            if (
+                post.slug == slug
+                and post.status == "published"
+                and post.published_at is not None
+            ):
                 return BlogPostDetail(
                     slug=post.slug,
                     title=post.title,
                     excerpt=post.excerpt,
                     author_name=post.author_name,
                     published_at=post.published_at,
+                    id=post.id,
                     content_markdown=post.content_markdown,
                 )
         return None
 
     def create(self, request: BlogPostCreate) -> BlogPost:
-        post = BlogPost(id=f"post_{uuid4().hex}", status="draft", published_at=None, **request.model_dump())
+        slug = request.slug
+        # Ensure slug uniqueness by appending a suffix if needed
+        existing_slugs = {p.slug for p in self.posts.values()}
+        if slug in existing_slugs:
+            suffix = 2
+            while f"{slug}-{suffix}" in existing_slugs:
+                suffix += 1
+            slug = f"{slug}-{suffix}"
+        post = BlogPost(
+            id=f"post_{uuid4().hex}",
+            slug=slug,
+            status="draft",
+            published_at=None,
+            title=request.title,
+            excerpt=request.excerpt,
+            author_name=request.author_name,
+            content_markdown=request.content_markdown,
+        )
         self.posts[post.id] = post
         return post
 
@@ -153,7 +216,9 @@ class BlogRepository:
         post = self.posts.get(post_id)
         if post is None:
             return None
-        published = post.model_copy(update={"status": "published", "published_at": datetime.now(UTC)})
+        published = post.model_copy(
+            update={"status": "published", "published_at": datetime.now(UTC)}
+        )
         self.posts[post_id] = published
         return published
 
@@ -165,7 +230,9 @@ class BlogRepository:
         self.posts[post_id] = draft
         return draft
 
-    def record_audit(self, actor_user_id: str, actor_email: str, action: str, entity_id: str) -> AuditEvent:
+    def record_audit(
+        self, actor_user_id: str, actor_email: str, action: str, entity_id: str
+    ) -> AuditEvent:
         event = AuditEvent(
             id=f"audit_{uuid4().hex}",
             actor_user_id=actor_user_id,
@@ -189,14 +256,20 @@ class PostgresBlogRepository:
     def seed_defaults_when_empty(self) -> None:
         with self.engine.begin() as connection:
             for post in DEFAULT_BLOG_POSTS:
-                existing = connection.execute(select(blog_posts.c.id).where(blog_posts.c.slug == post.slug)).first()
+                existing = connection.execute(
+                    select(blog_posts.c.id).where(blog_posts.c.slug == post.slug)
+                ).first()
                 if existing is None:
                     connection.execute(insert(blog_posts).values(**post.model_dump()))
 
     def get_by_id(self, post_id: str) -> AdminBlogPostDetail | None:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
-            row = connection.execute(select(blog_posts).where(blog_posts.c.id == post_id)).mappings().first()
+            row = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .first()
+            )
             if row is None:
                 return None
             return AdminBlogPostDetail(
@@ -213,7 +286,11 @@ class PostgresBlogRepository:
     def list_all(self) -> list[AdminBlogPostSummary]:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
-            rows = connection.execute(select(blog_posts).order_by(blog_posts.c.published_at.desc().nullslast())).mappings()
+            rows = connection.execute(
+                select(blog_posts).order_by(
+                    blog_posts.c.published_at.desc().nullslast()
+                )
+            ).mappings()
             return [
                 AdminBlogPostSummary(
                     id=row["id"],
@@ -230,7 +307,10 @@ class PostgresBlogRepository:
         with self.engine.begin() as connection:
             rows = connection.execute(
                 select(blog_posts)
-                .where(blog_posts.c.status == "published", blog_posts.c.published_at.is_not(None))
+                .where(
+                    blog_posts.c.status == "published",
+                    blog_posts.c.published_at.is_not(None),
+                )
                 .order_by(blog_posts.c.published_at.desc())
             ).mappings()
             return [
@@ -247,13 +327,17 @@ class PostgresBlogRepository:
     def get_published_by_slug(self, slug: str) -> BlogPostDetail | None:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
-            row = connection.execute(
-                select(blog_posts).where(
-                    blog_posts.c.slug == slug,
-                    blog_posts.c.status == "published",
-                    blog_posts.c.published_at.is_not(None),
+            row = (
+                connection.execute(
+                    select(blog_posts).where(
+                        blog_posts.c.slug == slug,
+                        blog_posts.c.status == "published",
+                        blog_posts.c.published_at.is_not(None),
+                    )
                 )
-            ).mappings().first()
+                .mappings()
+                .first()
+            )
             if row is None:
                 return None
             return BlogPostDetail(
@@ -262,11 +346,38 @@ class PostgresBlogRepository:
                 excerpt=row["excerpt"],
                 author_name=row["author_name"],
                 published_at=row["published_at"],
+                id=row["id"],
                 content_markdown=row["content_markdown"],
             )
 
     def create(self, request: BlogPostCreate) -> BlogPost:
-        post = BlogPost(id=f"post_{uuid4().hex}", status="draft", published_at=None, **request.model_dump())
+        slug = request.slug
+        # Ensure slug uniqueness by appending a suffix if needed
+        with self.engine.begin() as connection:
+            existing = connection.execute(
+                select(blog_posts.c.slug).where(blog_posts.c.slug == slug)
+            ).first()
+            if existing is not None:
+                suffix = 2
+                while True:
+                    candidate = f"{slug}-{suffix}"
+                    dup = connection.execute(
+                        select(blog_posts.c.slug).where(blog_posts.c.slug == candidate)
+                    ).first()
+                    if dup is None:
+                        slug = candidate
+                        break
+                    suffix += 1
+        post = BlogPost(
+            id=f"post_{uuid4().hex}",
+            slug=slug,
+            status="draft",
+            published_at=None,
+            title=request.title,
+            excerpt=request.excerpt,
+            author_name=request.author_name,
+            content_markdown=request.content_markdown,
+        )
         with self.engine.begin() as connection:
             connection.execute(insert(blog_posts).values(**post.model_dump()))
         return post
@@ -274,12 +385,24 @@ class PostgresBlogRepository:
     def update(self, post_id: str, request: BlogPostUpdate) -> BlogPost | None:
         update_data = request.model_dump(exclude_unset=True)
         with self.engine.begin() as connection:
-            existing = connection.execute(select(blog_posts).where(blog_posts.c.id == post_id)).mappings().first()
+            existing = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .first()
+            )
             if existing is None:
                 return None
             if update_data:
-                connection.execute(update(blog_posts).where(blog_posts.c.id == post_id).values(**update_data))
-            row = connection.execute(select(blog_posts).where(blog_posts.c.id == post_id)).mappings().one()
+                connection.execute(
+                    update(blog_posts)
+                    .where(blog_posts.c.id == post_id)
+                    .values(**update_data)
+                )
+            row = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .one()
+            )
         return BlogPost.model_validate(dict(row))
 
     def publish(self, post_id: str) -> BlogPost | None:
@@ -292,7 +415,11 @@ class PostgresBlogRepository:
             )
             if result.rowcount == 0:
                 return None
-            row = connection.execute(select(blog_posts).where(blog_posts.c.id == post_id)).mappings().one()
+            row = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .one()
+            )
         return BlogPost.model_validate(dict(row))
 
     def unpublish(self, post_id: str) -> BlogPost | None:
@@ -304,10 +431,16 @@ class PostgresBlogRepository:
             )
             if result.rowcount == 0:
                 return None
-            row = connection.execute(select(blog_posts).where(blog_posts.c.id == post_id)).mappings().one()
+            row = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .one()
+            )
         return BlogPost.model_validate(dict(row))
 
-    def record_audit(self, actor_user_id: str, actor_email: str, action: str, entity_id: str) -> AuditEvent:
+    def record_audit(
+        self, actor_user_id: str, actor_email: str, action: str, entity_id: str
+    ) -> AuditEvent:
         event = AuditEvent(
             id=f"audit_{uuid4().hex}",
             actor_user_id=actor_user_id,
@@ -323,7 +456,9 @@ class PostgresBlogRepository:
 
     def list_audit_events(self) -> list[AuditEvent]:
         with self.engine.begin() as connection:
-            rows = connection.execute(select(audit_events).order_by(audit_events.c.created_at.asc())).mappings()
+            rows = connection.execute(
+                select(audit_events).order_by(audit_events.c.created_at.asc())
+            ).mappings()
             return [AuditEvent.model_validate(dict(row)) for row in rows]
 
 

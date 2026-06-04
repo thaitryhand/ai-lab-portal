@@ -35,13 +35,17 @@ async function callAdminApi(path: string, init: RequestInit, session: AdminSessi
 
 async function saveDraft(formData: FormData, session: AdminSession) {
   const postId = formData.get("postId");
-  const payload = {
+  const imageUrlValue = formData.get("imageUrl");
+  const payload: Record<string, string | null> = {
     title: readRequiredField(formData, "title"),
     slug: readRequiredField(formData, "slug"),
     excerpt: readRequiredField(formData, "excerpt"),
     author_name: readRequiredField(formData, "authorName"),
     content_markdown: readRequiredField(formData, "contentMarkdown"),
   };
+  if (typeof imageUrlValue === "string" && imageUrlValue.trim().length > 0) {
+    payload.image_url = imageUrlValue.trim();
+  }
   if (typeof postId === "string" && postId.trim().length > 0) {
     return callAdminApi(`/admin/blog-posts/${postId.trim()}`, { method: "PATCH", body: JSON.stringify(payload) }, session);
   }
