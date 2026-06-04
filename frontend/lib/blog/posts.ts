@@ -1,3 +1,9 @@
+import { createUserBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
+
+type Session = { user: { id: string; email: string } };
+
+export type BlogFeed = "latest" | "following" | "discover";
+
 export type BlogPostSummary = {
   slug: string;
   title: string;
@@ -5,6 +11,7 @@ export type BlogPostSummary = {
   authorName: string;
   publishedAt: string;
   imageUrl?: string | null;
+  authorUserId?: string | null;
 };
 
 export type BlogPostDetail = BlogPostSummary & {
@@ -19,6 +26,7 @@ type ApiBlogPostSummary = {
   author_name: string;
   published_at: string;
   image_url?: string | null;
+  author_user_id?: string | null;
 };
 
 type ApiBlogPostDetail = ApiBlogPostSummary & {
@@ -36,6 +44,7 @@ function toSummary(post: ApiBlogPostSummary): BlogPostSummary {
     authorName: post.author_name,
     publishedAt: post.published_at,
     imageUrl: post.image_url,
+    authorUserId: post.author_user_id,
   };
 }
 
@@ -47,10 +56,14 @@ function toDetail(post: ApiBlogPostDetail): BlogPostDetail {
   };
 }
 
-export async function listPublishedBlogPosts(options?: { tag?: string }): Promise<BlogPostSummary[]> {
+export async function listPublishedBlogPosts(options?: { tag?: string; feed?: BlogFeed; session?: Session | null }): Promise<BlogPostSummary[]> {
   const url = new URL(`${backendBaseUrl}/public/blog-posts`);
   if (options?.tag) url.searchParams.set("tag", options.tag);
-  const response = await fetch(url.toString(), { cache: "no-store" });
+  if (options?.feed) url.searchParams.set("feed", options.feed);
+  const response = await fetch(url.toString(), {
+    cache: "no-store",
+    headers: options?.session ? createUserBoundaryHeaders(options.session) : undefined,
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published blog posts: ${response.status}`);

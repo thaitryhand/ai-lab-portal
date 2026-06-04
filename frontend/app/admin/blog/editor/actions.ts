@@ -88,6 +88,7 @@ async function saveDraft(formData: FormData, session: AdminSession) {
     excerpt: readRequiredField(formData, "excerpt"),
     author_name: readRequiredField(formData, "authorName"),
     content_markdown: readRequiredField(formData, "contentMarkdown"),
+    author_user_id: session.user.id,
   };
   if (typeof imageUrlValue === "string" && imageUrlValue.trim().length > 0) {
     payload.image_url = imageUrlValue.trim();

@@ -7,8 +7,11 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from backend.app.admin_boundary import (
     ADMIN_IDENTITY_HEADER,
     ADMIN_SIGNATURE_HEADER,
+    USER_IDENTITY_HEADER,
+    USER_SIGNATURE_HEADER,
     AdminIdentity,
     require_admin_identity_with_settings,
+    require_user_identity_with_settings,
 )
 from backend.app.ai_runs import AiRunRepository, PostgresAiRunRepository
 from backend.app.blog import (
@@ -81,6 +84,12 @@ from backend.app.news_submitted_links import (
 )
 from backend.app.request_logging import RequestLoggingMiddleware
 from backend.app.settings import Settings, get_settings
+from backend.app.user_follows import (
+    InMemoryUserFollowRepository,
+    PostgresUserFollowRepository,
+    UserFollowRepository,
+    create_user_follow_routes,
+)
 from backend.app.user_profiles import (
     InMemoryUserProfileRepository,
     PostgresUserProfileRepository,
@@ -126,6 +135,7 @@ def create_app(
     blog_social_repository: BlogSocialRepository | None = None,
     blog_tag_repository: BlogTagRepository | None = None,
     user_profile_repository: UserProfileRepository | None = None,
+    user_follow_repository: UserFollowRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -143,6 +153,7 @@ def create_app(
         social_repo = blog_social_repository or InMemoryBlogSocialRepository()
         tag_repo = blog_tag_repository or InMemoryBlogTagRepository()
         profile_repo = user_profile_repository or InMemoryUserProfileRepository()
+        follow_repo = user_follow_repository or InMemoryUserFollowRepository()
     else:
         engine = create_database_engine(resolved_settings)
         repository = blog_repository or PostgresBlogRepository(engine)
@@ -167,6 +178,7 @@ def create_app(
         social_repo = blog_social_repository or PostgresBlogSocialRepository(engine)
         tag_repo = blog_tag_repository or PostgresBlogTagRepository(engine)
         profile_repo = user_profile_repository or PostgresUserProfileRepository(engine)
+        follow_repo = user_follow_repository or PostgresUserFollowRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
     app.state.settings = resolved_settings
@@ -417,9 +429,20 @@ def create_app(
         return repository.list_audit_events()
 
     @app.get("/public/blog-posts")
-    async def public_blog_posts(tag: str | None = None) -> list[BlogPostSummary]:
+    async def public_blog_posts(
+        tag: str | None = None,
+        feed: str = "latest",
+        identity_payload: Annotated[str | None, Header(alias=USER_IDENTITY_HEADER)] = None,
+        signature: Annotated[str | None, Header(alias=USER_SIGNATURE_HEADER)] = None,
+    ) -> list[BlogPostSummary]:
         post_ids = tag_repo.get_post_ids_for_tag_slug(tag) if tag else None
-        return repository.list_published(post_ids=post_ids)
+        author_user_ids: set[str] | None = None
+        if feed == "following":
+            identity = require_user_identity_with_settings(resolved_settings, identity_payload, signature)
+            author_user_ids = follow_repo.followed_user_ids(identity.user_id)
+        elif feed not in {"latest", "discover"}:
+            raise HTTPException(status_code=422, detail="Unsupported feed")
+        return repository.list_published(post_ids=post_ids, author_user_ids=author_user_ids)
 
     @app.get("/public/blog-posts/{slug}")
     async def public_blog_post(slug: str) -> BlogPostDetail:
@@ -469,6 +492,7 @@ def create_app(
     # User profiles
     app.include_router(create_user_profile_routes(profile_repo, resolved_settings))
     app.include_router(create_user_profile_admin_routes(profile_repo, resolved_settings))
+    app.include_router(create_user_follow_routes(follow_repo, resolved_settings))
 
     # Blog social features (reactions, bookmarks, comments)
     app.include_router(

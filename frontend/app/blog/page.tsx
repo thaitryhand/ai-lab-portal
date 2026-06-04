@@ -10,7 +10,7 @@ import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { listPublishedBlogPosts } from "@/lib/blog/posts";
+import { listPublishedBlogPosts, type BlogFeed } from "@/lib/blog/posts";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
@@ -29,13 +29,15 @@ export const dynamic = "force-dynamic";
 export default async function BlogIndexPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tag?: string }>;
+  searchParams?: Promise<{ tag?: string; feed?: string }>;
 }) {
-  const activeTag = (await searchParams)?.tag;
-  const [posts, tags, session] = await Promise.all([
-    listPublishedBlogPosts({ tag: activeTag }),
+  const resolvedSearchParams = await searchParams;
+  const activeTag = resolvedSearchParams?.tag;
+  const activeFeed: BlogFeed = resolvedSearchParams?.feed === "following" || resolvedSearchParams?.feed === "discover" ? resolvedSearchParams.feed : "latest";
+  const session = await auth.api.getSession({ headers: await headers() });
+  const [posts, tags] = await Promise.all([
+    activeFeed === "following" && !session ? Promise.resolve([]) : listPublishedBlogPosts({ tag: activeTag, feed: activeFeed, session }),
     listPublicBlogTags(),
-    auth.api.getSession({ headers: await headers() }),
   ]);
 
   return (
@@ -64,11 +66,32 @@ export default async function BlogIndexPage({
           title="Practical AI engineering notes."
         />
 
+        <div className="flex flex-wrap gap-2">
+          {(["latest", "following", "discover"] as const).map((feed) => {
+            const href = new URLSearchParams();
+            if (feed !== "latest") href.set("feed", feed);
+            if (activeTag) href.set("tag", activeTag);
+            const label = feed[0].toUpperCase() + feed.slice(1);
+            return (
+              <Link
+                key={feed}
+                href={`/blog${href.toString() ? `?${href.toString()}` : ""}`}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition",
+                  activeFeed === feed ? "border-brand bg-brand text-brand-foreground" : "text-muted-foreground hover:border-brand/40 hover:text-foreground",
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+
         <BlogTagFilter tags={tags} activeTag={activeTag} />
 
         <PublicIndexList
-          emptyDescription="Published articles will appear here after an admin approves them."
-          emptyTitle="No published articles yet"
+          emptyDescription={activeFeed === "following" && !session ? "Sign in to follow authors and build a personalized feed." : activeFeed === "following" ? "Follow authors to populate this feed." : "Published articles will appear here after an admin approves them."}
+          emptyTitle={activeFeed === "following" ? "No following feed yet" : "No published articles yet"}
           isEmpty={posts.length === 0}
         >
           {posts.map((post) => (

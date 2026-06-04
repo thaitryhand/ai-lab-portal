@@ -21,6 +21,17 @@ blog_posts = Table(
     Column("published_at", DateTime(timezone=True), nullable=True),
     Column("content_markdown", Text, nullable=False),
     Column("image_url", String(2048), nullable=True),
+    Column("author_user_id", String(255), nullable=True),
+)
+
+user_follows = Table(
+    "user_follows",
+    metadata,
+    Column("follower_user_id", String(255), nullable=False, primary_key=True),
+    Column("followed_user_id", String(255), nullable=False, primary_key=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Index("ix_user_follows_follower", "follower_user_id"),
+    Index("ix_user_follows_followed", "followed_user_id"),
 )
 
 blog_tags = Table(

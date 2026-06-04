@@ -20,6 +20,7 @@ class BlogPost(BaseModel):
     published_at: datetime | None
     content_markdown: str
     image_url: str | None = None
+    author_user_id: str | None = None
 
 
 class BlogPostCreate(BaseModel):
@@ -29,6 +30,7 @@ class BlogPostCreate(BaseModel):
     author_name: str = Field(min_length=1, max_length=120)
     content_markdown: str = Field(min_length=1)
     image_url: str | None = Field(default=None, max_length=2048)
+    author_user_id: str | None = Field(default=None, max_length=255)
 
 
 class BlogPostUpdate(BaseModel):
@@ -38,6 +40,7 @@ class BlogPostUpdate(BaseModel):
     author_name: str | None = Field(default=None, min_length=1, max_length=120)
     content_markdown: str | None = Field(default=None, min_length=1)
     image_url: str | None = Field(default=None, max_length=2048)
+    author_user_id: str | None = Field(default=None, max_length=255)
 
 
 class BlogPostSummary(BaseModel):
@@ -47,6 +50,7 @@ class BlogPostSummary(BaseModel):
     author_name: str
     published_at: datetime
     image_url: str | None = None
+    author_user_id: str | None = None
 
 
 class BlogPostDetail(BlogPostSummary):
@@ -67,6 +71,7 @@ class AdminBlogPostDetail(AdminBlogPostSummary):
     excerpt: str
     author_name: str
     content_markdown: str
+    author_user_id: str | None = None
 
 
 class AuditEvent(BaseModel):
@@ -86,7 +91,7 @@ class BlogRepositoryProtocol(Protocol):
 
     def list_all(self) -> list[AdminBlogPostSummary]: ...
 
-    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]: ...
+    def list_published(self, *, post_ids: set[str] | None = None, author_user_ids: set[str] | None = None) -> list[BlogPostSummary]: ...
 
     def get_published_by_slug(self, slug: str) -> BlogPostDetail | None: ...
 
@@ -124,6 +129,8 @@ class BlogRepository:
             excerpt=post.excerpt,
             author_name=post.author_name,
             content_markdown=post.content_markdown,
+            image_url=post.image_url,
+            author_user_id=post.author_user_id,
         )
 
     def get_by_slug(self, slug: str) -> AdminBlogPostDetail | None:
@@ -149,11 +156,14 @@ class BlogRepository:
             for post in posts
         ]
 
-    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]:
+    def list_published(self, *, post_ids: set[str] | None = None, author_user_ids: set[str] | None = None) -> list[BlogPostSummary]:
         posts = [
             post
             for post in self.posts.values()
-            if post.status == "published" and post.published_at and (post_ids is None or post.id in post_ids)
+            if post.status == "published"
+            and post.published_at
+            and (post_ids is None or post.id in post_ids)
+            and (author_user_ids is None or (post.author_user_id is not None and post.author_user_id in author_user_ids))
         ]
         posts.sort(
             key=lambda post: post.published_at or datetime.min.replace(tzinfo=UTC),
@@ -166,6 +176,8 @@ class BlogRepository:
                 excerpt=post.excerpt,
                 author_name=post.author_name,
                 published_at=post.published_at,
+                image_url=post.image_url,
+                author_user_id=post.author_user_id,
             )
             for post in posts
             if post.published_at is not None
@@ -186,6 +198,8 @@ class BlogRepository:
                     published_at=post.published_at,
                     id=post.id,
                     content_markdown=post.content_markdown,
+                    image_url=post.image_url,
+                    author_user_id=post.author_user_id,
                 )
         return None
 
@@ -207,6 +221,8 @@ class BlogRepository:
             excerpt=request.excerpt,
             author_name=request.author_name,
             content_markdown=request.content_markdown,
+            image_url=request.image_url,
+            author_user_id=request.author_user_id,
         )
         self.posts[post.id] = post
         return post
@@ -332,7 +348,7 @@ class PostgresBlogRepository:
                 for row in rows
             ]
 
-    def list_published(self, *, post_ids: set[str] | None = None) -> list[BlogPostSummary]:
+    def list_published(self, *, post_ids: set[str] | None = None, author_user_ids: set[str] | None = None) -> list[BlogPostSummary]:
         self.seed_defaults_when_empty()
         with self.engine.begin() as connection:
             filters = [
@@ -343,6 +359,10 @@ class PostgresBlogRepository:
                 if not post_ids:
                     return []
                 filters.append(blog_posts.c.id.in_(post_ids))
+            if author_user_ids is not None:
+                if not author_user_ids:
+                    return []
+                filters.append(blog_posts.c.author_user_id.in_(author_user_ids))
             rows = connection.execute(
                 select(blog_posts)
                 .where(*filters)
@@ -355,6 +375,8 @@ class PostgresBlogRepository:
                     excerpt=row["excerpt"],
                     author_name=row["author_name"],
                     published_at=row["published_at"],
+                    image_url=row.get("image_url") if hasattr(row, "get") else row["image_url"],
+                    author_user_id=row.get("author_user_id") if hasattr(row, "get") else row["author_user_id"],
                 )
                 for row in rows
             ]
@@ -383,6 +405,8 @@ class PostgresBlogRepository:
                 published_at=row["published_at"],
                 id=row["id"],
                 content_markdown=row["content_markdown"],
+                image_url=row.get("image_url") if hasattr(row, "get") else row["image_url"],
+                author_user_id=row.get("author_user_id") if hasattr(row, "get") else row["author_user_id"],
             )
 
     def create(self, request: BlogPostCreate) -> BlogPost:
@@ -412,6 +436,8 @@ class PostgresBlogRepository:
             excerpt=request.excerpt,
             author_name=request.author_name,
             content_markdown=request.content_markdown,
+            image_url=request.image_url,
+            author_user_id=request.author_user_id,
         )
         with self.engine.begin() as connection:
             connection.execute(insert(blog_posts).values(**post.model_dump()))

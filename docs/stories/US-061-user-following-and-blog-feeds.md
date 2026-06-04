@@ -2,7 +2,7 @@
 
 ## Status
 
-planned
+implemented
 
 ## Lane
 
@@ -90,4 +90,28 @@ None expected.
 
 ## Evidence
 
-Pending implementation.
+Implemented in code:
+
+- `backend/migrations/versions/20260604_0028_user_follows_blog_authors.py` adds `user_follows` and `blog_posts.author_user_id`.
+- `backend/app/user_follows.py` adds follow/unfollow/follow-state repository and public routes.
+- `GET /public/blog-posts?feed=latest|following|discover` supports explicit feed selection; Following requires signed user identity and filters by followed `author_user_id`.
+- `BlogEditor` save/publish actions send `author_user_id` from the authenticated session.
+- `/profiles/[userId]` displays follower/following counts and follow/unfollow affordances.
+- `/blog` displays `Latest`, `Following`, and `Discover` tabs.
+
+Validation run:
+
+```text
+python -m pytest backend/tests/test_user_follows.py backend/tests/test_user_profiles.py backend/tests/test_blog_social_comments.py backend/tests/test_blog_tags.py backend/tests/test_admin_blog.py backend/tests/test_migrations.py -q
+# 22 passed
+
+cd frontend && npm run typecheck
+# passed
+
+cd frontend && npm run lint
+# passed
+
+cd frontend && npm run build
+# passed; routes include /blog and /profiles/[userId]
+```
+

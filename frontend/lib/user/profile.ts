@@ -4,6 +4,13 @@ const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:180
 
 type Session = { user: { id: string; email: string } };
 
+export type FollowState = {
+  userId: string;
+  followerCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+};
+
 export type UserProfile = {
   userId: string;
   displayName: string;
@@ -14,6 +21,13 @@ export type UserProfile = {
   linkedinUrl: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+type ApiFollowState = {
+  user_id: string;
+  follower_count: number;
+  following_count: number;
+  is_following: boolean;
 };
 
 type ApiUserProfile = {
@@ -27,6 +41,15 @@ type ApiUserProfile = {
   created_at: string;
   updated_at: string;
 };
+
+function toFollowState(state: ApiFollowState): FollowState {
+  return {
+    userId: state.user_id,
+    followerCount: state.follower_count,
+    followingCount: state.following_count,
+    isFollowing: state.is_following,
+  };
+}
 
 function toProfile(profile: ApiUserProfile): UserProfile {
   return {
@@ -81,4 +104,16 @@ export async function getPublicProfile(userId: string): Promise<UserProfile | un
   if (response.status === 404) return undefined;
   if (!response.ok) throw new Error(`Failed to fetch profile: ${response.status}`);
   return toProfile((await response.json()) as ApiUserProfile);
+}
+
+export async function getFollowState(session: Session, userId: string): Promise<FollowState> {
+  return toFollowState(await callUser<ApiFollowState>(session, `/public/profiles/${userId}/follow-state`));
+}
+
+export async function followUser(session: Session, userId: string): Promise<FollowState> {
+  return toFollowState(await callUser<ApiFollowState>(session, `/public/profiles/${userId}/follow`, { method: "POST" }));
+}
+
+export async function unfollowUser(session: Session, userId: string): Promise<FollowState> {
+  return toFollowState(await callUser<ApiFollowState>(session, `/public/profiles/${userId}/follow`, { method: "DELETE" }));
 }
