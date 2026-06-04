@@ -16,6 +16,11 @@ a durable place to land.
 | E03 AI News Official Sources | RSS/official/GitHub source ingestion, extraction, dedup, scoring, review queue, public feed | implemented (MVP 3) |
 | E04 User-Submitted Links | Safe link submission, SSRF-protected async fetch, duplicate detection, human approval | implemented (MVP 4) |
 | E05 X/Twitter Intelligence | Social ingestion after provider strategy and risk ownership are accepted | stories implemented (5/6 entry criteria met, waiting budget/terms) |
+| E06 Contact | Contact form public page and admin message review | planned |
+| E07 Notifications | User notification system for follows and comment replies | planned |
+| E08 Projects | Company projects CRUD and public pages | planned |
+| E09 UI/UX Polish | Loading states, micro-interactions, responsive improvements | planned |
+| E10 Admin Dashboard | Stats API and stat cards for admin dashboard | planned |
 
 ## Selected Stories
 
@@ -65,3 +70,18 @@ a durable place to land.
 | `US-056` | E05 X/Twitter | implemented |
 | `US-057` | E05 X/Twitter | implemented |
 | `US-058` | Blog creation from public page | implemented |
+| `US-059` | Blog tag picker and rich taxonomy | implemented |
+| `US-060` | Threaded blog comments | implemented |
+| `US-061` | User following and blog feeds | implemented |
+| `US-062` | E06 Contact | planned |
+| `US-063` | E06 Contact | planned |
+| `US-064` | E07 Notifications | planned |
+| `US-065` | E07 Notifications | planned |
+| `US-066` | E08 Projects | planned |
+| `US-067` | E08 Projects | planned |
+| `US-068` | E08 Projects | planned |
+| `US-069` | E09 UI/UX Polish | planned |
+| `US-070` | E09 UI/UX Polish | planned |
+| `US-071` | E09 UI/UX Polish | planned |
+| `US-072` | E10 Admin Dashboard | planned |
+| `US-073` | E10 Admin Dashboard | planned |

@@ -64,7 +64,7 @@ public-facing blog section, without navigating to the admin dashboard.
 | --- | --- |
 | Unit | N/A (UI change only, no new logic) |
 | Integration | Backend tests remain passing |
-| E2E | N/A (manual admin flow, covered by typecheck) |
+| E2E | E2E test: public blog creation and publish flow |
 | Platform | N/A |
 | Release | `cd frontend && npm run typecheck && npm run lint && npm run build` |
 

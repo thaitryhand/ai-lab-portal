@@ -80,7 +80,7 @@ Gap:
 | --- | --- |
 | Unit | Backend tests for follow/unfollow, self-follow rejection, following feed filtering. |
 | Integration | Blog post create assigns `author_user_id` for authenticated user. |
-| E2E | Optional: user follows author, following feed shows author's post. |
+| E2E | E2E test: feed tabs render, follow/unfollow from profile page. |
 | Platform | n/a unless deployed. |
 | Release | Backend tests; frontend typecheck/lint/build. |
 

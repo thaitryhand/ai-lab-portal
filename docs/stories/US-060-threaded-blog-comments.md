@@ -73,7 +73,7 @@ Gap:
 | --- | --- |
 | Unit | Backend tests for public approved comments without auth, parent validation, pending visibility. |
 | Integration | Comment tree building from flat API response. |
-| E2E | Optional: user replies to a comment; approved nested reply appears under parent. |
+| E2E | E2E test: authenticated user posts comment, sees pending moderation. |
 | Platform | n/a unless deployed. |
 | Release | Backend social/profile tests; frontend typecheck/lint/build. |
 

@@ -77,7 +77,7 @@ Gap:
 | --- | --- |
 | Unit | Backend tests for seed/default tags and duplicate normalization. |
 | Integration | Editor action saves selected tags, edit route preloads selected tags. |
-| E2E | Optional: create post with tag, publish, click tag filter on public blog. |
+| E2E | E2E test: admin selects tag in editor, tag renders on public detail, tag filter works. |
 | Platform | n/a unless deployed. |
 | Release | Frontend typecheck/lint/build; backend tag tests. |
 
