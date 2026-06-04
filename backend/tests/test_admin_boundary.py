@@ -46,7 +46,7 @@ def test_admin_probe_rejects_tampered_identity_payload() -> None:
     response = _client().get("/admin/probe", headers={**_headers(payload), ADMIN_IDENTITY_HEADER: tampered_payload})
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid admin identity signature"}
+    assert response.json() == {"detail": "Invalid identity signature"}
 
 
 def test_admin_probe_rejects_non_admin_role() -> None:
@@ -55,7 +55,7 @@ def test_admin_probe_rejects_non_admin_role() -> None:
     response = _client().get("/admin/probe", headers=_headers(payload))
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid admin identity"}
+    assert response.json() == {"detail": "Invalid identity"}
 
 
 def test_admin_probe_rejects_expired_identity() -> None:
@@ -64,7 +64,7 @@ def test_admin_probe_rejects_expired_identity() -> None:
     response = _client().get("/admin/probe", headers=_headers(payload))
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Expired admin identity"}
+    assert response.json() == {"detail": "Expired identity"}
 
 
 def test_admin_probe_accepts_valid_admin_identity() -> None:
