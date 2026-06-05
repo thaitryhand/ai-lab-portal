@@ -119,8 +119,10 @@ export async function publishAction(previous: EditorActionState, formData: FormD
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/admin/login");
   try {
-    const saved = previous.postId ? { id: previous.postId, status: previous.status } : await saveDraft(formData, session);
-    if (previous.postId) await savePostTags(formData, saved.id, session);
+    // Always save content first (includes image URLs from the editor).
+    // Then publish. Previously, for existing posts, saveDraft was skipped
+    // and publishAction only changed status — new content was never persisted.
+    const saved = await saveDraft(formData, session);
     const published = await callAdminApi(`/admin/blog-posts/${saved.id}/publish`, { method: "POST" }, session);
     return { message: "Post published", postId: published.id, status: "published" };
   } catch (error) {
