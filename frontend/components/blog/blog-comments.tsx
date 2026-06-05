@@ -141,7 +141,6 @@ function CommentCard({
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(node.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReacted, setIsReacted] = useState(node.user_reacted ?? false);
   const [reactionCount, setReactionCount] = useState(node.reaction_count ?? 0);
@@ -180,16 +179,18 @@ function CommentCard({
     });
   }, [onToggleReaction, isAuthenticated, slug, node.id, isReacted]);
 
-  const handleEditSave = useCallback(async () => {
-    if (!onEditComment || !editContent.trim()) return;
+  const handleEditSave = useCallback(async (html: string) => {
+    if (!onEditComment) return;
+    const text = html.replace(/<[^>]*>/g, "").trim();
+    if (!text) return;
     setIsSubmitting(true);
     try {
-      await onEditComment(slug, node.id, editContent.trim());
+      await onEditComment(slug, node.id, html);
       setIsEditing(false);
     } finally {
       setIsSubmitting(false);
     }
-  }, [onEditComment, slug, node.id, editContent]);
+  }, [onEditComment, slug, node.id]);
 
   const handleDelete = useCallback(async () => {
     if (!onDeleteComment) return;
@@ -269,7 +270,7 @@ function CommentCard({
                 <>
                   <button
                     type="button"
-                    onClick={() => { setIsEditing(true); setEditContent(node.content); }}
+                    onClick={() => setIsEditing(true)}
                     className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     aria-label="Edit comment"
                   >
@@ -310,23 +311,15 @@ function CommentCard({
 
           {/* Content */}
           {isEditing ? (
-            <div className="mt-2 space-y-2">
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="w-full resize-none rounded-xl border border-border/80 bg-card px-5 py-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:border-brand/40 focus:outline-none focus:ring-2 focus:ring-brand/10 selection:bg-brand/15"
-                rows={3}
-                maxLength={10000}
+            <div className="mt-2">
+              <CommentTiptapEditor
+                onSubmit={handleEditSave}
                 autoFocus
+                onCancel={() => setIsEditing(false)}
+                isSubmitting={isSubmitting}
+                session={session}
+                initialContent={node.content}
               />
-              <div className="flex gap-2">
-                <Button type="button" size="sm" disabled={!editContent.trim() || isSubmitting} onClick={handleEditSave}>
-                  Save
-                </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </Button>
-              </div>
             </div>
           ) : (
             <div className="mt-1.5">

@@ -30,6 +30,8 @@ type CommentTiptapEditorProps = {
   onCancel?: () => void;
   isSubmitting?: boolean;
   session?: { user: { id: string; name?: string; email: string; image?: string | null } } | null;
+  /** Pre‑fill the editor with existing HTML content (edit mode). */
+  initialContent?: string;
 };
 
 type ToolbarAction = {
@@ -74,9 +76,14 @@ export function CommentTiptapEditor({
   onCancel,
   isSubmitting: externalSubmitting,
   session,
+  initialContent,
 }: CommentTiptapEditorProps) {
-  const [hasContent, setHasContent] = useState(false);
-  const [charCount, setCharCount] = useState(0);
+  const [hasContent, setHasContent] = useState(
+    initialContent ? initialContent.replace(/<[^>]*>/g, "").trim().length > 0 : false,
+  );
+  const [charCount, setCharCount] = useState(
+    initialContent ? initialContent.replace(/<[^>]*>/g, "").length : 0,
+  );
 
   // ── Refs for values passed to editorProps (avoid stale closures) ──
   const onSubmitRef = useRef(onSubmit);
@@ -91,6 +98,7 @@ export function CommentTiptapEditor({
   const isBusy = externalSubmitting || submitLockRef.current;
 
   const editor = useEditor({
+    content: initialContent,
     extensions: [
       StarterKit.configure({
         heading: { levels: [3] },
@@ -102,7 +110,7 @@ export function CommentTiptapEditor({
         openOnClick: false,
         HTMLAttributes: { class: "text-brand underline underline-offset-2 hover:text-brand/80" },
       }),
-      Placeholder.configure({ placeholder, showOnlyWhenEditable: true }),
+      Placeholder.configure({ placeholder, showOnlyWhenEditable: false }),
     ],
     editorProps: {
       attributes: {
