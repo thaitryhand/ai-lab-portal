@@ -12,7 +12,8 @@
     "quality:precommit": "lint-staged && npm run typecheck && npm run build",
     "test": "tsx --test lib/**/*.test.ts",
     "test:e2e": "playwright test",
-    "seed:admin": "node scripts/seed-admin.mjs"
+    "seed:admin": "node scripts/seed-admin.mjs",
+    "postinstall": "node scripts/ensure-better-auth-sso-stub.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
