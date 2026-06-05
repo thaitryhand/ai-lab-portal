@@ -3,15 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PenLine } from "lucide-react";
+import { Eye, EyeOff, PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/session-provider";
 
 export default function PublicRegisterPage() {
   const router = useRouter();
+  const { refresh } = useSession();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,8 +54,9 @@ export default function PublicRegisterPage() {
         return;
       }
 
-      // Auto-redirect to login after successful registration
-      router.push("/login?registered=true");
+      await refresh();
+      router.push("/");
+      router.refresh();
     } catch {
       setError("Registration failed. Please try again.");
     } finally {
@@ -116,16 +121,27 @@ export default function PublicRegisterPage() {
               <label htmlFor="password" className="text-sm font-medium text-foreground">
                 Password
               </label>
-              <Input
-                autoComplete="new-password"
-                disabled={isSubmitting}
-                id="password"
-                minLength={8}
-                name="password"
-                required
-                type="password"
-                className="h-11"
-              />
+              <div className="relative">
+                <Input
+                  autoComplete="new-password"
+                  disabled={isSubmitting}
+                  id="password"
+                  minLength={8}
+                  name="password"
+                  required
+                  type={showPassword ? "text" : "password"}
+                  className="h-11 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                  disabled={isSubmitting}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">At least 8 characters</p>
             </div>
 
@@ -133,16 +149,27 @@ export default function PublicRegisterPage() {
               <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                 Confirm password
               </label>
-              <Input
-                autoComplete="new-password"
-                disabled={isSubmitting}
-                id="confirmPassword"
-                minLength={8}
-                name="confirmPassword"
-                required
-                type="password"
-                className="h-11"
-              />
+              <div className="relative">
+                <Input
+                  autoComplete="new-password"
+                  disabled={isSubmitting}
+                  id="confirmPassword"
+                  minLength={8}
+                  name="confirmPassword"
+                  required
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="h-11 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                  disabled={isSubmitting}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (

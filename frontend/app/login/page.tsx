@@ -3,17 +3,20 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenLine } from "lucide-react";
+import { Eye, EyeOff, PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/components/session-provider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refresh } = useSession();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("registered") === "true") {
@@ -46,6 +49,7 @@ function LoginForm() {
       }
 
       const data = await res.json();
+      await refresh();
       router.push(data.url || "/");
       router.refresh();
     } catch {
@@ -101,15 +105,26 @@ function LoginForm() {
             <label htmlFor="password" className="text-sm font-medium text-foreground">
               Password
             </label>
-            <Input
-              autoComplete="current-password"
-              disabled={isSubmitting}
-              id="password"
-              name="password"
-              required
-              type="password"
-              className="h-11"
-            />
+            <div className="relative">
+              <Input
+                autoComplete="current-password"
+                disabled={isSubmitting}
+                id="password"
+                name="password"
+                required
+                type={showPassword ? "text" : "password"}
+                className="h-11 pr-11"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                disabled={isSubmitting}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (
