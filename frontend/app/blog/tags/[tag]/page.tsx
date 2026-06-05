@@ -6,7 +6,7 @@ import { InfiniteBlogList } from "@/components/blog/infinite-blog-list";
 import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
-import { listPublishedBlogPosts } from "@/lib/blog/posts";
+import { listPublishedBlogPostsPage } from "@/lib/blog/posts";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
@@ -27,10 +27,11 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
 
 export default async function BlogTagPage({ params }: { params: Promise<{ tag: string }> }) {
   const { tag } = await params;
-  const [tags, posts] = await Promise.all([
+  const [tags, postsPage] = await Promise.all([
     listPublicBlogTags().catch(() => []),
-    listPublishedBlogPosts({ tag }).catch(() => []),
+    listPublishedBlogPostsPage({ tag, page: 1, limit: 8 }).catch(() => ({ items: [], page: 1, limit: 8, total: 0, hasMore: false })),
   ]);
+  const posts = postsPage.items;
   const found = tags.find((item) => item.slug === tag);
   const name = found?.name ?? tag;
 
@@ -47,7 +48,9 @@ export default async function BlogTagPage({ params }: { params: Promise<{ tag: s
           description={`${posts.length} article${posts.length === 1 ? "" : "s"} filed under ${name}.`}
         />
         <InfiniteBlogList
-          posts={posts}
+          initialPosts={posts}
+          initialHasMore={postsPage.hasMore}
+          tag={tag}
           emptyTitle="No articles for this tag yet"
           emptyDescription="Articles will appear here after they are tagged and published."
         />

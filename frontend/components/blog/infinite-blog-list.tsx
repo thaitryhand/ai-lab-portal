@@ -1,30 +1,63 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { PublicIndexEntry } from "@/components/public/public-index-entry";
 import { PublicIndexList } from "@/components/public/public-index-list";
 import { SkeletonCardGrid } from "@/components/public/skeleton-card";
-import type { BlogPostSummary } from "@/lib/blog/posts";
+import type { BlogFeed, BlogPostSummary } from "@/lib/blog/posts";
 import { formatReadingTime } from "@/lib/reading-time";
 
 type Props = {
-  posts: BlogPostSummary[];
+  initialPosts: BlogPostSummary[];
+  initialHasMore: boolean;
   emptyTitle: string;
   emptyDescription: string;
   pageSize?: number;
+  tag?: string;
+  feed?: BlogFeed;
+  query?: string;
 };
 
-export function InfiniteBlogList({ posts, emptyTitle, emptyDescription, pageSize = 8 }: Props) {
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+type ApiPage = {
+  items: BlogPostSummary[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+};
+
+function buildUrl({ page, pageSize, tag, feed, query }: { page: number; pageSize: number; tag?: string; feed?: BlogFeed; query?: string }) {
+  const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
+  if (tag) params.set("tag", tag);
+  if (feed && feed !== "latest") params.set("feed", feed);
+  if (query) params.set("q", query);
+  return `/api/blog-posts?${params.toString()}`;
+}
+
+export function InfiniteBlogList({
+  initialPosts,
+  initialHasMore,
+  emptyTitle,
+  emptyDescription,
+  pageSize = 8,
+  tag,
+  feed = "latest",
+  query,
+}: Props) {
+  const [posts, setPosts] = useState(initialPosts);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
-    setVisibleCount(pageSize);
-  }, [posts, pageSize]);
-
-  const visiblePosts = useMemo(() => posts.slice(0, visibleCount), [posts, visibleCount]);
-  const hasMore = visibleCount < posts.length;
+    setPosts(initialPosts);
+    setPage(1);
+    setHasMore(initialHasMore);
+    inFlightRef.current = false;
+  }, [initialPosts, initialHasMore, tag, feed, query]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -32,16 +65,31 @@ export function InfiniteBlogList({ posts, emptyTitle, emptyDescription, pageSize
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisibleCount((count) => Math.min(count + pageSize, posts.length));
-        }
+        if (!entry?.isIntersecting || inFlightRef.current) return;
+        inFlightRef.current = true;
+        const nextPage = page + 1;
+        startTransition(async () => {
+          try {
+            const response = await fetch(buildUrl({ page: nextPage, pageSize, tag, feed, query }));
+            if (!response.ok) throw new Error("Failed to load more posts");
+            const data = (await response.json()) as ApiPage;
+            setPosts((current) => {
+              const seen = new Set(current.map((post) => post.slug));
+              return [...current, ...data.items.filter((post) => !seen.has(post.slug))];
+            });
+            setPage(data.page);
+            setHasMore(data.hasMore);
+          } finally {
+            inFlightRef.current = false;
+          }
+        });
       },
       { rootMargin: "480px 0px" },
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, pageSize, posts.length]);
+  }, [feed, hasMore, page, pageSize, query, tag]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,7 +98,7 @@ export function InfiniteBlogList({ posts, emptyTitle, emptyDescription, pageSize
         emptyTitle={emptyTitle}
         isEmpty={posts.length === 0}
       >
-        {visiblePosts.map((post) => (
+        {posts.map((post) => (
           <PublicIndexEntry
             key={post.slug}
             excerpt={post.excerpt}
@@ -71,7 +119,7 @@ export function InfiniteBlogList({ posts, emptyTitle, emptyDescription, pageSize
 
       {hasMore ? (
         <div ref={sentinelRef} className="pt-2" aria-label="Loading more posts">
-          <SkeletonCardGrid count={2} />
+          <SkeletonCardGrid count={isPending ? 2 : 1} />
         </div>
       ) : posts.length > pageSize ? (
         <p className="text-center text-sm text-muted-foreground">You&apos;re all caught up.</p>

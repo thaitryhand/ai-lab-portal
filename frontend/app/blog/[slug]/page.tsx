@@ -72,7 +72,25 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     listPublicPostTags(slug).catch(() => []),
     listPublishedBlogPosts().catch(() => []),
   ]);
-  const relatedPosts = allPosts.filter((item) => item.slug !== slug).slice(0, 3);
+  const currentTagSlugs = new Set(tags.map((tag) => tag.slug));
+  const candidatePosts = allPosts.filter((item) => item.slug !== slug);
+  const candidateTags = await Promise.all(
+    candidatePosts.map(async (item) => ({
+      post: item,
+      tags: await listPublicPostTags(item.slug).catch(() => []),
+    })),
+  );
+  const relatedPosts = candidateTags
+    .map(({ post, tags: itemTags }) => ({
+      post,
+      sharedTagCount: itemTags.filter((tag) => currentTagSlugs.has(tag.slug)).length,
+    }))
+    .sort((a, b) => {
+      if (b.sharedTagCount !== a.sharedTagCount) return b.sharedTagCount - a.sharedTagCount;
+      return new Date(b.post.publishedAt).getTime() - new Date(a.post.publishedAt).getTime();
+    })
+    .slice(0, 3)
+    .map(({ post }) => post);
 
   const jsonLd = {
     "@context": "https://schema.org",

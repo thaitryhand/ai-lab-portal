@@ -16,6 +16,20 @@ def test_public_blog_list_returns_only_published_posts() -> None:
     assert "draft-provider-scorecards" not in {post["slug"] for post in posts}
 
 
+def test_public_blog_list_supports_paginated_response() -> None:
+    client = TestClient(create_app(Settings(environment="test")))
+
+    response = client.get("/public/blog-posts?paginated=true&page=1&limit=1")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["page"] == 1
+    assert data["limit"] == 1
+    assert data["total"] == 1
+    assert data["has_more"] is False
+    assert data["items"][0]["slug"] == "building-an-ai-lab-with-human-review"
+
+
 def test_public_blog_detail_returns_published_post() -> None:
     client = TestClient(create_app(Settings(environment="test")))
 

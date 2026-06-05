@@ -2,7 +2,7 @@
 from collections.abc import Callable
 from typing import Annotated, Any, cast
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 
 from backend.app.admin_boundary import (
     ADMIN_IDENTITY_HEADER,
@@ -465,9 +465,12 @@ def create_app(
         tag: str | None = None,
         feed: str = "latest",
         q: str | None = None,
+        page: Annotated[int, Query(ge=1)] = 1,
+        limit: Annotated[int, Query(ge=1, le=50)] = 20,
+        paginated: bool = False,
         identity_payload: Annotated[str | None, Header(alias=USER_IDENTITY_HEADER)] = None,
         signature: Annotated[str | None, Header(alias=USER_SIGNATURE_HEADER)] = None,
-    ) -> list[BlogPostSummary]:
+    ) -> list[BlogPostSummary] | dict[str, object]:
         post_ids = tag_repo.get_post_ids_for_tag_slug(tag) if tag else None
         author_user_ids: set[str] | None = None
         if feed == "following":
@@ -475,7 +478,19 @@ def create_app(
             author_user_ids = follow_repo.followed_user_ids(identity.user_id)
         elif feed not in {"latest", "discover"}:
             raise HTTPException(status_code=422, detail="Unsupported feed")
-        return repository.list_published(post_ids=post_ids, author_user_ids=author_user_ids, q=q)
+        posts = repository.list_published(post_ids=post_ids, author_user_ids=author_user_ids, q=q)
+        if not paginated:
+            return posts
+        total = len(posts)
+        start = (page - 1) * limit
+        end = start + limit
+        return {
+            "items": posts[start:end],
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "has_more": end < total,
+        }
 
     @app.get("/public/blog-posts/{slug}")
     async def public_blog_post(slug: str) -> BlogPostDetail:

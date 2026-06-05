@@ -11,7 +11,7 @@ import { PublicPageShell } from "@/components/public/public-page-shell";
 import { SearchInput } from "@/components/public/search-input";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { listPublishedBlogPosts, type BlogFeed } from "@/lib/blog/posts";
+import { listPublishedBlogPostsPage, type BlogFeed } from "@/lib/blog/posts";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
@@ -37,10 +37,11 @@ export default async function BlogIndexPage({
   const activeFeed: BlogFeed = resolvedSearchParams?.feed === "following" || resolvedSearchParams?.feed === "discover" ? resolvedSearchParams.feed : "latest";
   const searchQuery = resolvedSearchParams?.q;
   const session = await auth.api.getSession({ headers: await headers() });
-  const [posts, tags] = await Promise.all([
-    activeFeed === "following" && !session ? Promise.resolve([]) : listPublishedBlogPosts({ tag: activeTag, feed: activeFeed, session, q: searchQuery }),
+  const [postsPage, tags] = await Promise.all([
+    activeFeed === "following" && !session ? Promise.resolve({ items: [], page: 1, limit: 8, total: 0, hasMore: false }) : listPublishedBlogPostsPage({ tag: activeTag, feed: activeFeed, session, q: searchQuery, page: 1, limit: 8 }),
     listPublicBlogTags(),
   ]);
+  const posts = postsPage.items;
 
   return (
     <PublicPageShell currentPath="/blog">
@@ -110,7 +111,11 @@ export default async function BlogIndexPage({
         <BlogTagFilter tags={tags} activeTag={activeTag} />
 
         <InfiniteBlogList
-          posts={posts}
+          initialPosts={posts}
+          initialHasMore={postsPage.hasMore}
+          tag={activeTag}
+          feed={activeFeed}
+          query={searchQuery}
           emptyDescription={activeFeed === "following" && !session ? "" : activeFeed === "following" ? "Follow authors to populate this feed." : "Published articles will appear here after an admin approves them."}
           emptyTitle={activeFeed === "following" ? "No following feed yet" : "No published articles yet"}
         />

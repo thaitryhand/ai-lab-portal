@@ -21,6 +21,14 @@ export type BlogPostDetail = BlogPostSummary & {
   contentMarkdown: string;
 };
 
+export type PaginatedBlogPosts = {
+  items: BlogPostSummary[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+};
+
 type ApiBlogPostSummary = {
   slug: string;
   title: string;
@@ -76,6 +84,41 @@ export async function listPublishedBlogPosts(options?: { tag?: string; feed?: Bl
 
   const posts = (await response.json()) as ApiBlogPostSummary[];
   return posts.map(toSummary);
+}
+
+export async function listPublishedBlogPostsPage(options?: { tag?: string; feed?: BlogFeed; session?: Session | null; q?: string; page?: number; limit?: number }): Promise<PaginatedBlogPosts> {
+  const url = new URL(`${backendBaseUrl}/public/blog-posts`);
+  if (options?.tag) url.searchParams.set("tag", options.tag);
+  if (options?.feed) url.searchParams.set("feed", options.feed);
+  if (options?.q) url.searchParams.set("q", options.q);
+  url.searchParams.set("paginated", "true");
+  url.searchParams.set("page", String(options?.page ?? 1));
+  url.searchParams.set("limit", String(options?.limit ?? 8));
+
+  const response = await fetch(url.toString(), {
+    cache: "no-store",
+    headers: options?.session ? createUserBoundaryHeaders(options.session) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch paginated blog posts: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    items: ApiBlogPostSummary[];
+    page: number;
+    limit: number;
+    total: number;
+    has_more: boolean;
+  };
+
+  return {
+    items: data.items.map(toSummary),
+    page: data.page,
+    limit: data.limit,
+    total: data.total,
+    hasMore: data.has_more,
+  };
 }
 
 export async function getPublishedBlogPost(slug: string): Promise<BlogPostDetail | undefined> {
