@@ -7,9 +7,31 @@ import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 
+const siteName = "AI Lab Portal";
+const siteDescription = "Editorial AI engineering — exploring agent workflows, MCP integrations, and production AI patterns.";
+const siteUrl = "https://ai-lab-portal.dev";
+
 export const metadata: Metadata = {
-  title: "AI Lab Portal",
-  description: "Public and admin shell for the AI Lab Portal MVP.",
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  openGraph: {
+    siteName,
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
