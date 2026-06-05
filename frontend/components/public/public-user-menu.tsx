@@ -65,8 +65,13 @@ export function PublicUserMenu() {
   async function handleSignOut() {
     setOpen(false);
     try {
-      await fetch("/api/auth/sign-out", { method: "POST" });
-      refresh();
+      const response = await fetch("/api/auth/sign-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) return;
+      await refresh();
       router.refresh();
     } catch {
       // ignore
