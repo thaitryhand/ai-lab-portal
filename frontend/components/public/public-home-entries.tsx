@@ -6,8 +6,6 @@ import { ArrowUpRight, BookOpen, Briefcase, FlaskConical } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import {
-  publicEntryExcerptClass,
-  publicEntryTitleClass,
   publicEyebrowClass,
   publicLandingSectionGap,
   publicSectionHeaderBlockClass,
@@ -18,10 +16,10 @@ import { cn } from "@/lib/utils";
 
 type Entry = {
   description: string;
+  detail: string;
   href: string;
   icon: LucideIcon;
   index: string;
-  span?: "featured" | "default";
   title: string;
 };
 
@@ -29,22 +27,24 @@ const entries: Entry[] = [
   {
     index: "01",
     title: "AI Lab",
-    description: "Overview of human-reviewed engineering, featured showcases, and latest articles.",
+    description: "The overview layer for positioning, principles, and what the lab is building in public.",
+    detail: "Mission, operating model, and current focus areas.",
     href: "/lab",
     icon: FlaskConical,
-    span: "featured",
   },
   {
     index: "02",
     title: "Showcases",
-    description: "Client-ready delivery stories with industry context and publish controls.",
+    description: "Client-ready delivery stories with industry context, outcomes, and publish controls.",
+    detail: "Proof of work without exposing private drafts.",
     href: "/showcases",
     icon: Briefcase,
   },
   {
     index: "03",
     title: "Blog",
-    description: "Practical AI engineering notes approved before they go public.",
+    description: "Practical AI engineering notes, workflow lessons, and human-reviewed field reports.",
+    detail: "Editorial posts approved before they go public.",
     href: "/blog",
     icon: BookOpen,
   },
@@ -59,48 +59,58 @@ const fadeUp = {
   }),
 };
 
-function EntryCard({ entry }: { entry: Entry }) {
+function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   const Icon = entry.icon;
-  const featured = entry.span === "featured";
 
   return (
-    <Link
-      className={cn(
-        "group relative flex h-full min-h-60 flex-col justify-between overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 p-8 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)] sm:min-h-[16rem] sm:p-10 lg:p-12",
-        featured && "lg:min-h-88"
-      )}
-      href={entry.href}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand/5 blur-2xl transition-opacity duration-300 group-hover:bg-brand/10"
-      />
-      <div className="relative flex flex-1 flex-col">
-        <div className="flex items-start justify-between gap-6">
-          <span className="font-(family-name:--font-gt-super) text-4xl leading-none text-brand/75 sm:text-5xl">
+    <motion.div custom={index} initial="hidden" animate="show" variants={fadeUp} className="h-full">
+      <Link
+        className="group relative flex h-full min-h-[19rem] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 p-7 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:bg-card hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)] sm:p-8 lg:p-9"
+        href={entry.href}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brand/45 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/6 blur-3xl transition-opacity duration-300 group-hover:bg-brand/12"
+        />
+
+        <div className="relative flex items-start justify-between gap-6">
+          <span className="font-(family-name:--font-gt-super) text-5xl leading-none text-brand/75 tabular-nums">
             {entry.index}
           </span>
           <span className="flex size-12 items-center justify-center rounded-2xl border border-border/80 bg-muted/50 text-muted-foreground transition-[background-color,color,border-color] duration-300 group-hover:border-brand/25 group-hover:bg-accent group-hover:text-brand">
             <Icon className="size-5" aria-hidden />
           </span>
         </div>
-        <h3 className={cn(publicEntryTitleClass, "mt-8 sm:mt-10", featured && "sm:text-4xl")}>{entry.title}</h3>
-        <p className={cn(publicEntryExcerptClass, "mt-4 sm:mt-5", featured && "text-base sm:text-lg")}>
-          {entry.description.trim()}
-        </p>
-      </div>
-      <span className="relative mt-10 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-brand sm:mt-12">
-        Open
-        <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
-      </span>
-    </Link>
+
+        <div className="relative mt-9 flex flex-1 flex-col">
+          <h3 className="font-(family-name:--font-gt-super) text-3xl font-normal tracking-[-0.04em] text-foreground transition-colors group-hover:text-brand sm:text-4xl">
+            {entry.title}
+          </h3>
+          <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground">
+            {entry.description}
+          </p>
+
+          <div className="mt-auto pt-8">
+            <div className="rounded-2xl border border-border/55 bg-background/35 px-4 py-3 text-sm leading-6 text-muted-foreground">
+              {entry.detail}
+            </div>
+            <span className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-brand">
+              Open
+              <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+            </span>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }
 
 export function PublicHomeEntries() {
   const reduceMotion = useReducedMotion();
-  const featured = entries.find((e) => e.span === "featured")!;
-  const rest = entries.filter((e) => e.span !== "featured");
 
   return (
     <section className={publicLandingSectionGap} aria-labelledby="explore-heading">
@@ -118,23 +128,10 @@ export function PublicHomeEntries() {
         </div>
       </div>
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-10">
-        <motion.div custom={0} initial={reduceMotion ? false : "hidden"} animate="show" variants={fadeUp}>
-          <EntryCard entry={featured} />
-        </motion.div>
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-1 lg:gap-10">
-          {rest.map((entry, i) => (
-            <motion.div
-              key={entry.href}
-              custom={i + 1}
-              initial={reduceMotion ? false : "hidden"}
-              animate="show"
-              variants={fadeUp}
-            >
-              <EntryCard entry={entry} />
-            </motion.div>
-          ))}
-        </div>
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-3">
+        {entries.map((entry, index) => (
+          <EntryCard key={entry.href} entry={entry} index={reduceMotion ? 0 : index} />
+        ))}
       </div>
     </section>
   );
