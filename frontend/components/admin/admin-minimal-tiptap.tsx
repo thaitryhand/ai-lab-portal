@@ -50,7 +50,7 @@ export function AdminMinimalTiptap({
       }}
       output="markdown"
       placeholder={placeholder}
-      throttleDelay={200}
+      throttleDelay={0}
       uploader={uploader}
       value={value}
     />
