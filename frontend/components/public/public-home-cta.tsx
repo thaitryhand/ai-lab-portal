@@ -27,8 +27,7 @@ export function PublicHomeCta() {
       className={cn(
         publicLandingSectionGap,
         "relative overflow-hidden rounded-[2rem] border border-border/80 bg-primary text-primary-foreground",
-        publicPanelPaddingClass,
-        "py-14 sm:py-16 lg:py-20 xl:py-24"
+        publicPanelPaddingClass
       )}
       initial={reduceMotion ? false : "hidden"}
       animate="show"

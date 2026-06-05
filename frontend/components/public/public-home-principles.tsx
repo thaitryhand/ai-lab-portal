@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 
 import {
   publicEyebrowClass,
+  publicLandingCardPaddingClass,
   publicLandingSectionGap,
   publicLeadClass,
   publicSectionHeaderBlockClass,
@@ -69,7 +70,10 @@ export function PublicHomePrinciples() {
           return (
             <motion.article
               key={item.title}
-              className="flex flex-col gap-6 rounded-[1.75rem] border border-border/70 bg-card/60 p-8 sm:p-10 lg:p-12"
+              className={cn(
+                "flex flex-col gap-6 rounded-[1.75rem] border border-border/70 bg-card/60",
+                publicLandingCardPaddingClass,
+              )}
               custom={index}
               initial={reduceMotion ? false : "hidden"}
               animate="show"

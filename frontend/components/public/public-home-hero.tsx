@@ -62,7 +62,6 @@ export function PublicHomeHero() {
         className={cn(
           "relative grid lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]",
           publicPanelPaddingClass,
-          "py-14 sm:py-16 lg:py-20 xl:py-24",
           publicPanelGridGapClass
         )}
       >

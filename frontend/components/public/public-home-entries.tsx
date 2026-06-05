@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 
 import {
   publicEyebrowClass,
+  publicLandingCardPaddingClass,
   publicLandingSectionGap,
   publicSectionHeaderBlockClass,
   publicSectionIntroGapClass,
@@ -65,7 +66,10 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   return (
     <motion.div custom={index} initial="hidden" animate="show" variants={fadeUp} className="h-full">
       <Link
-        className="group relative flex h-full min-h-[18rem] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 p-8 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:bg-card hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)] sm:p-9 lg:p-10"
+        className={cn(
+          "group relative flex h-full min-h-[18rem] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:bg-card hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)]",
+          publicLandingCardPaddingClass,
+        )}
         href={entry.href}
       >
         <div

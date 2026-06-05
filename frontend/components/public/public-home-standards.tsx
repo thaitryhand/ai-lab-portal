@@ -43,7 +43,6 @@ export function PublicHomeStandards() {
         publicLandingSectionGap,
         "relative overflow-hidden rounded-[2rem] border border-border/75 bg-card/90 shadow-[0_24px_70px_color-mix(in_srgb,var(--primary)_6%,transparent)]",
         publicPanelPaddingClass,
-        "py-14 sm:py-16 lg:py-20 xl:py-24",
       )}
       initial={reduceMotion ? false : "hidden"}
       animate="show"

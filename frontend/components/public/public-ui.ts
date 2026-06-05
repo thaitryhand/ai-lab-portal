@@ -14,9 +14,13 @@ export const publicMainWidthClass = "w-full min-w-0";
 /** Optional reading measure for long-form body text inside a full-width article */
 export const publicProseMeasureClass = "mx-auto w-full max-w-[68ch]";
 
-/** Inner padding for hero panels, CTA bands, and large cards */
+/** Inner padding for hero panels, CTA bands, and large cards — 8px rhythm from styles/ */
 export const publicPanelPaddingClass =
-  "px-8 py-10 sm:px-12 sm:py-12 lg:px-16 lg:py-14 xl:px-20 xl:py-16";
+  "px-8 py-12 sm:px-12 sm:py-14 lg:px-16 lg:py-16 xl:px-20 xl:py-18";
+
+/** Compact card padding for landing cards — one step below panel padding */
+export const publicLandingCardPaddingClass =
+  "p-8 sm:p-9 lg:p-10";
 
 /** Column gap inside split hero / two-column panels */
 export const publicPanelGridGapClass = "gap-12 sm:gap-14 lg:gap-20 xl:gap-24";
@@ -104,8 +108,8 @@ export const publicLandingHeaderClass =
 /** Vertical rhythm between landing sections */
 export const publicLandingSectionGap = "scroll-mt-28";
 
-export const publicLandingStackClass = "flex flex-col gap-28 sm:gap-36 lg:gap-44";
+export const publicLandingStackClass = "flex flex-col gap-24 sm:gap-28 lg:gap-32";
 
-export const publicSectionHeaderBlockClass = "mb-14 sm:mb-16 lg:mb-20";
+export const publicSectionHeaderBlockClass = "mb-12 sm:mb-14 lg:mb-16";
 
 export const publicSectionIntroGapClass = "mt-4 sm:mt-5";
