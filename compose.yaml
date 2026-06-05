@@ -117,6 +117,9 @@ services:
       E2E_ADMIN_EMAIL: ${E2E_ADMIN_EMAIL:-admin@example.com}
       E2E_ADMIN_PASSWORD: ${E2E_ADMIN_PASSWORD:-test-admin-password-123456}
       E2E_ADMIN_NAME: ${E2E_ADMIN_NAME:-AI Lab Admin}
+    volumes:
+      # Persist uploaded images so they survive container rebuilds
+      - ./frontend/public/uploads:/app/public/uploads
     entrypoint: ["sh", "scripts/docker-entrypoint.sh"]
     ports:
       - "${FRONTEND_HOST_PORT:-13000}:3000"
