@@ -122,6 +122,7 @@ function CommentCard({
   slug,
   isAuthenticated,
   currentUserId,
+  session,
   onCreateComment,
   onToggleReaction,
   onEditComment,
@@ -132,6 +133,7 @@ function CommentCard({
   slug: string;
   isAuthenticated: boolean;
   currentUserId?: string;
+  session?: { user: { id: string; name?: string; email: string; image?: string | null } } | null;
   onCreateComment?: (slug: string, content: string, parentId: string | undefined) => Promise<void>;
   onToggleReaction?: (slug: string, commentId: string) => Promise<{ reacted: boolean; count: number }>;
   onEditComment?: (slug: string, commentId: string, content: string) => Promise<BlogCommentPublic>;
@@ -344,6 +346,7 @@ function CommentCard({
                 autoFocus
                 onCancel={() => setShowReplyForm(false)}
                 isSubmitting={isSubmitting}
+                session={session}
               />
             </div>
           )}
@@ -361,6 +364,7 @@ function CommentCard({
               slug={slug}
               isAuthenticated={isAuthenticated}
               currentUserId={currentUserId}
+              session={session}
               onCreateComment={onCreateComment}
               onToggleReaction={onToggleReaction}
               onEditComment={onEditComment}
@@ -482,6 +486,7 @@ export function BlogComments({
               slug={slug}
               isAuthenticated={isAuthenticated}
               currentUserId={session?.user.id}
+              session={session}
               onCreateComment={onCreateComment}
               onToggleReaction={onToggleCommentReaction}
               onEditComment={onEditComment}

@@ -278,7 +278,7 @@ class InMemoryBlogSocialRepository(BlogSocialRepository):
             user_name=user_name,
             parent_id=parent_id,
             content=content,
-            status="pending",
+            status="approved",
             created_at=now,
             updated_at=now,
         )
@@ -496,7 +496,7 @@ class PostgresBlogSocialRepository(BlogSocialRepository):
                     "user_name": user_name,
                     "parent_id": parent_id,
                     "content": content,
-                    "status": "pending",
+                    "status": "approved",
                     "created_at": now,
                     "updated_at": now,
                 },
