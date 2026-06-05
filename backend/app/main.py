@@ -709,6 +709,13 @@ def create_app(
             for e in sorted(audit_list, key=lambda e: e.created_at, reverse=True)[:10]
         ]
 
+        # Comment stats
+        try:
+            all_comments = social_repo.admin_list_all_comments() if hasattr(social_repo, "admin_list_all_comments") else []
+            comment_count = len(all_comments)
+        except Exception:
+            comment_count = 0
+
         return {
             "blog_drafts": blog_drafts,
             "blog_published": blog_published,
@@ -723,6 +730,7 @@ def create_app(
             "projects_published": projects_published,
             "projects_total": len(projects_list),
             "news_published": len(news_list),
+            "comments_total": comment_count,
             "recent_activity": recent_activity,
         }
 

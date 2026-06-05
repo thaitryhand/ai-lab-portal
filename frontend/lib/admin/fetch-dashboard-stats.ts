@@ -19,6 +19,7 @@ export type AdminDashboardStats = {
   projectsPublished: number;
   projectsTotal: number;
   newsPublished: number;
+  commentsTotal: number;
   recentActivity: Array<{
     action: string;
     actorEmail: string;
@@ -40,6 +41,7 @@ type BackendStatsResponse = {
   projects_published: number;
   projects_total: number;
   news_published: number;
+  comments_total: number;
   recent_activity: Array<{
     action: string;
     actor_email: string;
@@ -62,6 +64,7 @@ function snakeToCamel(src: BackendStatsResponse): AdminDashboardStats {
     projectsPublished: src.projects_published,
     projectsTotal: src.projects_total,
     newsPublished: src.news_published,
+    commentsTotal: src.comments_total,
     recentActivity: src.recent_activity.map((e) => ({
       action: e.action,
       actorEmail: e.actor_email,
@@ -127,6 +130,7 @@ export async function fetchAdminDashboardStats(user: SessionUser): Promise<Admin
     projectsPublished: 0,
     projectsTotal: 0,
     newsPublished: 0,
+    commentsTotal: 0,
     recentActivity: [],
   };
 }

@@ -6,6 +6,7 @@ import {
   Briefcase,
   FileText,
   Lightbulb,
+  MessageSquare,
   Newspaper,
   PencilLine,
   Rss,
@@ -49,6 +50,7 @@ export default async function AdminDashboardPage() {
 
   const statCards = [
     { label: "Blog posts", value: stats.blogTotal, hint: `${stats.blogPublished} live, ${stats.blogDrafts} drafts`, href: "/admin/blog", icon: FileText },
+    { label: "Comments", value: stats.commentsTotal, hint: "across all posts", href: "/admin/blog-comments", icon: MessageSquare },
     { label: "Blog ideas", value: stats.ideasTotal, hint: `${stats.ideasPending} pending, ${stats.ideasApproved} approved`, href: "/admin/blog-ideas", icon: Lightbulb },
     { label: "Showcases", value: stats.showcasesTotal, hint: `${stats.showcasesPublished} live, ${stats.showcasesDrafts} drafts`, href: "/admin/showcases", icon: Briefcase },
     { label: "AI News", value: stats.newsPublished, hint: "published items", href: "/admin/news-review", icon: Newspaper },

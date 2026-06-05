@@ -68,6 +68,6 @@ def test_dashboard_stats_has_expected_keys() -> None:
         "ideas_pending", "ideas_approved", "ideas_total",
         "showcases_drafts", "showcases_published", "showcases_total",
         "projects_drafts", "projects_published", "projects_total",
-        "news_published", "recent_activity",
+        "news_published", "comments_total", "recent_activity",
     }
     assert set(data.keys()) == expected_keys
