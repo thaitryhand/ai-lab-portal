@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 
 import { BlogComments } from "@/components/blog/blog-comments";
 import { BlogSocialBar } from "@/components/blog/blog-social-bar";
+import { RelatedBlogPosts } from "@/components/blog/related-blog-posts";
 import { BlogTagChips } from "@/components/blog/blog-tag-chips";
 import { PublicArticleHeader } from "@/components/public/public-article-header";
 import { PublicBackLink } from "@/components/public/public-back-link";
@@ -14,11 +15,12 @@ import { PublicPageShell } from "@/components/public/public-page-shell";
 import { PublicProse } from "@/components/public/public-prose";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { getPublishedBlogPost } from "@/lib/blog/posts";
+import { getPublishedBlogPost, listPublishedBlogPosts } from "@/lib/blog/posts";
 import { getSocialStats, listComments } from "@/lib/blog/social";
 import { listPublicPostTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
+import { formatReadingTime } from "@/lib/reading-time";
 import { cn } from "@/lib/utils";
 
 import {
@@ -64,11 +66,13 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     notFound();
   }
 
-  const [socialStats, comments, tags] = await Promise.all([
+  const [socialStats, comments, tags, allPosts] = await Promise.all([
     session ? getSocialStats(slug, session).catch(() => null) : Promise.resolve(null),
     listComments(slug).catch(() => []),
     listPublicPostTags(slug).catch(() => []),
+    listPublishedBlogPosts().catch(() => []),
   ]);
+  const relatedPosts = allPosts.filter((item) => item.slug !== slug).slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -126,12 +130,15 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             })}
             eyebrow={post.authorName}
             excerpt={post.excerpt}
+            readingTimeLabel={formatReadingTime(post.readingTime)}
             title={post.title}
           />
           <BlogTagChips tags={tags} />
         </div>
 
         <PublicProse contentMarkdown={post.contentMarkdown} />
+
+        <RelatedBlogPosts posts={relatedPosts} />
 
         {/* Social features */}
         <BlogSocialBar

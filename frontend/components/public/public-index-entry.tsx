@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Clock3 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { publicStaggerItem } from "@/components/public/public-motion";
@@ -22,6 +22,7 @@ type PublicIndexEntryProps = {
   imageUrl?: string;
   meta: ReactNode;
   title: string;
+  readingTimeLabel?: string;
   /** Enable bookmark button on this entry */
   showBookmark?: boolean;
   slug?: string;
@@ -33,6 +34,7 @@ export function PublicIndexEntry({
   imageUrl,
   meta,
   title,
+  readingTimeLabel,
   showBookmark,
   slug,
 }: PublicIndexEntryProps) {
@@ -59,7 +61,7 @@ export function PublicIndexEntry({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className={publicMetaClass}>{meta}</p>
+              <p className={cn(publicMetaClass, "flex flex-wrap items-center gap-1.5")}>{meta}{readingTimeLabel ? <><span aria-hidden>·</span><span className="inline-flex items-center gap-1"><Clock3 className="size-3" aria-hidden />{readingTimeLabel}</span></> : null}</p>
               <h2 className={cn(publicEntryTitleClass, "mt-2.5")}>{title}</h2>
               <p className={publicEntryExcerptClass}>{excerpt}</p>
             </div>

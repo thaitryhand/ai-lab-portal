@@ -24,7 +24,7 @@ export function BlogTagFilter({ tags, activeTag }: Props) {
       {tags.map((tag) => (
         <Link
           key={tag.id}
-          href={`/blog?tag=${encodeURIComponent(tag.slug)}`}
+          href={`/blog/tags/${encodeURIComponent(tag.slug)}`}
           className={cn(
             "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
             activeTag === tag.slug

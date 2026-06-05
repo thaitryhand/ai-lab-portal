@@ -1,3 +1,4 @@
+import { estimateReadingTime } from "@/lib/reading-time";
 import { createUserBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 
 type Session = { user: { id: string; email: string } };
@@ -12,6 +13,7 @@ export type BlogPostSummary = {
   publishedAt: string;
   imageUrl?: string | null;
   authorUserId?: string | null;
+  readingTime: number;
 };
 
 export type BlogPostDetail = BlogPostSummary & {
@@ -45,6 +47,7 @@ function toSummary(post: ApiBlogPostSummary): BlogPostSummary {
     publishedAt: post.published_at,
     imageUrl: post.image_url,
     authorUserId: post.author_user_id,
+    readingTime: estimateReadingTime(post.excerpt),
   };
 }
 
@@ -53,6 +56,7 @@ function toDetail(post: ApiBlogPostDetail): BlogPostDetail {
     ...toSummary(post),
     id: post.id,
     contentMarkdown: post.content_markdown,
+    readingTime: estimateReadingTime(post.content_markdown),
   };
 }
 

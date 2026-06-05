@@ -5,8 +5,7 @@ import { Plus, Rss } from "lucide-react";
 import { Suspense } from "react";
 
 import { BlogTagFilter } from "@/components/blog/blog-tag-filter";
-import { PublicIndexEntry } from "@/components/public/public-index-entry";
-import { PublicIndexList } from "@/components/public/public-index-list";
+import { InfiniteBlogList } from "@/components/blog/infinite-blog-list";
 import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
 import { SearchInput } from "@/components/public/search-input";
@@ -51,7 +50,7 @@ export default async function BlogIndexPage({
             <div className="flex items-center gap-3">
               <Link
                 className={buttonVariants({ size: "icon", variant: "ghost" })}
-                href="/blog/feed"
+                href="/feed.xml"
                 title="RSS feed"
               >
                 <Rss className="size-4 shrink-0" />
@@ -110,28 +109,11 @@ export default async function BlogIndexPage({
 
         <BlogTagFilter tags={tags} activeTag={activeTag} />
 
-        <PublicIndexList
+        <InfiniteBlogList
+          posts={posts}
           emptyDescription={activeFeed === "following" && !session ? "" : activeFeed === "following" ? "Follow authors to populate this feed." : "Published articles will appear here after an admin approves them."}
           emptyTitle={activeFeed === "following" ? "No following feed yet" : "No published articles yet"}
-          isEmpty={posts.length === 0}
-        >
-          {posts.map((post) => (
-            <PublicIndexEntry
-              key={post.slug}
-              excerpt={post.excerpt}
-              href={`/blog/${post.slug}`}
-              imageUrl={post.imageUrl ?? undefined}
-              meta={
-                <>
-                  {post.authorName} · {new Date(post.publishedAt).toLocaleDateString("en-US")}
-                </>
-              }
-              showBookmark
-              slug={post.slug}
-              title={post.title}
-            />
-          ))}
-        </PublicIndexList>
+        />
       </section>
     </PublicPageShell>
   );

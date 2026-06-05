@@ -1,7 +1,17 @@
-import { listPublishedBlogPosts } from "@/lib/blog/posts";
+import { getPublishedBlogPost, listPublishedBlogPosts } from "@/lib/blog/posts";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ailabportal.com";
 const siteName = "AI Lab Portal";
+
+type FeedPost = NonNullable<Awaited<ReturnType<typeof getPublishedBlogPost>>>;
+
+function isFeedPost(post: Awaited<ReturnType<typeof getPublishedBlogPost>>): post is FeedPost {
+  return Boolean(post);
+}
+
+function escapeCdata(text: string): string {
+  return text.replaceAll("]]>", "]]]]><![CDATA[>");
+}
 
 function escapeXml(text: string): string {
   return text
@@ -13,7 +23,8 @@ function escapeXml(text: string): string {
 }
 
 export async function GET() {
-  const posts = await listPublishedBlogPosts();
+  const summaries = await listPublishedBlogPosts();
+  const posts = (await Promise.all(summaries.map((post) => getPublishedBlogPost(post.slug)))).filter(isFeedPost);
 
   const items = posts
     .map(
@@ -23,6 +34,7 @@ export async function GET() {
       <link>${siteUrl}/blog/${post.slug}</link>
       <guid isPermaLink="true">${siteUrl}/blog/${post.slug}</guid>
       <description>${escapeXml(post.excerpt)}</description>
+      <content:encoded><![CDATA[${escapeCdata(post.contentMarkdown)}]]></content:encoded>
       <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
       <author>${escapeXml(post.authorName)}</author>
       ${post.imageUrl ? `<enclosure url="${escapeXml(post.imageUrl)}" type="image/jpeg" />` : ""}
@@ -38,7 +50,7 @@ export async function GET() {
     <description>Practical AI engineering notes and human-reviewed AI Lab articles.</description>
     <language>en</language>
     <lastBuildDate>${posts.length > 0 ? new Date(posts[0].publishedAt).toUTCString() : new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${siteUrl}/blog/feed" rel="self" type="application/rss+xml" />
+    <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml" />
     ${items}
   </channel>
 </rss>`;

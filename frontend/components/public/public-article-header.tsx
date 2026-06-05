@@ -17,9 +17,10 @@ type PublicArticleHeaderProps = {
   eyebrow: ReactNode;
   excerpt: string;
   title: string;
+  readingTimeLabel?: string;
 };
 
-export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title }: PublicArticleHeaderProps) {
+export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title, readingTimeLabel }: PublicArticleHeaderProps) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -35,7 +36,15 @@ export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title }: Publ
         className="pointer-events-none absolute -left-4 top-0 hidden h-full w-px bg-linear-to-b from-brand/60 via-brand/20 to-transparent sm:block"
       />
       <p className={publicEyebrowClass}>{eyebrow}</p>
-      <p className={cn(publicMetaClass, "mt-4")}>{dateLabel}</p>
+      <p className={cn(publicMetaClass, "mt-4 flex flex-wrap items-center gap-1.5")}>
+        <span>{dateLabel}</span>
+        {readingTimeLabel ? (
+          <>
+            <span aria-hidden>·</span>
+            <span>{readingTimeLabel}</span>
+          </>
+        ) : null}
+      </p>
       <h1 className={cn(publicArticleTitleClass, "mt-5 sm:mt-6")}>{title}</h1>
       <p className={cn(publicProseMeasureClass, "mt-8 text-xl text-muted-foreground sm:mt-10")}>
         {excerpt}
