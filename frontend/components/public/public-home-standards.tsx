@@ -43,6 +43,7 @@ export function PublicHomeStandards() {
         publicLandingSectionGap,
         "relative overflow-hidden rounded-[2rem] border border-border/75 bg-card/90 shadow-[0_24px_70px_color-mix(in_srgb,var(--primary)_6%,transparent)]",
         publicPanelPaddingClass,
+        "py-14 sm:py-16 lg:py-20 xl:py-24",
       )}
       initial={reduceMotion ? false : "hidden"}
       animate="show"
@@ -58,7 +59,7 @@ export function PublicHomeStandards() {
         className="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-brand/45 to-transparent"
       />
 
-      <div className="relative grid gap-10 lg:grid-cols-[0.9fr_1.35fr] lg:items-start lg:gap-14">
+      <div className="relative grid gap-12 lg:grid-cols-[0.9fr_1.35fr] lg:items-center lg:gap-16 xl:gap-20">
         <div className="max-w-md">
           <p className={publicEyebrowClass}>Editorial standard</p>
           <h2 className="mt-5 font-(family-name:--font-gt-super) text-4xl font-normal leading-[1.02] tracking-[-0.045em] text-foreground sm:text-5xl">
@@ -69,11 +70,11 @@ export function PublicHomeStandards() {
           </p>
         </div>
 
-        <ol className="grid gap-3 sm:grid-cols-2">
+        <ol className="grid gap-4 sm:grid-cols-2 lg:gap-5">
           {standards.map((item, index) => (
             <li
               key={item.label}
-              className="group rounded-2xl border border-border/65 bg-background/35 p-5 transition-colors hover:border-brand/30 hover:bg-muted/25"
+              className="group rounded-2xl border border-border/65 bg-background/35 p-5 transition-colors hover:border-brand/30 hover:bg-muted/25 sm:p-6"
             >
               <div className="flex items-start gap-4">
                 <span className="font-(family-name:--font-gt-super) text-2xl leading-none text-brand/75 tabular-nums">

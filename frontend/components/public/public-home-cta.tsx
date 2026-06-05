@@ -27,7 +27,8 @@ export function PublicHomeCta() {
       className={cn(
         publicLandingSectionGap,
         "relative overflow-hidden rounded-[2rem] border border-border/80 bg-primary text-primary-foreground",
-        publicPanelPaddingClass
+        publicPanelPaddingClass,
+        "py-14 sm:py-16 lg:py-20 xl:py-24"
       )}
       initial={reduceMotion ? false : "hidden"}
       animate="show"
@@ -46,10 +47,10 @@ export function PublicHomeCta() {
         >
           See how human-reviewed publishing works in practice.
         </h2>
-        <p className={cn(publicLeadClass, "mx-auto mt-8 text-primary-foreground/75")}>
+        <p className={cn(publicLeadClass, "mx-auto mt-7 text-primary-foreground/75 sm:mt-8")}>
           Start with the lab overview, browse client showcases, or read the latest engineering notes.
         </p>
-        <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:mt-12 sm:flex-row sm:gap-5">
           <Link
             className={cn(
               publicPrimaryCtaClass,

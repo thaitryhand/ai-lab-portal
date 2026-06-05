@@ -62,6 +62,7 @@ export function PublicHomeHero() {
         className={cn(
           "relative grid lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)]",
           publicPanelPaddingClass,
+          "py-14 sm:py-16 lg:py-20 xl:py-24",
           publicPanelGridGapClass
         )}
       >
@@ -100,7 +101,7 @@ export function PublicHomeHero() {
             </Link>
           </div>
 
-          <dl className="mt-14 grid grid-cols-3 gap-6 border-t border-border/80 pt-10 sm:mt-16 sm:max-w-lg sm:pt-12">
+          <dl className="mt-12 grid grid-cols-3 gap-5 border-t border-border/70 pt-8 sm:mt-14 sm:max-w-lg sm:gap-6 sm:pt-10">
             {[
               { label: "Surfaces", value: "3 live" },
               { label: "Review", value: "Human-first" },
@@ -125,7 +126,7 @@ export function PublicHomeHero() {
           animate="show"
           variants={fadeUp}
         >
-          <div className="rounded-2xl border border-border/70 bg-muted/25 p-8 sm:p-10 lg:p-11">
+          <div className="rounded-2xl border border-border/70 bg-muted/25 p-7 sm:p-9 lg:p-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
               Publishing flow
             </p>
@@ -133,12 +134,12 @@ export function PublicHomeHero() {
               AI assists drafting. Humans decide what ships.
             </p>
 
-            <ol className="relative mt-10 grid gap-0 sm:mt-12">
+            <ol className="relative mt-8 grid gap-0 sm:mt-10">
               {publishSteps.map((step, index) => {
                 const Icon = step.icon;
                 const isLast = index === publishSteps.length - 1;
                 return (
-                  <li key={step.title} className="relative flex gap-5 pb-10 last:pb-0 sm:pb-12">
+                  <li key={step.title} className="relative flex gap-5 pb-8 last:pb-0 sm:pb-10">
                     {!isLast ? (
                       <span
                         aria-hidden

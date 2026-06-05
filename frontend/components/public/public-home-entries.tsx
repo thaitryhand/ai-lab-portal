@@ -65,7 +65,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   return (
     <motion.div custom={index} initial="hidden" animate="show" variants={fadeUp} className="h-full">
       <Link
-        className="group relative flex h-full min-h-[19rem] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 p-7 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:bg-card hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)] sm:p-8 lg:p-9"
+        className="group relative flex h-full min-h-[18rem] flex-col overflow-hidden rounded-[1.75rem] border border-border/80 bg-card/95 p-8 shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_5%,transparent)] transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:border-brand/30 hover:bg-card hover:shadow-[0_28px_60px_color-mix(in_srgb,var(--brand)_12%,transparent)] sm:p-9 lg:p-10"
         href={entry.href}
       >
         <div
@@ -86,7 +86,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
           </span>
         </div>
 
-        <div className="relative mt-9 flex flex-1 flex-col">
+        <div className="relative mt-8 flex flex-1 flex-col sm:mt-9">
           <h3 className="font-(family-name:--font-gt-super) text-3xl font-normal tracking-[-0.04em] text-foreground transition-colors group-hover:text-brand sm:text-4xl">
             {entry.title}
           </h3>
@@ -94,7 +94,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
             {entry.description}
           </p>
 
-          <div className="mt-auto pt-8">
+          <div className="mt-auto pt-7 sm:pt-8">
             <div className="rounded-2xl border border-border/55 bg-background/35 px-4 py-3 text-sm leading-6 text-muted-foreground">
               {entry.detail}
             </div>
