@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 import { publicFadeUp, publicStaggerContainer } from "@/components/public/public-motion";
@@ -15,12 +15,11 @@ type PublicIndexListProps = {
 };
 
 export function PublicIndexList({ children, emptyDescription, emptyTitle, isEmpty }: PublicIndexListProps) {
-  const reduceMotion = useReducedMotion();
 
   if (isEmpty) {
     return (
       <motion.div
-        initial={reduceMotion ? false : "hidden"}
+        initial={false}
         animate="show"
         custom={1}
         variants={publicFadeUp}
@@ -33,7 +32,7 @@ export function PublicIndexList({ children, emptyDescription, emptyTitle, isEmpt
   return (
     <motion.div
       className={publicListPanelClass}
-      initial={reduceMotion ? false : "hidden"}
+      initial={false}
       animate="show"
       variants={publicStaggerContainer}
     >

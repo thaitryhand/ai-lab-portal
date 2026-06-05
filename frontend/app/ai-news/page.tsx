@@ -50,7 +50,7 @@ export default async function AiNewsIndexPage({
         />
 
         <div className="-mt-8 flex flex-col gap-6">
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="h-10 w-full max-w-md" />}>
             <SearchInput placeholder="Search AI news…" />
           </Suspense>
           <p className="text-sm text-muted-foreground">

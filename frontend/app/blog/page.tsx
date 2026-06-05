@@ -71,7 +71,7 @@ export default async function BlogIndexPage({
         />
 
         <div className="-mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="h-10 w-full max-w-md" />}>
             <SearchInput placeholder="Search blog posts…" />
           </Suspense>
         </div>
