@@ -14,6 +14,7 @@ import {
   adminWorkflowStatusClass,
 } from "@/components/admin/admin-ui";
 import { PendingSubmitButton } from "@/components/admin/pending-submit-button";
+import { uploadImage } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import type { EditorActionState } from "../../app/admin/blog/editor/actions";
@@ -291,6 +292,7 @@ export function BlogEditor({
           <AdminMinimalTiptap
             onChange={setContentMarkdown}
             placeholder="Draft your article… Use the toolbar for headings, lists, links, and more."
+            uploader={uploadImage}
             value={contentMarkdown}
           />
         </AdminCardBody>

@@ -89,8 +89,8 @@ const createExtensions = ({
   
   Image.configure({
     allowedMimeTypes: ["image/*"],
-    maxFileSize: 5 * 1024 * 1024,
-    allowBase64: true,
+    maxFileSize: 10 * 1024 * 1024,
+    allowBase64: false,
     uploadFn: async (file) => {
       return uploader ? await uploader(file) : await fakeuploader(file)
     },
@@ -149,26 +149,18 @@ const createExtensions = ({
     },
   }),
   FileHandler.configure({
-    allowBase64: true,
+    allowBase64: false,
     allowedMimeTypes: ["image/*"],
-    maxFileSize: 5 * 1024 * 1024,
+    maxFileSize: 10 * 1024 * 1024,
     onDrop: (editor, files, pos) => {
-      files.forEach(async (file) => {
-        const src = await fileToBase64(file)
-        editor.commands.insertContentAt(pos, {
-          type: "image",
-          attrs: { src },
-        })
-      })
+      editor.commands.setImages(
+        files.map((file) => ({ src: file, alt: file.name }))
+      )
     },
     onPaste: (editor, files) => {
-      files.forEach(async (file) => {
-        const src = await fileToBase64(file)
-        editor.commands.insertContent({
-          type: "image",
-          attrs: { src },
-        })
-      })
+      editor.commands.setImages(
+        files.map((file) => ({ src: file, alt: file.name }))
+      )
     },
     onValidationError: (errors) => {
       errors.forEach((error) => {

@@ -26,6 +26,8 @@ type AdminMinimalTiptapProps = {
   onChange: (markdown: string) => void;
   placeholder?: string;
   value: string;
+  /** Custom function to upload image files. Defaults to server-side /api/upload/image. */
+  uploader?: (file: File) => Promise<string>;
 };
 
 export function AdminMinimalTiptap({
@@ -33,6 +35,7 @@ export function AdminMinimalTiptap({
   onChange,
   placeholder = "Write your content…",
   value,
+  uploader,
 }: AdminMinimalTiptapProps) {
   return (
     <MinimalTiptapEditor
@@ -48,6 +51,7 @@ export function AdminMinimalTiptap({
       output="markdown"
       placeholder={placeholder}
       throttleDelay={200}
+      uploader={uploader}
       value={value}
     />
   );
