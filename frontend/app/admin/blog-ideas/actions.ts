@@ -5,6 +5,14 @@ import { redirect } from "next/navigation";
 
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
+import {
+  mapProjectToGeneratePayload,
+  mapShowcaseToGeneratePayload,
+} from "./lib/map-context-to-generate";
+import {
+  fetchProjectContextDetail,
+  fetchShowcaseContextDetail,
+} from "./new/data";
 
 const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
@@ -346,4 +354,96 @@ export async function createIdeaAction(formData: FormData) {
   }
 
   redirect("/admin/blog-ideas");
+}
+
+export async function generateFromContextAction(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/admin/login");
+
+  const sourceType = formData.get("sourceType") as string;
+  const contextId = formData.get("contextId") as string;
+
+  if (!contextId || (sourceType !== "project" && sourceType !== "showcase")) {
+    throw new Error("Select a valid project or showcase.");
+  }
+
+  let payload;
+  if (sourceType === "project") {
+    const project = await fetchProjectContextDetail(contextId);
+    if (!project) throw new Error("Project not found.");
+    payload = mapProjectToGeneratePayload(project);
+  } else {
+    const showcase = await fetchShowcaseContextDetail(contextId);
+    if (!showcase) throw new Error("Showcase not found.");
+    payload = mapShowcaseToGeneratePayload(showcase);
+  }
+
+  const response = await adminFetch(
+    "/admin/blog-ideas/generate",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    session,
+  );
+
+  if (response.status === 202) {
+    const detail = await parseResponseDetail(response);
+    const taskId = detailToTaskId(detail);
+    const params = new URLSearchParams({
+      opStage: "idea",
+      opStatus: "queued",
+      message: detailToMessage(detail, "Idea generation queued."),
+    });
+    if (taskId) params.set("taskId", taskId);
+    redirect(`/admin/blog-ideas/new?${params.toString()}`);
+  }
+
+  if (!response.ok) {
+    const detail = await parseResponseDetail(response);
+    throw new Error(detailToMessage(detail, `Generate failed with status ${response.status}.`));
+  }
+
+  const idea = (await response.json()) as { id?: string };
+  if (!idea.id) {
+    throw new Error("Generate succeeded but no idea id was returned.");
+  }
+
+  redirect(`/admin/blog-ideas/${idea.id}?opStage=idea&opStatus=completed&message=${encodeURIComponent("Blog idea generated.")}`);
+}
+
+export async function resolveGeneratedIdeaAction(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/admin/login");
+
+  const jobResponse = await adminFetch(
+    `/admin/blog-ideas/generation-jobs/${taskId}`,
+    { method: "GET" },
+    session,
+  );
+  if (!jobResponse.ok) return undefined;
+
+  const job = (await jobResponse.json()) as {
+    status: string;
+    created_at?: string;
+  };
+  if (job.status !== "completed") return undefined;
+
+  const ideasResponse = await adminFetch("/admin/blog-ideas", { method: "GET" }, session);
+  if (!ideasResponse.ok) return undefined;
+
+  const ideas = (await ideasResponse.json()) as Array<{
+    id: string;
+    source: "manual" | "ai_generated";
+    created_at: string;
+  }>;
+
+  const jobStartedAt = job.created_at ? Date.parse(job.created_at) : 0;
+  const candidates = ideas
+    .filter((idea) => idea.source === "ai_generated")
+    .filter((idea) => !jobStartedAt || Date.parse(idea.created_at) >= jobStartedAt - 5000)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+
+  return candidates[0]?.id;
 }

@@ -22,6 +22,7 @@ a durable place to land.
 | E09 UI/UX Polish | Loading states, micro-interactions, responsive improvements | implemented |
 | E10 Admin Dashboard | Stats API and stat cards for admin dashboard | implemented |
 | E11 Post-MVP Polish | SEO, blog UX, profile, social hardening, admin/home redesign, auth polish, search, content ops | implemented (US-074–083) |
+| E12 AI Blog Agent v2 | Generate from project/showcase, semi-auto pipeline, claim gate, admin-only | in progress (US-084–085 implemented) |
 
 ## Selected Stories
 
@@ -100,6 +101,8 @@ a durable place to land.
 | `US-081` | E11 Post-MVP Polish | implemented |
 | `US-082` | E11 Post-MVP Polish | implemented |
 | `US-083` | E11 Post-MVP Polish | implemented |
+| `US-084` | E12 AI Blog Agent v2 | implemented |
+| `US-085` | E12 AI Blog Agent v2 | implemented |
 
 ## Open / Deferred (not yet story-tracked)
 

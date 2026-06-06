@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { adminPageStackClass } from "@/components/admin/admin-ui";
 import { AdminListToolbar } from "@/components/admin/admin-list-toolbar";
+import { ButtonLink } from "@/components/ui/button-link";
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
 import { auth } from "@/lib/auth/server";
 import {
@@ -51,8 +52,13 @@ export default async function AdminBlogIdeasPage() {
       <div className={adminPageStackClass}>
         <AdminListToolbar
           ctaHref="/admin/blog-ideas/new"
-          ctaLabel="New idea"
-          description="Review, approve, and generate outlines, drafts, and technical reviews from blog ideas."
+          ctaLabel="Generate idea"
+          description="Generate ideas from projects or showcases, then approve and run the outline → draft → review pipeline."
+          secondaryAction={
+            <ButtonLink href="/admin/blog-ideas/new?mode=manual" variant="outline">
+              Manual idea
+            </ButtonLink>
+          }
           eyebrow="Content pipeline"
           metrics={[
             { dotClassName: "bg-brand", label: `${approvedCount} approved` },

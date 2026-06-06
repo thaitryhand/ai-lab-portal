@@ -18,6 +18,7 @@ type Props = {
 type BannerState = "polling" | "completed" | "failed" | "idle";
 
 const stageLabels: Record<string, string> = {
+  idea: "Generating blog idea",
   outline: "Generating outline",
   draft: "Writing draft",
   "technical-review": "Running technical review",
