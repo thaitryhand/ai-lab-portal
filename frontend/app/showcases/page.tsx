@@ -74,7 +74,8 @@ export default async function ShowcasesIndexPage() {
 
               excerpt={showcase.heroSummary}
 
-              href={`/showcases/${showcase.slug}`}
+                href={`/showcases/${showcase.slug}`}
+                imageUrl={showcase.imageUrl ?? undefined}
 
               meta={
 
@@ -90,7 +91,7 @@ export default async function ShowcasesIndexPage() {
 
               }
 
-              title={showcase.title}
+                title={showcase.title}
 
             />
 

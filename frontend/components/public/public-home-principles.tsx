@@ -64,18 +64,19 @@ export function PublicHomePrinciples() {
         </p>
       </div>
 
-      <div className="grid gap-8 sm:gap-10 lg:grid-cols-3 lg:gap-12">
-        {principles.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <motion.article
-              key={item.title}
-              className={cn(
-                "flex flex-col gap-6 rounded-[1.75rem] border border-border/70 bg-card/60",
-                publicLandingCardPaddingClass,
-              )}
-              custom={index}
-              initial={reduceMotion ? false : "hidden"}
+        <div className="grid gap-8 border-y border-border/70 py-8 sm:gap-10 sm:py-10 lg:grid-cols-3 lg:gap-12">
+          {principles.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.article
+                key={item.title}
+                className={cn(
+                  "flex flex-col gap-6 border-border/70 lg:border-r lg:pr-10 lg:last:border-r-0 lg:last:pr-0",
+                  publicLandingCardPaddingClass,
+                  "p-0 sm:p-0 lg:p-0",
+                )}
+                custom={index}
+                initial={reduceMotion ? false : "hidden"}
               animate="show"
               variants={fadeUp}
             >

@@ -74,31 +74,31 @@ export default async function ProjectDetailPage({
           )}
         </div>
 
-        {project.imageUrl && (
-          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-xl border">
-            <Image
-              alt=""
-              className="object-cover"
-              fill
-              priority
-              src={project.imageUrl}
-              unoptimized
-            />
-          </div>
-        )}
-
-        <PublicArticleHeader
-          dateLabel={new Date(project.publishedAt).toLocaleDateString("en-US", {
+          <PublicArticleHeader
+            dateLabel={new Date(project.publishedAt).toLocaleDateString("en-US", {
             month: "long",
             day: "numeric",
             year: "numeric",
           })}
           eyebrow="Company project"
           excerpt={project.description}
-          title={project.title}
-        />
+            title={project.title}
+          />
 
-        <PublicProse contentMarkdown={project.contentMarkdown} />
+          {project.imageUrl && (
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[1.5rem] border border-border/80 bg-muted shadow-[0_24px_60px_color-mix(in_srgb,var(--primary)_7%,transparent)]">
+              <Image
+                alt=""
+                className="object-cover"
+                fill
+                priority
+                src={project.imageUrl}
+                unoptimized
+              />
+            </div>
+          )}
+
+          <PublicProse contentMarkdown={project.contentMarkdown} />
       </article>
     </PublicPageShell>
   );

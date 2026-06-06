@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Mail, MessageSquare } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
 
 import {
   publicEyebrowClass,
@@ -41,14 +41,14 @@ export function PublicHomeCta() {
       <div className="relative mx-auto max-w-2xl text-center">
         <p className={cn(publicEyebrowClass, "text-brand")}>Ready to explore</p>
         <h2
-          id="cta-heading"
-          className="mt-6 font-(family-name:--font-gt-super) text-3xl font-normal leading-[1.05] tracking-[-0.04em] text-primary-foreground sm:text-4xl lg:text-5xl"
-        >
-          See how human-reviewed publishing works in practice.
-        </h2>
-        <p className={cn(publicLeadClass, "mx-auto mt-7 text-primary-foreground/75 sm:mt-8")}>
-          Start with the lab overview, browse client showcases, or read the latest engineering notes.
-        </p>
+            id="cta-heading"
+            className="mt-6 font-(family-name:--font-gt-super) text-3xl font-normal leading-[1.12] tracking-[-0.025em] text-primary-foreground sm:text-4xl sm:leading-[1.07] sm:tracking-[-0.04em] lg:text-5xl"
+          >
+            See how human-reviewed publishing works in practice.
+          </h2>
+          <p className={cn(publicLeadClass, "mx-auto mt-6 text-primary-foreground/75 sm:mt-8")}>
+            Start with the lab overview, browse client showcases, or read the latest engineering notes.
+          </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:mt-12 sm:flex-row sm:gap-5">
           <Link
             className={cn(

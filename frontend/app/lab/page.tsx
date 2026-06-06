@@ -39,11 +39,11 @@ export default async function LabPage() {
               </Link>
             </>
           }
-          description="The AI Lab portal combines manual publishing, client-ready showcases, and practical engineering notes. AI assists drafting; humans approve what goes live."
-          eyebrow="AI Lab"
-          title="Human-reviewed AI engineering for credible delivery."
-          variant="panel"
-        />
+            description="The AI Lab portal combines manual publishing, client-ready showcases, and practical engineering notes. AI assists drafting; humans approve what goes live."
+            eyebrow="AI Lab"
+            title="Human-reviewed AI engineering."
+            variant="panel"
+          />
 
         {showcases.length > 0 ? (
           <PublicLabSection

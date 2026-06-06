@@ -4,8 +4,13 @@ import Link from "next/link";
 import { useActionState } from "react";
 
 import { PublicBackLink } from "@/components/public/public-back-link";
+import { PublicPageHero } from "@/components/public/public-page-hero";
 import { PublicPageShell } from "@/components/public/public-page-shell";
-import { publicMainWidthClass } from "@/components/public/public-ui";
+import {
+  publicEyebrowClass,
+  publicMainWidthClass,
+  publicPanelPaddingClass,
+} from "@/components/public/public-ui";
 import { cn } from "@/lib/utils";
 
 import { submitAiNewsLinkAction, type SubmitLinkState } from "./actions";
@@ -16,69 +21,76 @@ export function AiNewsSubmitForm() {
   const [state, formAction, pending] = useActionState(submitAiNewsLinkAction, initialState);
 
   return (
-    <PublicPageShell currentPath="/ai-news">
-      <section className={cn(publicMainWidthClass, "flex flex-col gap-10 sm:gap-12")}>
-        <PublicBackLink href="/ai-news">AI News</PublicBackLink>
+      <PublicPageShell currentPath="/ai-news">
+        <section className={cn(publicMainWidthClass, "flex flex-col gap-12 sm:gap-14")}>
+          <PublicBackLink href="/ai-news">AI News</PublicBackLink>
 
-        <div className="flex flex-col gap-4">
-          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Submit a link</p>
-          <h1 className="font-display text-4xl font-medium tracking-tight sm:text-5xl">
-            Suggest AI news for review
-          </h1>
-          <p className="max-w-2xl text-muted-foreground">
-            Share an AI-related article or announcement. Submissions are validated, deduplicated, and
-            reviewed by the AI Lab team before anything appears on the public feed.
-          </p>
-        </div>
+          <PublicPageHero
+            description="Share an AI-related article or announcement. Submissions are validated, deduplicated, and reviewed by the AI Lab team before anything appears on the public feed."
+            eyebrow="Submit a link"
+            title="Suggest AI news for review."
+          />
 
-        <form action={formAction} className="flex max-w-xl flex-col gap-5">
-          <label className="flex flex-col gap-2 text-sm">
-            URL *
-            <input
-              required
-              className="rounded-md border bg-background px-3 py-2"
-              name="url"
-              placeholder="https://example.com/ai-announcement"
-              type="url"
-            />
-          </label>
+          <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-start lg:gap-12">
+            <aside className={cn("rounded-[1.5rem] border border-border/80 bg-card/80", publicPanelPaddingClass)}>
+              <p className={publicEyebrowClass}>Review criteria</p>
+              <div className="mt-8 grid gap-5 text-sm leading-7 text-muted-foreground">
+                <p>Prefer primary sources, release notes, research posts, and announcements with clear product or technical impact.</p>
+                <p>Skip thin summaries, copied social posts, and articles without a stable original URL.</p>
+              </div>
+            </aside>
 
-          <label className="flex flex-col gap-2 text-sm">
-            Your name
-            <input className="rounded-md border bg-background px-3 py-2" name="name" type="text" />
-          </label>
+            <form action={formAction} className={cn("flex flex-col gap-5 rounded-[1.5rem] border border-border/80 bg-card/90", publicPanelPaddingClass)}>
+              <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+                URL *
+                <input
+                  required
+                  className="h-11 rounded-xl border border-border/80 bg-background px-4 text-sm outline-none transition-colors focus:border-brand/50"
+                  name="url"
+                  placeholder="https://example.com/ai-announcement"
+                  type="url"
+                />
+              </label>
 
-          <label className="flex flex-col gap-2 text-sm">
-            Email
-            <input className="rounded-md border bg-background px-3 py-2" name="email" type="email" />
-          </label>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+                  Your name
+                  <input className="h-11 rounded-xl border border-border/80 bg-background px-4 text-sm outline-none transition-colors focus:border-brand/50" name="name" type="text" />
+                </label>
 
-          <label className="flex flex-col gap-2 text-sm">
-            Why is this worth reading?
-            <textarea className="min-h-24 rounded-md border bg-background px-3 py-2" name="note" />
-          </label>
+                <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+                  Email
+                  <input className="h-11 rounded-xl border border-border/80 bg-background px-4 text-sm outline-none transition-colors focus:border-brand/50" name="email" type="email" />
+                </label>
+              </div>
 
-          <label className="flex flex-col gap-2 text-sm">
-            Suggested category
-            <input className="rounded-md border bg-background px-3 py-2" name="category" type="text" />
-          </label>
+              <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+                Why is this worth reading?
+                <textarea className="min-h-28 rounded-xl border border-border/80 bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-brand/50" name="note" />
+              </label>
 
-          <button
-            className="inline-flex w-fit rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-            disabled={pending}
-            type="submit"
-          >
-            {pending ? "Submitting…" : "Submit link"}
-          </button>
+              <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+                Suggested category
+                <input className="h-11 rounded-xl border border-border/80 bg-background px-4 text-sm outline-none transition-colors focus:border-brand/50" name="category" type="text" />
+              </label>
 
-          {state ? (
-            <p className={cn("text-sm", state.ok ? "text-emerald-700" : "text-destructive")}>{state.message}</p>
-          ) : null}
-        </form>
+              <button
+                className="inline-flex h-11 w-fit items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/92 disabled:opacity-60"
+                disabled={pending}
+                type="submit"
+              >
+                {pending ? "Submitting..." : "Submit link"}
+              </button>
 
-        <p className="text-sm text-muted-foreground">
-          Already published items appear on{" "}
-          <Link className="underline underline-offset-4" href="/ai-news">
+              {state ? (
+                <p className={cn("rounded-xl border px-4 py-3 text-sm", state.ok ? "border-brand/20 bg-accent text-brand" : "border-destructive/20 bg-destructive/10 text-destructive")}>{state.message}</p>
+              ) : null}
+            </form>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            Already published items appear on{" "}
+            <Link className="underline underline-offset-4" href="/ai-news">
             /ai-news
           </Link>
           .

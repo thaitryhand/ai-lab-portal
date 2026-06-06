@@ -48,22 +48,18 @@ export function PublicHomeStandards() {
       animate="show"
       variants={fadeIn}
       aria-label="Editorial standards"
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand/8 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-brand/45 to-transparent"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-brand/45 to-transparent"
       />
 
       <div className="relative grid gap-12 lg:grid-cols-[0.9fr_1.35fr] lg:items-center lg:gap-16 xl:gap-20">
         <div className="max-w-md">
-          <p className={publicEyebrowClass}>Editorial standard</p>
-          <h2 className="mt-5 font-(family-name:--font-gt-super) text-4xl font-normal leading-[1.02] tracking-[-0.045em] text-foreground sm:text-5xl">
-            Private by default. Public with intent.
-          </h2>
+            <p className={publicEyebrowClass}>Editorial standard</p>
+            <h2 className="mt-5 font-(family-name:--font-gt-super) text-4xl font-normal leading-[1.08] tracking-[-0.03em] text-foreground sm:text-5xl sm:leading-[1.02] sm:tracking-[-0.045em]">
+              Private by default. Public with intent.
+            </h2>
           <p className="mt-6 text-base leading-7 text-muted-foreground">
             AI helps draft and organize the work, but the publishing flow stays deliberate: reviewed, approved, and useful before anything reaches readers.
           </p>
@@ -71,10 +67,10 @@ export function PublicHomeStandards() {
 
         <ol className="grid gap-4 sm:grid-cols-2 lg:gap-5">
           {standards.map((item, index) => (
-            <li
-              key={item.label}
-              className="group rounded-2xl border border-border/65 bg-background/35 p-5 transition-colors hover:border-brand/30 hover:bg-muted/25 sm:p-6"
-            >
+              <li
+                key={item.label}
+                className="group rounded-xl border border-border/65 bg-background/35 p-5 transition-colors hover:border-brand/30 hover:bg-muted/25 sm:p-6"
+              >
               <div className="flex items-start gap-4">
                 <span className="font-(family-name:--font-gt-super) text-2xl leading-none text-brand/75 tabular-nums">
                   {String(index + 1).padStart(2, "0")}

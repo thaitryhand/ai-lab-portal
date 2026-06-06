@@ -32,7 +32,7 @@ export const publicAtmosphereClass =
   "pointer-events-none absolute inset-0 overflow-hidden";
 
 export const publicEyebrowClass =
-  "text-[11px] font-semibold uppercase tracking-[0.32em] text-brand";
+  "text-[11px] font-semibold uppercase tracking-[0.22em] text-brand sm:tracking-[0.3em]";
 
 export const publicDisplayTitleClass =
   "font-(family-name:--font-gt-super) font-normal tracking-tighter text-foreground";
@@ -42,18 +42,18 @@ export const publicArticleTitleClass =
   "font-(family-name:--font-gt-super) text-[clamp(2.25rem,5vw,3.75rem)] font-normal leading-[1.08] tracking-tighter text-foreground text-balance sm:leading-[1.1]";
 
 export const publicPageTitleClass =
-  "font-(family-name:--font-gt-super) text-5xl font-normal leading-[0.95] tracking-tighter text-foreground sm:text-6xl";
+  "font-(family-name:--font-gt-super) text-5xl font-normal leading-[1.02] tracking-[-0.035em] text-foreground sm:text-6xl sm:leading-[0.98] sm:tracking-tighter";
 
 export const publicHeroTitleClass =
-  "font-(family-name:--font-gt-super) text-[clamp(2.5rem,5.5vw,4.75rem)] font-normal leading-[0.9] tracking-[-0.055em] text-foreground";
+  "font-(family-name:--font-gt-super) text-[clamp(2.4rem,5.5vw,4.75rem)] font-normal leading-[1.02] tracking-[-0.035em] text-foreground text-balance sm:leading-[0.94] sm:tracking-[-0.055em]";
 
 export const publicCardClass = "rounded-3xl border border-border bg-card shadow-sm";
 
 export const publicLeadClass =
-  "max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl sm:leading-[1.65]";
+  "max-w-2xl text-base leading-7 text-muted-foreground sm:text-xl sm:leading-[1.65]";
 
 export const publicSectionTitleClass =
-  "font-(family-name:--font-gt-super) text-2xl font-normal tracking-[-0.03em] text-foreground sm:text-4xl";
+  "font-(family-name:--font-gt-super) text-3xl font-normal leading-[1.08] tracking-[-0.025em] text-foreground text-balance sm:text-4xl sm:leading-[1.05] sm:tracking-[-0.03em]";
 
 export const publicMetaClass = "text-sm text-muted-foreground";
 

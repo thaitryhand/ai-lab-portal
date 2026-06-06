@@ -71,17 +71,8 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
           publicLandingCardPaddingClass,
         )}
         href={entry.href}
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brand/45 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/6 blur-3xl transition-opacity duration-300 group-hover:bg-brand/12"
-        />
-
-        <div className="relative flex items-start justify-between gap-6">
+        >
+          <div className="relative flex items-start justify-between gap-6">
           <span className="font-(family-name:--font-gt-super) text-5xl leading-none text-brand/75 tabular-nums">
             {entry.index}
           </span>

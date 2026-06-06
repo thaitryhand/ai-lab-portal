@@ -60,15 +60,20 @@ export default async function AiNewsDetailPage({ params }: { params: Promise<{ s
           title={item.title}
         />
 
-        <p className="text-sm text-muted-foreground">{item.summary}</p>
+          <div className="rounded-[1.25rem] border border-border/80 bg-card/80 px-5 py-4 sm:px-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Reviewed summary
+            </p>
+            <p className="mt-3 text-base leading-7 text-foreground/80">{item.summary}</p>
+          </div>
 
-        <PublicProse contentMarkdown={item.contentMarkdown} />
+          <PublicProse contentMarkdown={item.contentMarkdown} />
 
-        <p className="text-sm">
-          <Link className="underline underline-offset-4" href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
-            Read original source
-          </Link>
-        </p>
+          <p className="mx-auto w-full max-w-[72ch] text-sm">
+            <Link className="font-semibold text-brand underline underline-offset-4" href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
+              Read original source
+            </Link>
+          </p>
       </article>
     </PublicPageShell>
   );

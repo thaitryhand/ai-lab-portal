@@ -35,9 +35,10 @@ export default async function ProjectsIndexPage() {
           {projects.map((project) => (
             <PublicIndexEntry
               key={project.slug}
-              excerpt={project.description}
-              href={`/projects/${project.slug}`}
-              meta={new Date(project.publishedAt).toLocaleDateString("en-US", {
+                excerpt={project.description}
+                href={`/projects/${project.slug}`}
+                imageUrl={project.imageUrl ?? undefined}
+                meta={new Date(project.publishedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",

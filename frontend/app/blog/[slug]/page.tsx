@@ -132,21 +132,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           )}
         </div>
 
-        {post.imageUrl && (
-          <div className="relative aspect-2/1 w-full overflow-hidden rounded-xl border">
-            <Image
-              alt=""
-              className="object-cover"
-              fill
-              priority
-              src={post.imageUrl}
-              unoptimized
-            />
-          </div>
-        )}
-
-        <div className="space-y-5">
-          <PublicArticleHeader
+          <div className="space-y-5">
+            <PublicArticleHeader
             dateLabel={new Date(post.publishedAt).toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
@@ -157,10 +144,23 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             readingTimeLabel={formatReadingTime(post.readingTime)}
             title={post.title}
           />
-          <BlogTagChips tags={tags} />
-        </div>
+            <BlogTagChips tags={tags} />
+          </div>
 
-        <PublicProse contentMarkdown={post.contentMarkdown} />
+          {post.imageUrl && (
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[1.5rem] border border-border/80 bg-muted shadow-[0_24px_60px_color-mix(in_srgb,var(--primary)_7%,transparent)]">
+              <Image
+                alt=""
+                className="object-cover"
+                fill
+                priority
+                src={post.imageUrl}
+                unoptimized
+              />
+            </div>
+          )}
+
+          <PublicProse contentMarkdown={post.contentMarkdown} />
 
         <div className="mx-auto w-full max-w-[72ch]">
           <BlogShareButtons title={post.title} slug={post.slug} />

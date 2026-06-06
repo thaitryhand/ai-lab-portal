@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOptimistic, useCallback, useEffect, useState, startTransition } from "react";
+import { useCallback, useEffect, useState, startTransition } from "react";
 import { Bookmark } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -41,7 +40,9 @@ export function PublicBookmarkButton({ slug }: PublicBookmarkButtonProps) {
     startTransition(async () => {
       setIsBookmarked((prev) => !prev);
       try {
-        const res = await fetch(`/api/bookmarks/toggle/${slug}`, { method: "POST" });
+        const res = await fetch(`/api/bookmarks/toggle/${slug}`, {
+          method: "POST",
+        });
         if (!res.ok) {
           setIsBookmarked((prev) => !prev); // revert
         }
@@ -67,7 +68,7 @@ export function PublicBookmarkButton({ slug }: PublicBookmarkButtonProps) {
         "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
         isBookmarked
           ? "text-brand hover:bg-brand/10"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
       aria-label={isBookmarked ? "Remove bookmark" : "Bookmark this post"}
     >

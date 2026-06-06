@@ -24,8 +24,8 @@ export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title, readin
   const reduceMotion = useReducedMotion();
 
   return (
-    <motion.header
-      className="relative border-b border-border/80 pb-12 sm:pb-14"
+      <motion.header
+        className="relative border-b border-border/80 pb-10 sm:pb-12"
       custom={1}
       initial={reduceMotion ? false : "hidden"}
       animate="show"
@@ -35,9 +35,9 @@ export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title, readin
         aria-hidden
         className="pointer-events-none absolute -left-4 top-0 hidden h-full w-px bg-linear-to-b from-brand/60 via-brand/20 to-transparent sm:block"
       />
-      <p className={publicEyebrowClass}>{eyebrow}</p>
-      <p className={cn(publicMetaClass, "mt-4 flex flex-wrap items-center gap-1.5")}>
-        <span>{dateLabel}</span>
+        <p className={publicEyebrowClass}>{eyebrow}</p>
+        <p className={cn(publicMetaClass, "mt-4 flex flex-wrap items-center gap-1.5")}>
+          <span>{dateLabel}</span>
         {readingTimeLabel ? (
           <>
             <span aria-hidden>·</span>
@@ -45,10 +45,10 @@ export function PublicArticleHeader({ dateLabel, eyebrow, excerpt, title, readin
           </>
         ) : null}
       </p>
-      <h1 className={cn(publicArticleTitleClass, "mt-5 sm:mt-6")}>{title}</h1>
-      <p className={cn(publicProseMeasureClass, "mt-8 text-xl text-muted-foreground sm:mt-10")}>
-        {excerpt}
-      </p>
+        <h1 className={cn(publicArticleTitleClass, "mt-5 sm:mt-6")}>{title}</h1>
+        <p className={cn(publicProseMeasureClass, "mt-7 text-lg leading-8 text-muted-foreground sm:mt-9 sm:text-xl sm:leading-9")}>
+          {excerpt}
+        </p>
     </motion.header>
   );
 }

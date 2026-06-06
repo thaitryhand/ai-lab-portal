@@ -3,25 +3,24 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import {
-  Bookmark,
-  FileEdit,
-  LogOut,
-  Moon,
-  Sun,
-  User,
-} from "lucide-react";
+import { Bookmark, FileEdit, LogOut, Moon, Sun, User } from "lucide-react";
 
 import { NotificationBell } from "@/components/public/notification-bell";
 import { useSession } from "@/components/session-provider";
 import { cn } from "@/lib/utils";
 
-function AvatarFallback({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
+function AvatarFallback({
+  name,
+  size = "sm",
+}: {
+  name: string;
+  size?: "sm" | "md";
+}) {
   const initial = name?.charAt(0)?.toUpperCase() ?? "?";
   return (
     <span
       className={cn(
-        "flex items-center justify-center rounded-full bg-gradient-to-br from-brand/80 to-brand text-brand-foreground font-semibold select-none",
+        "flex items-center justify-center rounded-full bg-linear-to-br from-brand/80 to-brand text-brand-foreground font-semibold select-none",
         size === "sm" && "h-8 w-8 text-sm",
         size === "md" && "h-10 w-10 text-base",
       )}
@@ -38,7 +37,9 @@ export function PublicUserMenu() {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof document === "undefined") return "light";
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+    return document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
   });
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -97,8 +98,8 @@ export function PublicUserMenu() {
         <div className="flex h-10 w-10 items-center justify-center rounded-full">
           <Moon className="size-4" />
         </div>
-        <div className="hidden h-10 w-[68px] rounded-full sm:block" />
-        <div className="h-10 w-[112px] rounded-full" />
+        <div className="hidden h-10 w-17 rounded-full sm:block" />
+        <div className="h-10 w-28 rounded-full" />
       </div>
     );
   }
@@ -113,7 +114,11 @@ export function PublicUserMenu() {
           className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
-          {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          {theme === "light" ? (
+            <Moon className="size-4" />
+          ) : (
+            <Sun className="size-4" />
+          )}
         </button>
         <Link
           href="/login"
@@ -156,7 +161,11 @@ export function PublicUserMenu() {
         className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
       >
-        {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        {theme === "light" ? (
+          <Moon className="size-4" />
+        ) : (
+          <Sun className="size-4" />
+        )}
       </button>
 
       {/* Avatar trigger */}
@@ -183,13 +192,17 @@ export function PublicUserMenu() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 min-w-[220px] overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 min-w-55 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
           role="menu"
         >
           {/* User info */}
           <div className="border-b border-border px-4 py-3">
-            <p className="truncate text-sm font-medium text-foreground">{userName}</p>
-            <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
+            <p className="truncate text-sm font-medium text-foreground">
+              {userName}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {session.user.email}
+            </p>
           </div>
 
           <div className="p-1.5">
