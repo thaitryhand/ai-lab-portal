@@ -15,6 +15,8 @@ import { listPublishedBlogPostsPage, type BlogFeed } from "@/lib/blog/posts";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
+import { breadcrumbListSchema, itemListSchema } from "@/lib/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
 export const metadata = createPublicMetadata({
@@ -45,6 +47,22 @@ export default async function BlogIndexPage({
 
   return (
     <PublicPageShell currentPath="/blog">
+      <JsonLd
+        data={breadcrumbListSchema([
+          { name: "Home", url: "/" },
+          { name: "Blog", url: "/blog" },
+        ])}
+      />
+      {posts.length > 0 && (
+        <JsonLd
+          data={itemListSchema({
+            items: posts,
+            itemUrl: (p) => `/blog/${p.slug}`,
+            itemName: (p) => p.title,
+            numberOfItems: postsPage.total,
+          })}
+        />
+      )}
       <section className={cn(publicMainWidthClass, "flex flex-col gap-14 sm:gap-16 lg:gap-20")}>
         <PublicPageHero
           actions={

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/seo/json-ld";
+import { webSiteSchema, organizationSchema } from "@/lib/seo/json-ld";
 import { ReducedMotionProvider } from "@/components/reduced-motion-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -44,6 +46,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <Toaster position="bottom-right" richColors />
           </SessionProvider>
         </ThemeProvider>
+        <JsonLd data={webSiteSchema()} />
+        <JsonLd data={organizationSchema()} />
       </body>
     </html>
   );

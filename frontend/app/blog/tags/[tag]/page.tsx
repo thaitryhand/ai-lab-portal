@@ -9,6 +9,8 @@ import { publicMainWidthClass } from "@/components/public/public-ui";
 import { listPublishedBlogPostsPage } from "@/lib/blog/posts";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { createPublicMetadata } from "@/lib/seo/metadata";
+import { breadcrumbListSchema, itemListSchema } from "@/lib/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,24 @@ export default async function BlogTagPage({ params }: { params: Promise<{ tag: s
 
   return (
     <PublicPageShell currentPath="/blog">
+      <JsonLd
+        data={breadcrumbListSchema([
+          { name: "Home", url: "/" },
+          { name: "Blog", url: "/blog" },
+          { name: "Tags", url: "/blog/tags" },
+          { name: `#${name}`, url: `/blog/tags/${tag}` },
+        ])}
+      />
+      {posts.length > 0 && (
+        <JsonLd
+          data={itemListSchema({
+            items: posts,
+            itemUrl: (p) => `/blog/${p.slug}`,
+            itemName: (p) => p.title,
+            numberOfItems: postsPage.total,
+          })}
+        />
+      )}
       <section className={cn(publicMainWidthClass, "flex flex-col gap-12 sm:gap-14")}> 
         <Link href="/blog/tags" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-brand">
           <ArrowLeft className="size-4" />

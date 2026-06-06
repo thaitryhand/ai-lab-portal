@@ -8,6 +8,7 @@ import { Pencil } from "lucide-react";
 import { BlogComments } from "@/components/blog/blog-comments";
 import { BlogSocialBar } from "@/components/blog/blog-social-bar";
 import { RelatedBlogPosts } from "@/components/blog/related-blog-posts";
+import { BlogShareButtons } from "@/components/blog/blog-share-buttons";
 import { BlogTagChips } from "@/components/blog/blog-tag-chips";
 import { PublicArticleHeader } from "@/components/public/public-article-header";
 import { PublicBackLink } from "@/components/public/public-back-link";
@@ -20,6 +21,8 @@ import { getSocialStats, listComments } from "@/lib/blog/social";
 import { listPublicPostTags } from "@/lib/blog/tags";
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
+import { blogPostingSchema, breadcrumbListSchema } from "@/lib/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { formatReadingTime } from "@/lib/reading-time";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +53,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${post.title} | AI Lab Portal`,
     description: post.excerpt,
     ogImageUrl: post.imageUrl ?? undefined,
+    ogAuthor: post.authorName,
+    ogReadingTime: post.readingTime ?? undefined,
     path: `/blog/${slug}`,
     type: "article",
   });
@@ -92,24 +97,25 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     .slice(0, 3)
     .map(({ post }) => post);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.excerpt,
-    image: post.imageUrl,
-    author: {
-      "@type": "Person",
-      name: post.authorName,
-    },
-    datePublished: post.publishedAt,
-  };
-
   return (
     <PublicPageShell currentPath="/blog">
-      <script
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        type="application/ld+json"
+      <JsonLd
+        data={blogPostingSchema({
+          headline: post.title,
+          description: post.excerpt,
+          url: `/blog/${slug}`,
+          datePublished: post.publishedAt,
+          dateModified: post.publishedAt,
+          imageUrl: post.imageUrl ?? undefined,
+          authorName: post.authorName,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbListSchema([
+          { name: "Home", url: "/" },
+          { name: "Blog", url: "/blog" },
+          { name: post.title, url: `/blog/${slug}` },
+        ])}
       />
       <article className={cn(publicMainWidthClass, "flex flex-col gap-10 sm:gap-12")}>
         <div className="flex items-start justify-between gap-4">
@@ -127,7 +133,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         </div>
 
         {post.imageUrl && (
-          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-xl border">
+          <div className="relative aspect-2/1 w-full overflow-hidden rounded-xl border">
             <Image
               alt=""
               className="object-cover"
@@ -156,27 +162,33 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
         <PublicProse contentMarkdown={post.contentMarkdown} />
 
+        <div className="mx-auto w-full max-w-[72ch]">
+          <BlogShareButtons title={post.title} slug={post.slug} />
+        </div>
+
         <RelatedBlogPosts posts={relatedPosts} />
 
         {/* Social features */}
-        <BlogSocialBar
-          isAuthenticated={!!session}
-          initialStats={socialStats}
-          slug={slug}
-          onToggleReaction={session ? toggleReactionAction : undefined}
-          onToggleBookmark={session ? toggleBookmarkAction : undefined}
-        />
+        <div className="mx-auto flex w-full max-w-[72ch] flex-col gap-8">
+          <BlogSocialBar
+            isAuthenticated={!!session}
+            initialStats={socialStats}
+            slug={slug}
+            onToggleReaction={session ? toggleReactionAction : undefined}
+            onToggleBookmark={session ? toggleBookmarkAction : undefined}
+          />
 
-        <BlogComments
-          initialComments={comments}
-          isAuthenticated={!!session}
-          slug={slug}
-          session={session}
-          onCreateComment={session ? createCommentAction : undefined}
-          onToggleCommentReaction={session ? toggleCommentReactionAction : undefined}
-          onEditComment={session ? editCommentAction : undefined}
-          onDeleteComment={session ? deleteCommentAction : undefined}
-        />
+          <BlogComments
+            initialComments={comments}
+            isAuthenticated={!!session}
+            slug={slug}
+            session={session}
+            onCreateComment={session ? createCommentAction : undefined}
+            onToggleCommentReaction={session ? toggleCommentReactionAction : undefined}
+            onEditComment={session ? editCommentAction : undefined}
+            onDeleteComment={session ? deleteCommentAction : undefined}
+          />
+        </div>
       </article>
     </PublicPageShell>
   );

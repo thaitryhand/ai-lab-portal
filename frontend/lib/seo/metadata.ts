@@ -8,17 +8,24 @@ export function createPublicMetadata({
   title,
   description,
   ogImageUrl,
+  ogAuthor,
+  ogReadingTime,
   path,
   type = "website",
 }: {
   title: string;
   description: string;
   ogImageUrl?: string;
+  ogAuthor?: string;
+  ogReadingTime?: number;
   path: string;
   type?: "website" | "article";
 }): Metadata {
   const canonicalPath = path.startsWith("/") ? path : `/${path}`;
-  const image = ogImageUrl ?? `${baseUrl}/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
+  const ogParams = new URLSearchParams({ title, description });
+  if (ogAuthor) ogParams.set("author", ogAuthor);
+  if (ogReadingTime) ogParams.set("readingTime", String(ogReadingTime));
+  const image = ogImageUrl ?? `${baseUrl}/api/og?${ogParams.toString()}`;
 
   return {
     title,

@@ -7,6 +7,8 @@ import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { listPublicBlogTags } from "@/lib/blog/tags";
 import { createPublicMetadata } from "@/lib/seo/metadata";
+import { breadcrumbListSchema } from "@/lib/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = createPublicMetadata({
@@ -22,6 +24,13 @@ export default async function BlogTagsPage() {
 
   return (
     <PublicPageShell currentPath="/blog">
+      <JsonLd
+        data={breadcrumbListSchema([
+          { name: "Home", url: "/" },
+          { name: "Blog", url: "/blog" },
+          { name: "Tags", url: "/blog/tags" },
+        ])}
+      />
       <section className={cn(publicMainWidthClass, "flex flex-col gap-12 sm:gap-14")}> 
         <PublicPageHero
           eyebrow="Topics"
