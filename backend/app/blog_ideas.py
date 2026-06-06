@@ -47,9 +47,11 @@ from backend.app.settings import Settings
 
 def marketing_metadata_for_storage(result: MarketingMetadata) -> dict:
     """Normalize LLM marketing output to the admin UI / publish contract."""
+    excerpt = (result.excerpt or result.meta_description or "").strip()
     return {
         "seo_title": result.seo_title,
         "meta_description": result.meta_description,
+        "excerpt": excerpt,
         "canonical_url": "",
         "social_headline": result.linkedin_post,
         "social_description": result.x_post,

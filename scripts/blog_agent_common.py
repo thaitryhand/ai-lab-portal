@@ -20,22 +20,32 @@ JOB_TIMEOUT_SEC = 300
 SEED_PROJECT_PAYLOAD = {
     "project_name": "AI Lab Portal",
     "project_summary": (
-        "A web portal and harness for agent-ready software repos: blog, projects, "
-        "showcases, and a semi-automated AI blog agent pipeline."
+        "AI Lab Portal is a full-stack platform for publishing AI lab work: blog posts, "
+        "project showcases, AI news, and an admin-operated blog agent that turns internal "
+        "project context into reviewed, publishable articles."
     ),
     "ai_capabilities": (
-        "LLM-powered idea generation, outline and draft writing, technical review, "
-        "SEO marketing metadata, and claim extraction with human approval gates."
+        "Multi-stage LLM pipeline (idea, outline, draft, technical review, marketing metadata, "
+        "claim extraction) with human approval gates at each step. Semi-auto orchestration "
+        "runs the next Celery job after an admin approves a gate."
     ),
     "technical_highlights": (
-        "## Stack\n"
-        "FastAPI backend, Next.js admin UI, Celery + Redis async jobs, Postgres persistence.\n\n"
-        "## Blog agent\n"
-        "Semi-auto orchestrator: admin approves each gate before the next LLM stage runs.\n"
-        "Publish bridge creates a public blog post when draft, review, marketing, and claims are ready."
+        "## Architecture\n"
+        "- FastAPI backend with Postgres repositories and Alembic migrations\n"
+        "- Next.js admin UI with server actions and Better Auth sessions\n"
+        "- Celery workers on Redis for long-running generation jobs\n"
+        "- Structured OpenAI outputs validated with Pydantic at the API boundary\n\n"
+        "## Editorial workflow\n"
+        "Admins pick a published project or showcase, generate an idea, then approve outline, "
+        "draft, technical review, and marketing before claims are extracted. A publish bridge "
+        "creates a public blog post only when the claim gate is clear.\n\n"
+        "## Quality controls\n"
+        "Technical review flags unsupported metrics and shallow sections. Claims require "
+        "evidence or an explicit waiver before publish."
     ),
     "business_value": (
-        "Ships publishable technical blog content from real project context with editorial control."
+        "Ships credible B2B technical content from real engineering context without losing "
+        "editorial control — suitable for CTOs evaluating how the lab builds with AI."
     ),
 }
 

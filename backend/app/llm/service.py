@@ -105,6 +105,12 @@ class OpenAILLMService(LLMService):
         system = prompt.system
         user = prompt.user_template.format(**inputs)
 
+        completion_kwargs: dict[str, Any] = {}
+        if prompt_name == "draft_writer":
+            completion_kwargs["max_completion_tokens"] = 12000
+        if prompt_name == "draft_section_writer":
+            completion_kwargs["max_completion_tokens"] = 2500
+
         try:
             completion = self._client.beta.chat.completions.parse(
                 model=self._model,
@@ -113,6 +119,7 @@ class OpenAILLMService(LLMService):
                     {"role": "user", "content": user},
                 ],
                 response_format=output_schema,
+                **completion_kwargs,
             )
         except Exception as exc:
             raise LLMGenerationError(

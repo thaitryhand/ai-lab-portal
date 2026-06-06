@@ -53,7 +53,21 @@ class BlogDraft(BaseModel):
 
     title: str = Field(description="Article title")
     markdown: str = Field(
-        description="Full article markdown content, including all sections",
+        description=(
+            "Full article markdown content, including all outline sections. "
+            "Minimum 1,800 words; use ## headings per section."
+        ),
+    )
+
+
+class BlogDraftSection(BaseModel):
+    """One outline section expanded into publication-ready prose."""
+
+    markdown: str = Field(
+        description=(
+            "Section body only (no heading). Write 250–400 words of natural "
+            "English with concrete examples from the project context."
+        ),
     )
 
 

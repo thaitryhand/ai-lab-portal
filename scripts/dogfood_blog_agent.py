@@ -18,6 +18,7 @@ from urllib.request import Request, urlopen
 
 sys.path.insert(0, "D:/Personal/ai-lab-portal")
 from backend.app.admin_boundary import sign_admin_identity
+from scripts.blog_agent_common import SEED_PROJECT_PAYLOAD
 
 BACKEND_URL = "http://127.0.0.1:18000"
 SECRET = "ai-lab-dev-boundary-2026-secret!"
@@ -25,27 +26,7 @@ DATABASE_URL = "postgresql://ai_lab:ai_lab_dev_password@localhost:15432/ai_lab_p
 POLL_INTERVAL_SEC = 2
 JOB_TIMEOUT_SEC = 300
 
-PROJECT_PAYLOAD = {
-    "project_name": "AI Lab Portal",
-    "project_summary": (
-        "A web portal and harness for agent-ready software repos: blog, projects, "
-        "showcases, and a semi-automated AI blog agent pipeline."
-    ),
-    "ai_capabilities": (
-        "LLM-powered idea generation, outline and draft writing, technical review, "
-        "SEO marketing metadata, and claim extraction with human approval gates."
-    ),
-    "technical_highlights": (
-        "## Stack\n"
-        "FastAPI backend, Next.js admin UI, Celery + Redis async jobs, Postgres persistence.\n\n"
-        "## Blog agent\n"
-        "Semi-auto orchestrator: admin approves each gate before the next LLM stage runs.\n"
-        "Publish bridge creates a public blog post when draft, review, marketing, and claims are ready."
-    ),
-    "business_value": (
-        "Ships publishable technical blog content from real project context with editorial control."
-    ),
-}
+PROJECT_PAYLOAD = SEED_PROJECT_PAYLOAD
 
 
 def admin_headers() -> dict[str, str]:
@@ -206,6 +187,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Dogfood AI Blog Agent with real OpenAI")
     parser.add_argument("--skip-seed-project", action="store_true")
     parser.add_argument("--idea-id", help="Resume an existing idea (skip generate step)")
+    parser.add_argument(
+        "--regenerate-draft",
+        action="store_true",
+        help="Clear draft/review/marketing and re-run from outline approval",
+    )
     args = parser.parse_args()
 
     try:
@@ -250,7 +236,27 @@ def main() -> None:
         skip_if=idea.get("status") == "approved" and bool(idea.get("outline_sections")),
     )
 
+    if args.regenerate_draft:
+        print("   Regenerating draft: resetting downstream gates...", flush=True)
+        status, result = api_call(
+            "PATCH",
+            f"/admin/blog-ideas/{idea_id}",
+            {
+                "draft_status": "pending",
+                "technical_review_status": "pending",
+                "marketing_status": "pending",
+            },
+        )
+        if status >= 300:
+            raise RuntimeError(f"Reset gates failed ({status}) {result}")
+        idea = load_idea(idea_id)
+
     print("3. Approve outline -> draft...", flush=True)
+    skip_draft = (
+        not args.regenerate_draft
+        and idea.get("outline_status") == "approved"
+        and bool(idea.get("draft_markdown"))
+    )
     idea = maybe_approve_and_run(
         idea,
         idea_id,
@@ -258,10 +264,15 @@ def main() -> None:
         gate_value="approved",
         post_path=f"/admin/blog-ideas/{idea_id}/generate-draft",
         label="Draft",
-        skip_if=idea.get("outline_status") == "approved" and bool(idea.get("draft_markdown")),
+        skip_if=skip_draft,
     )
 
     print("4. Approve draft -> technical review...", flush=True)
+    skip_review = (
+        not args.regenerate_draft
+        and idea.get("draft_status") == "approved"
+        and bool(idea.get("technical_review"))
+    )
     idea = maybe_approve_and_run(
         idea,
         idea_id,
@@ -269,11 +280,11 @@ def main() -> None:
         gate_value="approved",
         post_path=f"/admin/blog-ideas/{idea_id}/review-technical",
         label="Technical review",
-        skip_if=idea.get("draft_status") == "approved" and bool(idea.get("technical_review")),
+        skip_if=skip_review,
     )
 
     print("5. Accept review -> marketing...", flush=True)
-    if idea.get("marketing_metadata"):
+    if idea.get("marketing_metadata") and not args.regenerate_draft:
         print("   Marketing: skipped (already done)")
     else:
         if idea.get("technical_review_status") != "approved":
