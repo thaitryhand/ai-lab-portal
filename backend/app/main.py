@@ -133,13 +133,84 @@ from backend.app.projects import (
 )
 
 
-def health(request: Request) -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
+def health(request: Request) -> dict[str, object]:
     settings = cast(Settings, request.app.state.settings)
-    return {
+    result: dict[str, object] = {
         "service": settings.service_name,
         "status": "ok",
         "environment": settings.environment,
     }
+
+    # Database check
+    if settings.environment != "test":
+        try:
+            from sqlalchemy import create_engine as _ce, text as _t
+            engine = getattr(request.app.state, "engine", None) or _ce(str(settings.database_url))
+            with engine.connect() as conn:
+                conn.execute(_t("SELECT 1"))
+            result["database"] = "connected"
+        except Exception as e:
+            result["database"] = f"error: {e!s}"
+            if result["status"] == "ok":
+                result["status"] = "degraded"
+
+    # Redis check
+    if settings.environment != "test":
+        try:
+            import redis as _redis
+            r = _redis.from_url(str(settings.redis_url), socket_connect_timeout=2)
+            r.ping()
+            r.close()
+            result["redis"] = "connected"
+        except ImportError:
+            result["redis"] = "not_available"
+        except Exception as e:
+            result["redis"] = f"error: {e!s}"
+            if result["status"] == "ok":
+                result["status"] = "degraded"
+
+    # Celery worker check (best-effort, only outside test)
+    if settings.environment != "test":
+        try:
+            from backend.app.celery_app import celery_app
+            try:
+                inspect = celery_app.control.inspect(timeout=2)
+                stats = inspect.stats()
+                if stats:
+                    workers = list(stats.keys())
+                    result["celery_workers"] = workers
+                    result["celery_worker_count"] = len(workers)
+                else:
+                    result["celery_workers"] = []
+                    result["celery_worker_count"] = 0
+                    result["celery_status"] = "no_workers_connected"
+                    if result["status"] == "ok":
+                        result["status"] = "degraded"
+            except Exception as e:
+                result["celery_status"] = f"inspect_failed: {e!s}"
+                result["celery_worker_count"] = 0
+        except ImportError:
+            result["celery_status"] = "not_available"
+
+    # Queue info via Redis (best-effort)
+    if settings.environment != "test":
+        try:
+            import redis as _redis
+            r = _redis.from_url(str(settings.redis_url), socket_connect_timeout=2)
+            queue_keys = [k.decode() if isinstance(k, bytes) else k for k in r.keys("celery*")]
+            queue_info: dict[str, int] = {}
+            for key in queue_keys:
+                if "celery@" not in key:
+                    try:
+                        queue_info[key] = r.llen(key)
+                    except Exception:
+                        pass
+            r.close()
+            result["celery_queues"] = queue_info
+        except Exception:
+            pass
+
+    return result
 
 
 def create_app(
@@ -213,6 +284,8 @@ def create_app(
         notif_repo = notification_repository or PostgresNotificationRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
+    if resolved_settings.environment != "test":
+        app.state.engine = engine
     app.state.settings = resolved_settings
     app.add_middleware(RequestLoggingMiddleware)
     app.add_api_route("/health", health, methods=["GET"])

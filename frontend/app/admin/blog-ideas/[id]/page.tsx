@@ -106,6 +106,7 @@ export default async function AdminBlogIdeaDetailPage({
       <GenerationJobPoller
         ideaId={id}
         taskId={query.taskId}
+        opStage={query.opStage}
         opStatus={query.opStatus}
       />
       <BlogIdeaDetailView

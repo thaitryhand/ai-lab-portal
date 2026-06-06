@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   Activity,
-  ArrowUpRight,
   Briefcase,
   FileText,
   Lightbulb,
@@ -17,6 +16,7 @@ import {
 import { AdminDashboardHeader } from "@/components/admin/admin-dashboard-header";
 import { AdminDashboardStatGrid } from "@/components/admin/admin-dashboard-stat-grid";
 import { AdminModuleCard, type AdminModuleCardProps } from "@/components/admin/admin-module-card";
+import { AdminHealthWidget } from "@/components/admin/admin-health-widget";
 import {
   adminCardClass,
   adminPageStackClass,
@@ -127,6 +127,8 @@ export default async function AdminDashboardPage() {
               ))}
             </div>
           </div>
+
+          <AdminHealthWidget />
 
           <div className={cn(adminCardClass, "p-5")}>
             <div className="flex items-center gap-2.5">

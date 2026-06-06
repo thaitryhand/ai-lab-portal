@@ -1,7 +1,10 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useFormStatus } from "react-dom";
+
 import {
   CheckCircle,
   XCircle,
@@ -20,6 +23,7 @@ import {
   Send,
   ExternalLink,
   Scale,
+  Loader2,
 } from "lucide-react";
 
 import { AdminBackLink } from "@/components/admin/admin-back-link";
@@ -310,11 +314,20 @@ export function BlogIdeaDetailView({ idea, claims = [], operationalStatus, actio
         </div>
       </motion.div>
 
-      {operationalStatus?.opStatus && operationalStatus.message && (
-        <motion.div variants={sectionAnim}>
-          <OperationalStatusBanner status={operationalStatus} />
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {operationalStatus?.opStatus && operationalStatus.message && (
+          <motion.div
+            key="op-banner"
+            variants={sectionAnim}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <OperationalStatusBanner status={operationalStatus} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Header ── */}
       <motion.div variants={sectionAnim}>
@@ -945,13 +958,7 @@ export function BlogIdeaDetailView({ idea, claims = [], operationalStatus, actio
             </p>
             <form action={actions.publishToBlog}>
               <input name="ideaId" type="hidden" value={idea.id} />
-              <button
-                className={cn(buttonVariants({ variant: "default" }), "gap-2")}
-                type="submit"
-              >
-                <Send className="size-4" aria-hidden />
-                Publish to blog
-              </button>
+              <ActionSubmitButton icon={Send} label="Publish to blog" variant="default" />
             </form>
           </div>
         ) : (
@@ -963,6 +970,15 @@ export function BlogIdeaDetailView({ idea, claims = [], operationalStatus, actio
 }
 
 // ─── Sub-Components ──────────────────────────────────────────────
+
+const badgeAnim = {
+  hidden: { opacity: 0, scale: 0.8 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" as const },
+  },
+};
 
 function SectionCard({
   icon: Icon,
@@ -982,7 +998,7 @@ function SectionCard({
       variants={sectionAnim}
       className={cn(adminPanelClass, "p-0")}
     >
-      <div className="flex items-center justify-between border-b border-border px-5 py-4 ">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
         <div className="flex items-center gap-2.5">
           <div className="flex size-8 items-center justify-center rounded-xl bg-muted">
             <Icon className="size-4 text-muted-foreground" aria-hidden />
@@ -992,7 +1008,8 @@ function SectionCard({
           </h2>
         </div>
         {status && (
-          <span
+          <motion.span
+            variants={badgeAnim}
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest",
               statusColors[status] ?? statusColors.pending
@@ -1002,10 +1019,10 @@ function SectionCard({
             {status === "rejected" && <XCircle className="size-3" />}
             {status === "pending" && <Clock className="size-3" />}
             {status}
-          </span>
+          </motion.span>
         )}
       </div>
-      <div className="p-5">{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </motion.div>
   );
 }
@@ -1023,21 +1040,70 @@ function EmptyState({
   };
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <p className="text-sm text-muted-foreground">{message}</p>
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border/30">
+        <Sparkles className="size-5 text-muted-foreground/60" aria-hidden />
+      </div>
+      <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{message}</p>
       {action && (
         <form action={action.actionName} className="mt-4">
           <input name="ideaId" type="hidden" value={action.ideaId} />
-          <button
-            className={cn(buttonVariants({ variant: "secondary" }), "gap-2")}
-            type="submit"
-          >
-            <action.icon className="size-4" aria-hidden />
-            {action.label}
-          </button>
+          <ActionSubmitButton icon={action.icon} label={action.label} variant="outline" />
         </form>
       )}
     </div>
+  );
+}
+
+function ActionButton({
+  action,
+  ideaId,
+  label,
+  icon: Icon,
+  variant = "default",
+}: {
+  action: (formData: FormData) => Promise<void>;
+  ideaId: string;
+  label: string;
+  icon: typeof CheckCircle;
+  variant?: "default" | "outline";
+}) {
+  return (
+    <form action={action}>
+      <input name="ideaId" type="hidden" value={ideaId} />
+      <ActionSubmitButton icon={Icon} label={label} variant={variant} />
+    </form>
+  );
+}
+
+function ActionSubmitButton({
+  icon: Icon,
+  label,
+  variant,
+}: {
+  icon: typeof CheckCircle;
+  label: string;
+  variant: "default" | "outline";
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      disabled={pending}
+      className={cn(
+        buttonVariants({ size: "sm", variant: variant === "default" ? "default" : "outline" }),
+        "flex items-center gap-1.5",
+        pending && "pointer-events-none opacity-60"
+      )}
+      type="submit"
+    >
+      {pending ? (
+        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+      ) : (
+        <Icon className="size-3.5" aria-hidden />
+      )}
+      {pending ? `${label}…` : label}
+    </button>
   );
 }
 
@@ -1056,32 +1122,20 @@ function ActionButtons({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <form action={approveAction}>
-        <input name="ideaId" type="hidden" value={ideaId} />
-        <button
-          className={cn(
-            buttonVariants({ size: "sm" }),
-            "flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand/90"
-          )}
-          type="submit"
-        >
-          <CheckCircle className="size-3.5" aria-hidden />
-          {approveLabel}
-        </button>
-      </form>
-      <form action={rejectAction}>
-        <input name="ideaId" type="hidden" value={ideaId} />
-        <button
-          className={cn(
-            buttonVariants({ size: "sm", variant: "outline" }),
-            "flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
-          )}
-          type="submit"
-        >
-          <XCircle className="size-3.5" aria-hidden />
-          {rejectLabel}
-        </button>
-      </form>
+      <ActionButton
+        action={approveAction}
+        ideaId={ideaId}
+        label={approveLabel}
+        icon={CheckCircle}
+        variant="default"
+      />
+      <ActionButton
+        action={rejectAction}
+        ideaId={ideaId}
+        label={rejectLabel}
+        icon={XCircle}
+        variant="outline"
+      />
     </div>
   );
 }
@@ -1099,11 +1153,16 @@ function OperationalStatusBanner({ status }: { status: OperationalStatus }) {
   const isError = status.opStatus === "error";
   const isQueued = status.opStatus === "queued";
   const isPublish = status.opStage === "publish";
+
   return (
-    <div
+    <motion.div
       role={isError ? "alert" : "status"}
+      initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+      animate={{ opacity: 1, height: "auto", marginBottom: "1.5rem" }}
+      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       className={cn(
-        "rounded-xl border p-4",
+        "overflow-hidden rounded-xl border",
         isError
           ? "border-red-200 bg-red-50/80 text-red-900 dark:border-red-900 dark:bg-red-950/20 dark:text-red-200"
           : isQueued
@@ -1111,9 +1170,19 @@ function OperationalStatusBanner({ status }: { status: OperationalStatus }) {
             : "border-emerald-200 bg-emerald-50/80 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-200"
       )}
     >
-      <div className="flex items-start gap-2">
-        {isError ? <AlertCircle className="mt-0.5 size-4" aria-hidden /> : <Sparkles className="mt-0.5 size-4" aria-hidden />}
-        <div className="grid gap-1">
+      <div className="flex items-start gap-3 p-4">
+        <motion.div
+          initial={{ rotate: -90, opacity: 0 }}
+          animate={{ rotate: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+        >
+          {isError ? (
+            <AlertCircle className="mt-0.5 size-5" aria-hidden />
+          ) : (
+            <Sparkles className="mt-0.5 size-5" aria-hidden />
+          )}
+        </motion.div>
+        <div className="grid min-w-0 flex-1 gap-1">
           <p className="text-sm font-semibold">
             {isError
               ? isPublish
@@ -1125,16 +1194,23 @@ function OperationalStatusBanner({ status }: { status: OperationalStatus }) {
                   ? "Published to blog"
                   : "Generation completed"}
           </p>
-          <p className="text-sm leading-snug opacity-90">{status.message}</p>
+          {status.message && (
+            <p className="text-sm leading-snug opacity-80">{status.message}</p>
+          )}
           {(status.opStage || status.taskId) && (
-            <p className="text-xs opacity-75">
+            <p className="text-xs opacity-60">
               {status.opStage ? `Stage: ${status.opStage}` : null}
               {status.opStage && status.taskId ? " · " : null}
               {status.taskId ? `Task: ${status.taskId}` : null}
             </p>
           )}
           {status.blogPostId && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              className="mt-2 flex flex-wrap gap-2"
+            >
               <Link
                 href={`/admin/blog/${status.blogPostId}/edit`}
                 className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "gap-1.5")}
@@ -1151,11 +1227,11 @@ function OperationalStatusBanner({ status }: { status: OperationalStatus }) {
                   View live
                 </Link>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1175,13 +1251,7 @@ function RegenerateAction({
       </p>
       <form action={actionName}>
         <input name="ideaId" type="hidden" value={ideaId} />
-        <button
-          className={cn(buttonVariants({ size: "sm", variant: "secondary" }), "gap-1.5 whitespace-nowrap")}
-          type="submit"
-        >
-          <Sparkles className="size-3.5" aria-hidden />
-          {label}
-        </button>
+        <ActionSubmitButton icon={Sparkles} label={label} variant="outline" />
       </form>
     </div>
   );

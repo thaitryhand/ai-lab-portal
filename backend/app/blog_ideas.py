@@ -540,6 +540,7 @@ def _row_to_idea(row: dict) -> BlogIdea:
     raw_ctx = data.pop("source_project_context", None)
     raw_outline = data.pop("outline_sections", None)
     raw_review = data.pop("technical_review", None)
+    raw_marketing = data.pop("marketing_metadata", None)
     idea = BlogIdea(**data)
     if raw_pos:
         try:
@@ -562,7 +563,6 @@ def _row_to_idea(row: dict) -> BlogIdea:
             idea.technical_review = json.loads(raw_review)
         except (json.JSONDecodeError, TypeError):
             pass
-    raw_marketing = data.pop("marketing_metadata", None)
     if raw_marketing:
         try:
             idea.marketing_metadata = json.loads(raw_marketing)
