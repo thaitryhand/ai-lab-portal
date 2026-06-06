@@ -15,7 +15,8 @@ validation contracts before implementation.
 | MVP 2 | AI-assisted blog | **Implemented** | US-025–US-035, US-043 |
 | MVP 3 | AI News (official sources) | **Implemented** | US-036–US-041 |
 | MVP 4 | User-submitted links | **Implemented** | US-044–US-046 |
-| MVP 5 | X/Twitter intelligence | Blocked — planning stub only | `docs/stories/epics/E05-x-twitter/README.md` |
+| MVP 5 | X/Twitter intelligence | Fake provider implemented; real Apify blocked on budget/terms | US-053–057 |
+| Post-MVP | Blog social, contact, notifications, projects, polish, SEO, search | **Implemented** | US-058–083 |
 
 ---
 
@@ -162,21 +163,66 @@ Deferred (post-MVP 4):
 
 ## MVP 5: X/Twitter Intelligence
 
-**Status: Blocked — planning stub only** (2026-06-04).
+**Status: Fake provider implemented; real Apify blocked on human gate** (2026-06-04).
 
 Objective: evaluate social intelligence as a future AI News source class only after provider, data, terms, cost, and moderation risks are accepted.
 
-Planning stub:
+### Delivered (fake provider path)
 
-- `docs/stories/epics/E05-x-twitter/README.md`
+| Story | Capability |
+| --- | --- |
+| US-051–052 | Planning stub and provider research (Apify-first strategy) |
+| US-053–054 | Source contract, fake fixtures, AI social link filter |
+| US-055 | X/Twitter ingestion spike with fake provider |
+| US-056 | Social item scoring calibration (author credibility, engagement) |
+| US-057 | Admin review affordances for social context |
 
-Entry criteria:
+### Entry criteria for real provider (not yet met)
 
-- Provider strategy chosen and documented in a durable decision record.
+- Provider strategy chosen and documented in a durable decision record. ✓ (US-052)
 - Source account and keyword list defined.
-- Required and nullable fields documented, including engagement and author metadata semantics.
-- Rate limits, budget, provider terms, fallback behavior, and risk owner agreed.
+- Required and nullable fields documented, including engagement and author metadata semantics. ✓ (US-053)
+- Rate limits, budget, provider terms, fallback behavior, and risk owner agreed. **Blocked — backlog #4**
 - Moderation, attribution, storage, and display policy accepted.
-- Fake-provider validation plan exists before any real provider implementation.
+- Fake-provider validation plan exists before any real provider implementation. ✓
 
-Non-goal for this phase: do not implement X/Twitter ingestion, schema, provider calls, or UI until the entry criteria are met.
+Non-goal until human gate clears: do not call real Apify or X/Twitter APIs in production.
+
+---
+
+## Post-MVP: Blog Social, Platform Polish, and Content Ops
+
+**Status: Implemented** (2026-06-04 through 2026-06-06) — US-058 through US-083.
+
+Objective: ship credible public-facing blog social features, complete deferred platform slices (contact, notifications, projects, admin dashboard), and polish UX/SEO for launch readiness.
+
+### Delivered
+
+| Area | Stories | Notes |
+| --- | --- | --- |
+| Blog social | US-058–061 | Public blog creation, tags, threaded comments, following/feeds |
+| Contact | US-062–063 | Backend API + public `/contact` form |
+| Notifications | US-064–065 | Backend API + notification bell UI |
+| Projects | US-066–068 | Backend CRUD + admin UI + public `/projects` pages |
+| UI/UX polish | US-069–071 | Loading skeletons, micro-interactions, responsive/hamburger nav |
+| Admin dashboard | US-072–073 | Unified stats API + stat cards UI |
+| SEO foundation | US-074 | Metadata, sitemap.xml, robots.txt, article sharing |
+| Blog UX | US-075 | Reading time, RSS, infinite scroll, related posts |
+| Blog media | US-076 | Image upload in editor, Docker volume persistence |
+| Public profile | US-077 | Avatar/cover uploads, profile redesign, header avatar sync |
+| Blog social hardening | US-078 | Comment reactions, bookmarks, TipTap comment editor |
+| Admin polish | US-079 | Health status widget, dashboard comment stats, blog search |
+| Home redesign | US-080 | Editorial landing sections, spacing rhythm |
+| Auth polish | US-081 | Session refresh, password visibility, login/register redesign |
+| Search | US-082 | ILIKE filtering in blog and AI news repositories |
+| Content ops | US-083 | Editorial seed scripts, expanded E2E proof coverage |
+
+### Still deferred (not story-tracked)
+
+| Item | Reason |
+| --- | --- |
+| Real Apify X/Twitter ingestion | Budget/terms gate (backlog #4) |
+| Admin submitted-links review UI | API complete; UI deferred |
+| GitHub/website crawl beyond RSS | Registry stubs only |
+| Advanced caching / CDN | Correctness-first `no-store` fetches |
+| Richer claim review UI | Post-MVP 2 deferral |
