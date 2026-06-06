@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -29,7 +29,9 @@ type CommentTiptapEditorProps = {
   autoFocus?: boolean;
   onCancel?: () => void;
   isSubmitting?: boolean;
-  session?: { user: { id: string; name?: string; email: string; image?: string | null } } | null;
+  session?: {
+    user: { id: string; name?: string; email: string; image?: string | null };
+  } | null;
   /** Pre‑fill the editor with existing HTML content (edit mode). */
   initialContent?: string;
 };
@@ -44,21 +46,74 @@ type ToolbarAction = {
 
 function createToolbar(): ToolbarAction[] {
   return [
-    { key: "bold", icon: Bold, label: "Bold", action: (e) => e.chain().focus().toggleBold().run(), isActive: (e) => e.isActive("bold") },
-    { key: "italic", icon: Italic, label: "Italic", action: (e) => e.chain().focus().toggleItalic().run(), isActive: (e) => e.isActive("italic") },
-    { key: "strikethrough", icon: Strikethrough, label: "Strikethrough", action: (e) => e.chain().focus().toggleStrike().run(), isActive: (e) => e.isActive("strike") },
-    { key: "code", icon: Code, label: "Code", action: (e) => e.chain().focus().toggleCode().run(), isActive: (e) => e.isActive("code") },
-    { key: "heading", icon: Heading3, label: "Heading", action: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(), isActive: (e) => e.isActive("heading", { level: 3 }) },
-    { key: "blockquote", icon: Quote, label: "Blockquote", action: (e) => e.chain().focus().toggleBlockquote().run(), isActive: (e) => e.isActive("blockquote") },
-    { key: "bulletList", icon: List, label: "Bullet list", action: (e) => e.chain().focus().toggleBulletList().run(), isActive: (e) => e.isActive("bulletList") },
-    { key: "orderedList", icon: ListOrdered, label: "Numbered list", action: (e) => e.chain().focus().toggleOrderedList().run(), isActive: (e) => e.isActive("orderedList") },
     {
-      key: "link", icon: Link, label: "Link",
+      key: "bold",
+      icon: Bold,
+      label: "Bold",
+      action: (e) => e.chain().focus().toggleBold().run(),
+      isActive: (e) => e.isActive("bold"),
+    },
+    {
+      key: "italic",
+      icon: Italic,
+      label: "Italic",
+      action: (e) => e.chain().focus().toggleItalic().run(),
+      isActive: (e) => e.isActive("italic"),
+    },
+    {
+      key: "strikethrough",
+      icon: Strikethrough,
+      label: "Strikethrough",
+      action: (e) => e.chain().focus().toggleStrike().run(),
+      isActive: (e) => e.isActive("strike"),
+    },
+    {
+      key: "code",
+      icon: Code,
+      label: "Code",
+      action: (e) => e.chain().focus().toggleCode().run(),
+      isActive: (e) => e.isActive("code"),
+    },
+    {
+      key: "heading",
+      icon: Heading3,
+      label: "Heading",
+      action: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 3 }),
+    },
+    {
+      key: "blockquote",
+      icon: Quote,
+      label: "Blockquote",
+      action: (e) => e.chain().focus().toggleBlockquote().run(),
+      isActive: (e) => e.isActive("blockquote"),
+    },
+    {
+      key: "bulletList",
+      icon: List,
+      label: "Bullet list",
+      action: (e) => e.chain().focus().toggleBulletList().run(),
+      isActive: (e) => e.isActive("bulletList"),
+    },
+    {
+      key: "orderedList",
+      icon: ListOrdered,
+      label: "Numbered list",
+      action: (e) => e.chain().focus().toggleOrderedList().run(),
+      isActive: (e) => e.isActive("orderedList"),
+    },
+    {
+      key: "link",
+      icon: Link,
+      label: "Link",
       action: (e) => {
         const prev = e.isActive("link") ? e.getAttributes("link").href : "";
         const url = window.prompt("Enter URL", prev || "https://");
         if (url === null) return;
-        if (!url) { e.chain().focus().unsetLink().run(); return; }
+        if (!url) {
+          e.chain().focus().unsetLink().run();
+          return;
+        }
         e.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
       },
       isActive: (e) => e.isActive("link"),
@@ -79,23 +134,22 @@ export function CommentTiptapEditor({
   initialContent,
 }: CommentTiptapEditorProps) {
   const [hasContent, setHasContent] = useState(
-    initialContent ? initialContent.replace(/<[^>]*>/g, "").trim().length > 0 : false,
+    initialContent
+      ? initialContent.replace(/<[^>]*>/g, "").trim().length > 0
+      : false,
   );
   const [charCount, setCharCount] = useState(
     initialContent ? initialContent.replace(/<[^>]*>/g, "").length : 0,
   );
+  const [isSubmittingInternal, setIsSubmittingInternal] = useState(false);
 
   // ── Refs for values passed to editorProps (avoid stale closures) ──
   const onSubmitRef = useRef(onSubmit);
-  onSubmitRef.current = onSubmit;
-
   const submitLockRef = useRef(false);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const handleSubmitRef = useRef<() => Promise<void>>(async () => {});
-
   const externalSubmittingRef = useRef(externalSubmitting);
-  externalSubmittingRef.current = externalSubmitting;
-  const isBusy = externalSubmitting || submitLockRef.current;
+  const isBusy = Boolean(externalSubmitting) || isSubmittingInternal;
 
   const editor = useEditor({
     content: initialContent,
@@ -108,13 +162,16 @@ export function CommentTiptapEditor({
       }),
       LinkExtension.configure({
         openOnClick: false,
-        HTMLAttributes: { class: "text-brand underline underline-offset-2 hover:text-brand/80" },
+        HTMLAttributes: {
+          class: "text-brand underline underline-offset-2 hover:text-brand/80",
+        },
       }),
       Placeholder.configure({ placeholder, showOnlyWhenEditable: false }),
     ],
     editorProps: {
       attributes: {
-        class: "comment-tiptap focus:outline-none text-sm leading-7 text-foreground px-6 py-5",
+        class:
+          "comment-tiptap focus:outline-none text-sm leading-7 text-foreground px-6 py-5",
       },
       handleKeyDown: (view, event) => {
         // Meta/Ctrl+Enter → submit
@@ -140,15 +197,22 @@ export function CommentTiptapEditor({
     },
   });
 
-  // Subscribe handleSubmit ref after editor is created
-  editorRef.current = editor;
-  handleSubmitRef.current = async () => {
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
+
+  useEffect(() => {
+    externalSubmittingRef.current = externalSubmitting;
+  }, [externalSubmitting]);
+
+  const handleSubmit = useCallback(async () => {
     const ed = editorRef.current;
     if (!ed || submitLockRef.current || externalSubmittingRef.current) return;
     const text = ed.state.doc.textContent.trim();
     if (!text) return;
 
     submitLockRef.current = true;
+    setIsSubmittingInternal(true);
     try {
       const html = ed.getHTML();
       await onSubmitRef.current(html);
@@ -157,8 +221,14 @@ export function CommentTiptapEditor({
       setCharCount(0);
     } finally {
       submitLockRef.current = false;
+      setIsSubmittingInternal(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    editorRef.current = editor;
+    handleSubmitRef.current = handleSubmit;
+  }, [editor, handleSubmit]);
 
   const handleToolbarAction = useCallback(
     (action: ToolbarAction) => {
@@ -206,7 +276,7 @@ export function CommentTiptapEditor({
                   aria-pressed={active}
                   tabIndex={-1}
                 >
-                  <action.icon className="size-[18px]" />
+                  <action.icon className="size-4.5" />
                 </button>
               );
             })}
@@ -219,7 +289,7 @@ export function CommentTiptapEditor({
                 title="Undo"
                 tabIndex={-1}
               >
-                <Undo className="size-[18px]" />
+                <Undo className="size-4.5" />
               </button>
               <button
                 type="button"
@@ -229,13 +299,13 @@ export function CommentTiptapEditor({
                 title="Redo"
                 tabIndex={-1}
               >
-                <Redo className="size-[18px]" />
+                <Redo className="size-4.5" />
               </button>
             </span>
           </div>
 
           {/* Scrollable editor area */}
-          <div className="max-h-[360px] overflow-y-auto comment-tiptap">
+          <div className="max-h-90 overflow-y-auto comment-tiptap">
             <EditorContent editor={editor} />
           </div>
         </div>
@@ -283,7 +353,6 @@ export function CommentTiptapEditor({
             >
               {charCount}/{MAX_CHARS}
             </span>
-
           </div>
         </div>
       </div>

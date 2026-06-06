@@ -27,8 +27,30 @@ type ApiPage = {
   hasMore: boolean;
 };
 
-function buildUrl({ page, pageSize, tag, feed, query }: { page: number; pageSize: number; tag?: string; feed?: BlogFeed; query?: string }) {
-  const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
+type ListState = {
+  hasMore: boolean;
+  page: number;
+  posts: BlogPostSummary[];
+  resetKey: string;
+};
+
+function buildUrl({
+  page,
+  pageSize,
+  tag,
+  feed,
+  query,
+}: {
+  page: number;
+  pageSize: number;
+  tag?: string;
+  feed?: BlogFeed;
+  query?: string;
+}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(pageSize),
+  });
   if (tag) params.set("tag", tag);
   if (feed && feed !== "latest") params.set("feed", feed);
   if (query) params.set("q", query);
@@ -45,19 +67,34 @@ export function InfiniteBlogList({
   feed = "latest",
   query,
 }: Props) {
-  const [posts, setPosts] = useState(initialPosts);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialHasMore);
+  const resetKey = `${feed}:${tag ?? ""}:${query ?? ""}:${initialPosts.map((post) => post.slug).join(",")}`;
+  const [listState, setListState] = useState<ListState>({
+    hasMore: initialHasMore,
+    page: 1,
+    posts: initialPosts,
+    resetKey,
+  });
   const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const inFlightRef = useRef(false);
 
+  if (listState.resetKey !== resetKey) {
+    setListState({
+      hasMore: initialHasMore,
+      page: 1,
+      posts: initialPosts,
+      resetKey,
+    });
+  }
+
+  const { hasMore, page, posts } =
+    listState.resetKey === resetKey
+      ? listState
+      : { hasMore: initialHasMore, page: 1, posts: initialPosts };
+
   useEffect(() => {
-    setPosts(initialPosts);
-    setPage(1);
-    setHasMore(initialHasMore);
     inFlightRef.current = false;
-  }, [initialPosts, initialHasMore, tag, feed, query]);
+  }, [resetKey]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -70,15 +107,23 @@ export function InfiniteBlogList({
         const nextPage = page + 1;
         startTransition(async () => {
           try {
-            const response = await fetch(buildUrl({ page: nextPage, pageSize, tag, feed, query }));
+            const response = await fetch(
+              buildUrl({ page: nextPage, pageSize, tag, feed, query }),
+            );
             if (!response.ok) throw new Error("Failed to load more posts");
             const data = (await response.json()) as ApiPage;
-            setPosts((current) => {
-              const seen = new Set(current.map((post) => post.slug));
-              return [...current, ...data.items.filter((post) => !seen.has(post.slug))];
+            setListState((current) => {
+              const seen = new Set(current.posts.map((post) => post.slug));
+              return {
+                ...current,
+                hasMore: data.hasMore,
+                page: data.page,
+                posts: [
+                  ...current.posts,
+                  ...data.items.filter((post) => !seen.has(post.slug)),
+                ],
+              };
             });
-            setPage(data.page);
-            setHasMore(data.hasMore);
           } finally {
             inFlightRef.current = false;
           }
@@ -107,7 +152,8 @@ export function InfiniteBlogList({
             readingTimeLabel={formatReadingTime(post.readingTime)}
             meta={
               <>
-                {post.authorName} · {new Date(post.publishedAt).toLocaleDateString("en-US")}
+                {post.authorName} ·{" "}
+                {new Date(post.publishedAt).toLocaleDateString("en-US")}
               </>
             }
             showBookmark
@@ -122,7 +168,9 @@ export function InfiniteBlogList({
           <SkeletonCardGrid count={isPending ? 2 : 1} />
         </div>
       ) : posts.length > pageSize ? (
-        <p className="text-center text-sm text-muted-foreground">You&apos;re all caught up.</p>
+        <p className="text-center text-sm text-muted-foreground">
+          You&apos;re all caught up.
+        </p>
       ) : null}
     </div>
   );

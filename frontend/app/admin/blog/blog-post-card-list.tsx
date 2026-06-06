@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Edit3, ExternalLink, FileText, Globe, Search } from "lucide-react";
+import {
+  Clock,
+  Edit3,
+  ExternalLink,
+  FileText,
+  Globe,
+  Search,
+} from "lucide-react";
 
-import { AdminContentRow, adminListMotion } from "@/components/admin/admin-content-row";
+import {
+  AdminContentRow,
+  adminListMotion,
+} from "@/components/admin/admin-content-row";
 import { AdminEmptyState } from "@/components/admin/admin-empty-state";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import {
@@ -14,7 +24,7 @@ import {
   AdminListSubmitButton,
 } from "@/components/admin/admin-list-actions";
 import { adminListPanelClass } from "@/components/admin/admin-ui";
-import { cn } from "@/lib/utils";
+
 import type { AdminBlogPost } from "./page";
 
 function formatPublishedDate(publishedAt: string | null) {
@@ -32,7 +42,11 @@ type Props = {
   unpublishAction: (formData: FormData) => Promise<void>;
 };
 
-export function BlogPostCardList({ posts, publishAction, unpublishAction }: Props) {
+export function BlogPostCardList({
+  posts,
+  publishAction,
+  unpublishAction,
+}: Props) {
   const [query, setQuery] = useState("");
 
   const filtered = query.trim()
@@ -73,7 +87,10 @@ export function BlogPostCardList({ posts, publishAction, unpublishAction }: Prop
         <div className="flex flex-col items-center gap-2 rounded-[var(--radius-admin-md)] border border-border/60 bg-card px-6 py-12 text-center">
           <Search className="size-6 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground">
-            No posts match <span className="font-medium text-foreground">&ldquo;{query}&rdquo;</span>
+            No posts match{" "}
+            <span className="font-medium text-foreground">
+              &ldquo;{query}&rdquo;
+            </span>
           </p>
         </div>
       ) : (
@@ -93,7 +110,9 @@ export function BlogPostCardList({ posts, publishAction, unpublishAction }: Prop
                   <div className="flex flex-wrap items-center gap-2">
                     <AdminStatusBadge status={post.status} />
                     {publishedLabel ? (
-                      <span className="text-[11px] text-muted-foreground">Published {publishedLabel}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        Published {publishedLabel}
+                      </span>
                     ) : null}
                   </div>
                 }
@@ -110,11 +129,17 @@ export function BlogPostCardList({ posts, publishAction, unpublishAction }: Prop
                     </AdminListActionLink>
 
                     <AdminListActionForm
-                      action={post.status === "published" ? unpublishAction : publishAction}
+                      action={
+                        post.status === "published"
+                          ? unpublishAction
+                          : publishAction
+                      }
                     >
                       <input name="postId" type="hidden" value={post.id} />
                       <AdminListSubmitButton
-                        variant={post.status === "published" ? "outline" : "secondary"}
+                        variant={
+                          post.status === "published" ? "outline" : "secondary"
+                        }
                       >
                         {post.status === "published" ? (
                           <>
@@ -153,7 +178,8 @@ export function BlogPostCardList({ posts, publishAction, unpublishAction }: Prop
 
       {query.trim() && (
         <p className="text-[11px] text-muted-foreground/60">
-          {filtered.length} of {posts.length} post{posts.length !== 1 ? "s" : ""}
+          {filtered.length} of {posts.length} post
+          {posts.length !== 1 ? "s" : ""}
         </p>
       )}
     </div>
