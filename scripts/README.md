@@ -30,6 +30,8 @@ node scripts/setup-git-hooks.mjs      # Enable repo-root Husky hooks (also runs 
 python scripts/deploy_smoke.py        # Smoke-test deployed backend/frontend URLs
 scripts/e2e-preflight.sh            # Start Postgres/Redis and migrate before Playwright E2E
 scripts/e2e-preflight.bat           # Windows wrapper (requires Git Bash)
+python scripts/seed_blog_agent_pipeline.py  # Seed published blog via agent pipeline (fake LLM)
+python scripts/dogfood_blog_agent.py        # Full pipeline dogfood with real OpenAI
 scripts/bin/harness-cli migrate       # Apply pending schema migrations
 scripts/bin/harness-cli --version     # Print the installed CLI version
 ```

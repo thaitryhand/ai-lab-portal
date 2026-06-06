@@ -20,10 +20,10 @@ with claim gate.
 | US-084 | Generate from context UI | implemented |
 | US-085 | Project/showcase picker | implemented |
 | US-086 | E2E golden path generate → publish | implemented |
-| US-087 | Editorial seed via agent pipeline | planned |
+| US-087 | Editorial seed via agent pipeline | implemented |
 | US-088 | Pipeline stepper UX | implemented |
 | US-089 | Run next stage orchestrator | implemented |
-| US-090 | Claim review UI | planned |
+| US-090 | Claim review UI | implemented |
 
 ## Non-goals (Phase 1)
 

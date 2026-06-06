@@ -23,6 +23,7 @@ import {
   publishToBlogAction,
   extractClaimsAction,
   updateClaimAction,
+  waiveAllClaimsAction,
 } from "../actions";
 
 
@@ -133,6 +134,7 @@ export default async function AdminBlogIdeaDetailPage({
           publishToBlog: publishToBlogAction,
           extractClaims: extractClaimsAction,
           updateClaim: updateClaimAction,
+          waiveAllClaims: waiveAllClaimsAction,
         }}
       />
     </>

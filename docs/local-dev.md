@@ -52,6 +52,21 @@ If Docker Desktop is stopped, E2E fails before any test runs.
 Blog agent golden-path E2E (`US-086`) uses deterministic fake LLM responses
 (`AI_LAB_LLM_E2E_FAKE=true` in `frontend/playwright.config.ts`) — no OpenAI key required.
 
+### Seed a published post via agent pipeline (US-087)
+
+```bash
+# Terminal 1 — API with fake LLM (no OpenAI key)
+set AI_LAB_LLM_E2E_FAKE=true
+set AI_LAB_DATABASE_URL=postgresql+psycopg://ai_lab:ai_lab_dev_password@localhost:15432/ai_lab_portal
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 18000
+
+# Terminal 2 — seed script
+python scripts/seed_blog_agent_pipeline.py
+```
+
+For real OpenAI dogfood (manual QA), use `python scripts/dogfood_blog_agent.py` with a
+Celery worker and `AI_LAB_LLM_OPENAI_API_KEY` set (do not set `AI_LAB_LLM_E2E_FAKE`).
+
 ```bash
 # From repo root — automated preflight (starts infra, waits for Postgres, migrates)
 scripts/e2e-preflight.sh

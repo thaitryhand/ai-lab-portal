@@ -291,16 +291,53 @@ export async function updateClaimAction(formData: FormData) {
   const evidenceSource = (formData.get("evidenceSource") as string) || undefined;
   const evidenceReference = (formData.get("evidenceReference") as string) || undefined;
   const waive = formData.get("waive") === "on";
+  const unsupported = formData.get("unsupported") === "on";
+
+  let status: string | undefined;
+  if (waive) {
+    status = "waived";
+  } else if (unsupported) {
+    status = "unsupported";
+  }
+
   await adminFetch(`/admin/blog-ideas/claims/${claimId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      status: waive ? "waived" : undefined,
-      evidence_source_type: evidenceSource,
-      evidence_reference: evidenceReference,
+      status,
+      evidence_source_type: waive || unsupported ? undefined : evidenceSource,
+      evidence_reference: waive || unsupported ? undefined : evidenceReference,
     }),
   }, session);
-  redirect(`/admin/blog-ideas/${ideaId}`);
+  redirect(`/admin/blog-ideas/${ideaId}#pipeline-section-claims`);
+}
+
+export async function waiveAllClaimsAction(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/admin/login");
+  const ideaId = formData.get("ideaId") as string;
+
+  const listResponse = await adminFetch(
+    `/admin/blog-ideas/${ideaId}/claims`,
+    { method: "GET" },
+    session,
+  );
+  if (!listResponse.ok) {
+    throw new Error(`Failed to list claims (${listResponse.status}).`);
+  }
+
+  const claims = (await listResponse.json()) as Array<{ id: string; status: string }>;
+  const pending = claims.filter((claim) => claim.status === "pending");
+
+  for (const claim of pending) {
+    await adminFetch(`/admin/blog-ideas/claims/${claim.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "waived" }),
+    }, session);
+  }
+
+  redirect(`/admin/blog-ideas/${ideaId}#pipeline-section-claims`);
 }
 
 export async function publishToBlogAction(formData: FormData) {

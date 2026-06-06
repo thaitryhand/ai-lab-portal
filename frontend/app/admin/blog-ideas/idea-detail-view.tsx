@@ -35,6 +35,8 @@ import {
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
+import { ClaimReviewPanel } from "./claim-review-panel";
+import { claimsBlockPublish } from "./lib/claim-publish-gate";
 import { approveButtonLabel } from "./lib/pipeline-next-stage";
 import { getPipelineNextAction } from "./lib/pipeline-next-action";
 import { PipelineNextActionBanner } from "./pipeline-next-action-banner";
@@ -212,6 +214,7 @@ type Actions = {
   publishToBlog: (formData: FormData) => Promise<void>;
   extractClaims: (formData: FormData) => Promise<void>;
   updateClaim: (formData: FormData) => Promise<void>;
+  waiveAllClaims: (formData: FormData) => Promise<void>;
 };
 
 // ─── Main Component ──────────────────────────────────────────────
@@ -879,71 +882,15 @@ export function BlogIdeaDetailView({ idea, claims = [], operationalStatus, actio
         {idea.marketing_status !== "approved" ? (
           <EmptyState message="Approve marketing metadata before extracting claims for the evidence ledger." />
         ) : (
-          <div className="grid gap-4">
-            {claims.length === 0 ? (
-              <form action={actions.extractClaims}>
-                <input name="ideaId" type="hidden" value={idea.id} />
-                <button
-                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "gap-2")}
-                  type="submit"
-                >
-                  <Search className="size-4" aria-hidden />
-                  Extract claims from draft
-                </button>
-              </form>
-            ) : null}
-            {claims.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No claims in the ledger yet. Extract claims before publishing quantified statements.
-              </p>
-            ) : (
-              <ul className="grid gap-3">
-                {claims.map((claim) => (
-                  <li
-                    key={claim.id}
-                    className="rounded-lg border border-border bg-muted/30 p-4"
-                  >
-                    <p className="text-sm font-medium text-foreground">{claim.claim_text}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {claim.claim_type} · {claim.status}
-                    </p>
-                    {claim.status === "pending" && (
-                      <form action={actions.updateClaim} className="mt-3 grid gap-2">
-                        <input name="claimId" type="hidden" value={claim.id} />
-                        <input name="ideaId" type="hidden" value={idea.id} />
-                        <input
-                          name="evidenceSource"
-                          placeholder="Evidence source (e.g. measurement)"
-                          className="rounded-md border border-border bg-background px-2 py-1 text-sm"
-                        />
-                        <input
-                          name="evidenceReference"
-                          placeholder="Evidence reference or link"
-                          className="rounded-md border border-border bg-background px-2 py-1 text-sm"
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            className={cn(buttonVariants({ size: "sm" }))}
-                            type="submit"
-                          >
-                            Attach evidence
-                          </button>
-                          <button
-                            className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
-                            type="submit"
-                            name="waive"
-                            value="on"
-                          >
-                            Waive for publish
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <ClaimReviewPanel
+            actions={{
+              extractClaims: actions.extractClaims,
+              updateClaim: actions.updateClaim,
+              waiveAllClaims: actions.waiveAllClaims,
+            }}
+            claims={claims}
+            ideaId={idea.id}
+          />
         )}
       </SectionCard>
 
@@ -981,12 +928,27 @@ export function BlogIdeaDetailView({ idea, claims = [], operationalStatus, actio
           </div>
         ) : idea.marketing_status === "approved" ? (
           <div className="grid gap-3">
-            <p className="text-sm text-muted-foreground">
-              Create a published blog post from the approved draft and marketing metadata.
-            </p>
+            {claimsBlockPublish(claims) ? (
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Resolve claims in the{" "}
+                <a className="font-medium underline" href="#pipeline-section-claims">
+                  evidence ledger
+                </a>{" "}
+                before publishing.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Create a published blog post from the approved draft and marketing metadata.
+              </p>
+            )}
             <form action={actions.publishToBlog}>
               <input name="ideaId" type="hidden" value={idea.id} />
-              <ActionSubmitButton icon={Send} label="Publish to blog" variant="default" />
+              <ActionSubmitButton
+                disabled={claimsBlockPublish(claims)}
+                icon={Send}
+                label="Publish to blog"
+                variant="default"
+              />
             </form>
           </div>
         ) : (
@@ -1108,10 +1070,12 @@ function ActionButton({
 }
 
 function ActionSubmitButton({
+  disabled = false,
   icon: Icon,
   label,
   variant,
 }: {
+  disabled?: boolean;
   icon: typeof CheckCircle;
   label: string;
   variant: "default" | "outline";
@@ -1120,7 +1084,7 @@ function ActionSubmitButton({
 
   return (
     <button
-      disabled={pending}
+      disabled={pending || disabled}
       className={cn(
         buttonVariants({ size: "sm", variant: variant === "default" ? "default" : "outline" }),
         "flex items-center gap-1.5",
