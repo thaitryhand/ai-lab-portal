@@ -27,29 +27,108 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   return (
     <PublicPageShell>
-      <section className={cn(publicMainWidthClass, "flex flex-col gap-8 py-10 sm:py-14")}>
+      <section className={cn(publicMainWidthClass, "flex flex-col gap-8 px-3 py-10 sm:px-0 sm:py-14")}>
         <PublicBackLink href="/blog">Blog</PublicBackLink>
-        <div className="rounded-2xl border bg-card p-6 sm:p-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-3xl font-semibold text-muted-foreground">
-              {profile.avatarUrl ? <Image src={profile.avatarUrl} alt="" fill className="object-cover" unoptimized /> : profile.displayName[0]?.toUpperCase()}
+
+        <div className="overflow-hidden rounded-[2rem] border border-border/80 bg-card shadow-sm">
+          {profile.coverUrl ? (
+            <div className="bg-[#171310] px-6 pt-6 sm:px-10 sm:pt-8 lg:px-14">
+              <div className="relative mx-auto aspect-video max-w-5xl overflow-hidden rounded-xl bg-muted shadow-2xl shadow-black/20 ring-1 ring-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profile.coverUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
-            <div className="min-w-0 flex-1 space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h1 className="text-3xl font-semibold tracking-tight">{profile.displayName}</h1>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {followState?.followerCount ?? 0} followers · {followState?.followingCount ?? 0} following
-                  </p>
+          ) : (
+            <div className="relative aspect-video max-h-[520px] bg-gradient-to-br from-brand/15 via-brand/5 to-brand/25" />
+          )}
+
+          <div className="px-6 pb-8 sm:px-10 sm:pb-10 lg:px-14">
+            <div className="mx-auto max-w-5xl">
+            <div className="flex items-end justify-between -mt-12 sm:-mt-14">
+              <div className="relative h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-background bg-muted shadow-md">
+                {profile.avatarUrl ? (
+                  <Image
+                    src={profile.avatarUrl}
+                    alt=""
+                    width={128}
+                    height={128}
+                    className="h-full w-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-4xl sm:text-5xl font-bold text-brand-foreground select-none">
+                    {profile.displayName[0]?.toUpperCase() ?? "?"}
+                  </span>
+                )}
+              </div>
+              {!isSelf &&
+                (session ? (
+                  <FollowButton userId={userId} isFollowing={Boolean(followState?.isFollowing)} />
+                ) : (
+                  <Link className={buttonVariants()} href="/login">
+                    Sign in to follow
+                  </Link>
+                ))}
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  {profile.displayName}
+                </h1>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {followState?.followerCount ?? 0} followers · {followState?.followingCount ?? 0} following
+                </p>
+              </div>
+
+              {profile.bio && (
+                <p className="max-w-prose whitespace-pre-wrap text-sm leading-7 text-foreground/80">
+                  {profile.bio}
+                </p>
+              )}
+
+              {(profile.websiteUrl || profile.githubUrl || profile.linkedinUrl) && (
+                <div className="flex flex-wrap gap-2">
+                  {profile.websiteUrl && (
+                    <a
+                      href={profile.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/40 px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-border hover:bg-muted hover:text-foreground"
+                    >
+                      <Globe className="size-3.5" />
+                      Website
+                    </a>
+                  )}
+                  {profile.githubUrl && (
+                    <a
+                      href={profile.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/40 px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-border hover:bg-muted hover:text-foreground"
+                    >
+                      <Code className="size-3.5" />
+                      GitHub
+                    </a>
+                  )}
+                  {profile.linkedinUrl && (
+                    <a
+                      href={profile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/40 px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-border hover:bg-muted hover:text-foreground"
+                    >
+                      <Briefcase className="size-3.5" />
+                      LinkedIn
+                    </a>
+                  )}
                 </div>
-                {!isSelf && (session ? <FollowButton userId={userId} isFollowing={Boolean(followState?.isFollowing)} /> : <Link className={buttonVariants()} href="/login">Sign in to follow</Link>)}
-              </div>
-              {profile.bio && <p className="max-w-2xl whitespace-pre-wrap text-sm leading-7 text-foreground/85">{profile.bio}</p>}
-              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                {profile.websiteUrl && <a className="inline-flex items-center gap-1.5 hover:text-foreground" href={profile.websiteUrl}><Globe className="size-4" />Website</a>}
-                {profile.githubUrl && <a className="inline-flex items-center gap-1.5 hover:text-foreground" href={profile.githubUrl}><Code className="size-4" />GitHub</a>}
-                {profile.linkedinUrl && <a className="inline-flex items-center gap-1.5 hover:text-foreground" href={profile.linkedinUrl}><Briefcase className="size-4" />LinkedIn</a>}
-              </div>
+              )}
+            </div>
             </div>
           </div>
         </div>

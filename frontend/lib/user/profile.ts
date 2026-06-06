@@ -16,6 +16,7 @@ export type UserProfile = {
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
+  coverUrl: string | null;
   websiteUrl: string | null;
   githubUrl: string | null;
   linkedinUrl: string | null;
@@ -35,6 +36,7 @@ type ApiUserProfile = {
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
+  cover_url: string | null;
   website_url: string | null;
   github_url: string | null;
   linkedin_url: string | null;
@@ -57,6 +59,7 @@ function toProfile(profile: ApiUserProfile): UserProfile {
     displayName: profile.display_name,
     bio: profile.bio,
     avatarUrl: profile.avatar_url,
+    coverUrl: profile.cover_url,
     websiteUrl: profile.website_url,
     githubUrl: profile.github_url,
     linkedinUrl: profile.linkedin_url,
@@ -83,7 +86,7 @@ export async function getMyProfile(session: Session): Promise<UserProfile> {
   return toProfile(await callUser<ApiUserProfile>(session, "/public/profile/me"));
 }
 
-export async function updateMyProfile(session: Session, payload: Partial<Pick<UserProfile, "displayName" | "bio" | "avatarUrl" | "websiteUrl" | "githubUrl" | "linkedinUrl">>): Promise<UserProfile> {
+export async function updateMyProfile(session: Session, payload: Partial<Pick<UserProfile, "displayName" | "bio" | "avatarUrl" | "coverUrl" | "websiteUrl" | "githubUrl" | "linkedinUrl">>): Promise<UserProfile> {
   return toProfile(
     await callUser<ApiUserProfile>(session, "/public/profile/me", {
       method: "PATCH",
@@ -91,6 +94,7 @@ export async function updateMyProfile(session: Session, payload: Partial<Pick<Us
         display_name: payload.displayName,
         bio: payload.bio,
         avatar_url: payload.avatarUrl,
+        cover_url: payload.coverUrl,
         website_url: payload.websiteUrl,
         github_url: payload.githubUrl,
         linkedin_url: payload.linkedinUrl,

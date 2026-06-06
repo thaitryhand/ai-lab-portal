@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,6 +20,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { auth } from "@/lib/auth/server";
 import { getMyProfile } from "@/lib/user/profile";
 import { cn } from "@/lib/utils";
+import { ProfileContextSync } from "./profile-context-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -42,16 +44,33 @@ export default async function ProfilePage() {
 
   return (
     <PublicPageShell currentPath="/profile">
-      <div className={cn(publicMainWidthClass, "flex flex-col gap-8 pb-12")}>
+      <Suspense fallback={null}>
+        <ProfileContextSync />
+      </Suspense>
+      <div className={cn(publicMainWidthClass, "flex flex-col gap-8 px-3 pb-12 pt-6 sm:px-0 sm:pt-8")}>
         {/* ── Profile Header Card ── */}
-        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+        <div className="overflow-hidden rounded-[2rem] border border-border/80 bg-card shadow-sm">
           {/* Cover */}
-          <div className="relative h-32 sm:h-40 bg-gradient-to-br from-brand/15 via-brand/5 to-brand/25" />
+          {profile.coverUrl ? (
+            <div className="bg-[#171310] px-6 pt-6 sm:px-10 sm:pt-8 lg:px-14">
+              <div className="relative mx-auto aspect-video max-w-5xl overflow-hidden rounded-xl bg-muted shadow-2xl shadow-black/20 ring-1 ring-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profile.coverUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="relative aspect-video max-h-[520px] bg-gradient-to-br from-brand/15 via-brand/5 to-brand/25" />
+          )}
 
-          <div className="px-8 pb-8 sm:px-10 sm:pb-10">
+          <div className="px-6 pb-8 sm:px-10 sm:pb-10 lg:px-14">
+            <div className="mx-auto max-w-5xl">
             {/* Avatar + Edit button */}
-            <div className="flex items-end justify-between -mt-14 sm:-mt-16">
-              <div className="relative h-28 w-28 sm:h-32 sm:w-32 overflow-hidden rounded-full ring-4 ring-background bg-muted shadow-md">
+            <div className="flex items-end justify-between -mt-12 sm:-mt-14">
+              <div className="relative h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-background bg-muted shadow-md">
                 {profile.avatarUrl ? (
                   <Image
                     src={profile.avatarUrl}
@@ -80,7 +99,7 @@ export default async function ProfilePage() {
             </div>
 
             {/* Info */}
-            <div className="mt-6 space-y-5">
+            <div className="mt-5 space-y-4">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {profile.displayName}
@@ -116,11 +135,12 @@ export default async function ProfilePage() {
                 </div>
               )}
             </div>
+            </div>
           </div>
         </div>
 
         {/* ── Quick Actions ── */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <Link
             href="/bookmarks"
             className="group flex items-center gap-4 rounded-xl border border-border/80 bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-md"

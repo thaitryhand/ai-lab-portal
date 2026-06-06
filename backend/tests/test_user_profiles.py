@@ -53,6 +53,7 @@ def test_user_can_update_own_profile() -> None:
             "display_name": "Ada Reader",
             "bio": "I build agent workflows.",
             "avatar_url": "https://example.com/avatar.png",
+            "cover_url": "https://example.com/cover.png",
             "website_url": "https://example.com",
             "github_url": "https://github.com/example",
             "linkedin_url": "https://linkedin.com/in/example",
@@ -65,6 +66,24 @@ def test_user_can_update_own_profile() -> None:
     assert body["display_name"] == "Ada Reader"
     assert body["bio"] == "I build agent workflows."
     assert body["avatar_url"] == "https://example.com/avatar.png/" or body["avatar_url"] == "https://example.com/avatar.png"
+    assert body["cover_url"] == "https://example.com/cover.png/" or body["cover_url"] == "https://example.com/cover.png"
+
+
+def test_user_can_save_uploaded_image_paths() -> None:
+    client = _client()
+    response = client.patch(
+        "/public/profile/me",
+        json={
+            "avatar_url": "/uploads/avatar.webp",
+            "cover_url": "/uploads/cover.webp",
+        },
+        headers=_signed_headers(role="user"),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["avatar_url"] == "/uploads/avatar.webp"
+    assert body["cover_url"] == "/uploads/cover.webp"
 
 
 def test_public_profile_omits_email_and_requires_existing_profile() -> None:

@@ -27,6 +27,7 @@ class UserProfile(BaseModel):
     display_name: str
     bio: str | None = None
     avatar_url: str | None = None
+    cover_url: str | None = None
     website_url: str | None = None
     github_url: str | None = None
     linkedin_url: str | None = None
@@ -37,7 +38,8 @@ class UserProfile(BaseModel):
 class UserProfileUpdate(BaseModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=120)
     bio: str | None = Field(default=None, max_length=2000)
-    avatar_url: HttpUrl | None = None
+    avatar_url: str | None = Field(default=None, max_length=2048)
+    cover_url: str | None = Field(default=None, max_length=2048)
     website_url: HttpUrl | None = None
     github_url: HttpUrl | None = None
     linkedin_url: HttpUrl | None = None

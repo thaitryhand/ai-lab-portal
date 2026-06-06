@@ -6,11 +6,11 @@ import { PublicPageShell } from "@/components/public/public-page-shell";
 import { publicMainWidthClass } from "@/components/public/public-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 import { auth } from "@/lib/auth/server";
 import { getMyProfile } from "@/lib/user/profile";
 import { cn } from "@/lib/utils";
 import { updateProfileAction } from "./actions";
-import { AvatarUploadPreview } from "./avatar-preview";
 
 export const dynamic = "force-dynamic";
 
@@ -30,42 +30,46 @@ export default async function EditProfilePage() {
               Edit profile
             </h1>
             <p className="text-sm text-muted-foreground">
-              Update your public display name, bio, avatar, and links.
+              Update your public display name, bio, avatar, cover image, and links.
             </p>
           </div>
         </div>
 
         {/* ── Form ── */}
         <form action={updateProfileAction} className="space-y-10">
-          {/* ── Section: Avatar ── */}
+          {/* ── Section: Profile media ── */}
           <section className="rounded-2xl border border-border/80 bg-card shadow-sm">
-            <div className="px-8 pt-8 pb-8 sm:px-10 sm:pt-10 sm:pb-10">
-              <div className="flex flex-col sm:flex-row items-start gap-8">
-                <AvatarUploadPreview
+            <div className="px-8 py-8 sm:px-10 sm:py-10">
+              <div className="mb-6 flex flex-col gap-1.5 border-b border-border/60 pb-5">
+                <p className="text-base font-semibold text-foreground">Profile media</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Keep the page clean: upload avatar and cover from focused dialogs.
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ImageUploadField
+                  name="avatarUrl"
                   initialUrl={profile.avatarUrl ?? undefined}
-                  name={profile.displayName}
+                  aspectClass="aspect-square"
+                  roundedClass="rounded-full"
+                  label="Avatar"
+                  description="Your compact identity mark across comments, posts, and profile cards."
+                  placeholder="https://example.com/avatar.png"
+                  hint="Square image recommended. JPG, PNG, WebP, GIF, or AVIF. Max 10MB."
+                  variant="avatar"
                 />
-                <div className="min-w-0 flex-1 space-y-4">
-                  <div>
-                    <p className="text-base font-semibold text-foreground">Profile image</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      Square image recommended. JPG, PNG, or GIF.
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label htmlFor="avatarUrl" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                      Image URL
-                    </label>
-                    <Input
-                      id="avatarUrl"
-                      name="avatarUrl"
-                      type="url"
-                      defaultValue={profile.avatarUrl ?? ""}
-                      placeholder="https://example.com/avatar.png"
-                      className="h-11 text-sm"
-                    />
-                  </div>
-                </div>
+                <ImageUploadField
+                  name="coverUrl"
+                  initialUrl={profile.coverUrl ?? undefined}
+                  aspectClass="aspect-video"
+                  roundedClass="rounded-xl"
+                  label="Cover image"
+                  description="A 16:9 visual hero shown cleanly at the top of your profile."
+                  placeholder="https://example.com/cover.png"
+                  hint="16:9 image recommended. Screenshots and hero visuals work best."
+                  variant="cover"
+                />
               </div>
             </div>
           </section>

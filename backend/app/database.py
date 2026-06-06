@@ -60,6 +60,7 @@ user_profiles = Table(
     Column("display_name", String(120), nullable=False),
     Column("bio", Text, nullable=True),
     Column("avatar_url", String(2048), nullable=True),
+    Column("cover_url", String(2048), nullable=True),
     Column("website_url", String(2048), nullable=True),
     Column("github_url", String(2048), nullable=True),
     Column("linkedin_url", String(2048), nullable=True),

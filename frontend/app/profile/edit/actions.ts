@@ -21,9 +21,10 @@ export async function updateProfileAction(formData: FormData) {
     displayName: optionalString(formData, "displayName") ?? undefined,
     bio: optionalString(formData, "bio"),
     avatarUrl: optionalString(formData, "avatarUrl"),
+    coverUrl: optionalString(formData, "coverUrl"),
     websiteUrl: optionalString(formData, "websiteUrl"),
     githubUrl: optionalString(formData, "githubUrl"),
     linkedinUrl: optionalString(formData, "linkedinUrl"),
   });
-  redirect("/profile");
+  redirect("/profile?profileUpdated=1");
 }
