@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useNotifications } from "@/components/session-provider";
 import { cn } from "@/lib/utils";
 
 type NotificationSummary = {
@@ -17,8 +18,6 @@ type NotificationSummary = {
   read: boolean;
   created_at: string;
 };
-
-const POLL_INTERVAL_MS = 30_000;
 
 function timeAgo(createdAt: string): string {
   const now = Date.now();
@@ -46,53 +45,25 @@ function typeLabel(type: string): string {
 }
 
 export function NotificationBell() {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const {
+    unreadCount,
+    setUnreadCount,
+  } = useNotifications();
   const [notifications, setNotifications] = useState<NotificationSummary[]>([]);
   const [open, setOpen] = useState(false);
-  const mountedRef = useRef(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const fetchUnreadCount = useCallback(async () => {
-    if (!mountedRef.current) return;
-    try {
-      const response = await fetch("/api/notifications?path=unread-count");
-      if (response.ok) {
-        const data = (await response.json()) as { count: number };
-        if (mountedRef.current) setUnreadCount(data.count);
-      }
-    } catch {
-      // ignore polling errors
-    }
-  }, []);
 
   const fetchNotifications = useCallback(async () => {
-    if (!mountedRef.current) return;
     try {
       const response = await fetch("/api/notifications");
       if (response.ok) {
         const data = (await response.json()) as NotificationSummary[];
-        if (mountedRef.current) {
-          setNotifications(data);
-          setUnreadCount(data.filter((n) => !n.read).length);
-        }
+        setNotifications(data);
+        setUnreadCount(data.filter((n) => !n.read).length);
       }
     } catch {
       // ignore
     }
-  }, []);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchUnreadCount().catch(() => {});
-    intervalRef.current = setInterval(() => {
-      fetchUnreadCount().catch(() => {});
-    }, POLL_INTERVAL_MS);
-    return () => {
-      mountedRef.current = false;
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fetchUnreadCount]);
+  }, [setUnreadCount]);
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);

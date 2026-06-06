@@ -34,15 +34,17 @@ function AvatarFallback({ name, size = "sm" }: { name: string; size?: "sm" | "md
 
 export function PublicUserMenu() {
   const router = useRouter();
-  const { session, loading, refresh } = useSession();
+  const { session, loading, avatarUrl, refresh } = useSession();
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof document === "undefined") return "light";
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Detect theme (local, no server round-trip)
   useEffect(() => {
     const html = document.documentElement;
-    setTheme(html.classList.contains("dark") ? "dark" : "light");
     const observer = new MutationObserver(() => {
       setTheme(html.classList.contains("dark") ? "dark" : "light");
     });
@@ -131,7 +133,7 @@ export function PublicUserMenu() {
 
   // ── Confirmed: logged in ─────────────────────────────────────────────────
   const userName = session.user.name || session.user.email || "User";
-  const userImage = session.user.image;
+  const userImage = avatarUrl;
 
   return (
     <div ref={menuRef} className="relative flex items-center gap-1.5">
