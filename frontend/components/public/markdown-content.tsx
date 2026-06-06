@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
 import { publicProseClass } from "@/components/public/public-ui";
+import { isRenderableImageSrc } from "@/lib/sanitize-blog-markdown";
 import { cn } from "@/lib/utils";
 
 type MarkdownContentProps = {
@@ -81,15 +82,29 @@ export function MarkdownContent({ className, markdown }: MarkdownContentProps) {
           [rehypeHighlight, { detect: true, ignoreMissing: true }],
         ]}
         components={{
-          img: (props: ComponentProps<"img"> & { node?: unknown }) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              loading="lazy"
-              decoding="async"
-              alt={props.alt ?? ""}
-              {...props}
-            />
-          ),
+          img: ({
+            src,
+            alt,
+            title,
+            ...rest
+          }: ComponentProps<"img"> & { node?: unknown }) => {
+            const resolvedSrc = typeof src === "string" ? src : undefined;
+            if (!isRenderableImageSrc(resolvedSrc)) {
+              return null;
+            }
+
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                loading="lazy"
+                decoding="async"
+                alt={alt ?? ""}
+                title={title}
+                src={resolvedSrc}
+                {...rest}
+              />
+            );
+          },
           // Render task list items as styled checkboxes (like the editor)
           input: (props: ComponentProps<"input"> & { node?: unknown }) => {
             if (props.type === "checkbox") {

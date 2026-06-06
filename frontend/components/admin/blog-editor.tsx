@@ -14,6 +14,7 @@ import {
   adminWorkflowStatusClass,
 } from "@/components/admin/admin-ui";
 import { PendingSubmitButton } from "@/components/admin/pending-submit-button";
+import { hasPendingBlogImages, stripBrokenBlogImages } from "@/lib/sanitize-blog-markdown";
 import { uploadImage } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -171,11 +172,24 @@ export function BlogEditor({
 
   // Before the form serialises its data we sync the hidden input DOM value
   // directly from the ref, bypassing any pending React batch.
-  const handleFormSubmit = () => {
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const raw = contentMarkdownRef.current;
+    if (hasPendingBlogImages(raw)) {
+      event.preventDefault();
+      window.alert(
+        "An image is still uploading (or has no saved URL). Wait for the upload spinner to finish, then save or publish again.",
+      );
+      return;
+    }
+
+    const sanitized = stripBrokenBlogImages(raw);
+    contentMarkdownRef.current = sanitized;
+    setContentMarkdown(sanitized);
+
     if (!formRef.current) return;
     const input = formRef.current.elements.namedItem("contentMarkdown") as HTMLInputElement | null;
     if (input) {
-      input.value = contentMarkdownRef.current;
+      input.value = sanitized;
     }
   };
 
@@ -183,7 +197,7 @@ export function BlogEditor({
     <form
       ref={formRef}
       action={saveFormAction}
-      onSubmit={handleFormSubmit}
+      onSubmitCapture={handleFormSubmit}
       className={adminEditorGridClass}
     >
       <input name="postId" type="hidden" value={visibleState.postId} />
