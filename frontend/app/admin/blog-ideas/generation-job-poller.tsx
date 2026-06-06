@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { pollGenerationJobAction } from "./actions";
+import { urlWithoutOperationalQuery } from "./lib/clear-operational-query";
 
 type Props = {
   ideaId: string;
@@ -28,12 +30,26 @@ const stageLabels: Record<string, string> = {
 };
 
 export function GenerationJobPoller({ taskId, opStage, opStatus }: Props) {
+  const router = useRouter();
   const polling = useRef(false);
   const [banner, setBanner] = useState<BannerState>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [stageName, setStageName] = useState("");
+
+  const finishCompletedJob = useCallback(() => {
+    polling.current = false;
+    setBanner("completed");
+    const cleanUrl = urlWithoutOperationalQuery(
+      window.location.pathname,
+      window.location.search,
+    );
+    window.setTimeout(() => {
+      router.replace(cleanUrl);
+      router.refresh();
+    }, 600);
+  }, [router]);
 
   // Elapsed timer
   useEffect(() => {
@@ -56,16 +72,16 @@ export function GenerationJobPoller({ taskId, opStage, opStatus }: Props) {
 
     const poll = async () => {
       for (let attemptNum = 1; attemptNum <= 60 && !signal.aborted; attemptNum++) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (attemptNum > 1) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
         if (signal.aborted) return;
         setAttempt(attemptNum);
         const job = await pollGenerationJobAction(taskId);
         if (signal.aborted) return;
 
         if (job.status === "completed") {
-          setBanner("completed");
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-          if (!signal.aborted) window.location.reload();
+          if (!signal.aborted) finishCompletedJob();
           return;
         }
         if (job.status === "failed") {
@@ -83,7 +99,7 @@ export function GenerationJobPoller({ taskId, opStage, opStatus }: Props) {
 
     void poll();
     return () => abort.abort();
-  }, [taskId, opStage]);
+  }, [taskId, opStage, finishCompletedJob]);
 
   // Start on mount if queued
   useEffect(() => {
@@ -144,7 +160,7 @@ export function GenerationJobPoller({ taskId, opStage, opStatus }: Props) {
           <div className="flex items-center gap-3">
             <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
             <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-              {stageName} completed! Reloading…
+              {stageName} completed! Updating page…
             </p>
           </div>
         </motion.div>
@@ -171,7 +187,10 @@ export function GenerationJobPoller({ taskId, opStage, opStatus }: Props) {
                 </p>
               )}
               <button
-                onClick={startPolling}
+                onClick={() => {
+                  polling.current = false;
+                  startPolling();
+                }}
                 className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "mt-2 w-fit gap-1.5")}
               >
                 <RefreshCw className="size-3.5" aria-hidden />

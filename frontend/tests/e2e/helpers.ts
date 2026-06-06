@@ -60,7 +60,7 @@ export async function signInAdmin(
   throw new Error(`signInAdmin failed after ${retries} retries`);
 }
 
-/** Click an approve/generate button and wait for async Celery jobs to finish (page reload). */
+/** Click an approve/generate button and wait for async Celery jobs to finish. */
 export async function clickPipelineActionAndWait(page: Page, buttonName: RegExp, timeoutMs = 120_000) {
   const urlBefore = page.url();
   await page.getByRole("button", { name: buttonName }).click();
@@ -69,24 +69,14 @@ export async function clickPipelineActionAndWait(page: Page, buttonName: RegExp,
     .poll(async () => page.url(), { timeout: timeoutMs })
     .not.toBe(urlBefore);
 
-  const reloading = page.getByText(/completed! Reloading/i);
-  const running = page.getByText(/Running ·/);
+  // Poller clears taskId/opStatus=queued when the job finishes (avoids reload loop).
+  await expect
+    .poll(async () => {
+      const params = new URL(page.url()).searchParams;
+      return params.get("opStatus") !== "queued" && !params.get("taskId");
+    }, { timeout: timeoutMs })
+    .toBe(true);
 
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await reloading.isVisible().catch(() => false)) {
-      await page.waitForLoadState("load", { timeout: 60_000 });
-      return;
-    }
-    if (await running.isVisible().catch(() => false)) {
-      await page.waitForTimeout(500);
-      continue;
-    }
-    break;
-  }
-
-  await page.waitForLoadState("networkidle");
-  await page.reload();
   await page.waitForLoadState("load");
 }
 
