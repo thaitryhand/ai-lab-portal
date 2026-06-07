@@ -519,6 +519,44 @@ def fetch_github_source_task(source_id: str) -> dict:
     return result.model_dump()
 
 
+@celery_app.task(name="blog.publish_scheduled_posts")
+def publish_scheduled_posts_task() -> list[dict]:
+    """Publish all blog ideas where scheduled_at <= now."""
+    from datetime import UTC, datetime
+    from backend.app.blog import BlogRepository
+    from backend.app.blog_ideas import BlogIdeaRepository
+    from backend.app.blog_publish import publish_idea_to_blog
+
+    ideas_repo = BlogIdeaRepository()
+    blog_repo = BlogRepository()
+    now = datetime.now(UTC)
+    results: list[dict] = []
+
+    for summary in ideas_repo.list_all():
+        idea = ideas_repo.get_by_id(summary.id)
+        if idea is None:
+            continue
+        if idea.scheduled_at is None:
+            continue
+        if idea.scheduled_at > now:
+            continue
+        if idea.status != "approved":
+            continue
+        if not idea.draft_markdown:
+            continue
+
+        try:
+            result = publish_idea_to_blog(idea.id, ideas_repo, blog_repo)
+            results.append({"idea_id": idea.id, "status": "published", "slug": result.slug})
+            # Clear scheduled_at after publishing
+            from backend.app.blog_ideas import BlogIdeaUpdate
+            ideas_repo.update(idea.id, BlogIdeaUpdate(scheduled_at=None))
+        except Exception as exc:
+            results.append({"idea_id": idea.id, "status": "failed", "error": str(exc)})
+
+    return results
+
+
 @celery_app.task(name="news.fetch_due_github_sources")
 def fetch_due_github_sources_task() -> list[dict]:
     from backend.app.news_github_ingest import GitHubReleaseProvider, run_due_github_sources

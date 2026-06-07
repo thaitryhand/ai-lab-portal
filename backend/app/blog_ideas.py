@@ -101,6 +101,7 @@ class BlogIdea(BaseModel):
     marketing_metadata: dict | None = None
     marketing_status: str | None = None
     published_blog_post_id: str | None = None
+    scheduled_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -124,6 +125,7 @@ class BlogIdeaUpdate(BaseModel):
     draft_status: str | None = None
     technical_review_status: str | None = None
     marketing_status: str | None = None
+    scheduled_at: datetime | None = None
 
 
 class BlogIdeaGenerateRequest(BaseModel):
@@ -1071,6 +1073,57 @@ def create_blog_idea_routes(
         if ai_runs_repository is None:
             return []
         return ai_runs_repository.list_for_entity("blog_idea", idea_id)
+
+    @router.patch("/{idea_id}/schedule")
+    async def schedule_publish(
+        idea_id: str,
+        payload: BlogIdeaUpdate,
+        _identity: AdminIdentity = Depends(require_identity),
+    ) -> BlogIdea:
+        """Set or clear the scheduled publish date."""
+        idea = repository.get_by_id(idea_id)
+        if idea is None:
+            raise HTTPException(status_code=404, detail="Blog idea not found")
+        updated = repository.update(idea_id, payload)
+        if updated is None:
+            raise HTTPException(status_code=500, detail="Failed to update")
+        return updated
+
+    @router.post("/{idea_id}/generate-thumbnail")
+    async def generate_thumbnail(
+        idea_id: str,
+        _identity: AdminIdentity = Depends(require_identity),
+    ) -> dict:
+        """Generate an AI thumbnail using DALL-E for this idea."""
+        idea = repository.get_by_id(idea_id)
+        if idea is None:
+            raise HTTPException(status_code=404, detail="Blog idea not found")
+        if not idea.draft_markdown:
+            raise HTTPException(
+                status_code=400,
+                detail="Draft required to generate thumbnail",
+            )
+
+        from backend.app.llm.thumbnail import generate_thumbnail as _gen_thumb
+
+        api_key = settings.llm_openai_api_key.get_secret_value()
+        image_url = _gen_thumb(
+            title=idea.title,
+            excerpt=(
+                idea.draft_markdown.strip().split("\n", 1)[0][:200]
+                if idea.draft_markdown
+                else idea.title
+            ),
+            api_key=api_key,
+        )
+
+        if image_url is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Thumbnail generation failed",
+            )
+
+        return {"image_url": image_url}
 
     @router.get("/{idea_id}/claims")
     async def list_claims(

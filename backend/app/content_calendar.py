@@ -93,6 +93,7 @@ def create_content_calendar_routes(
                     "title": idea.title,
                     "type": "idea",
                     "stage": _idea_stage(idea),
+                    "scheduled_at": idea.scheduled_at.isoformat() if idea.scheduled_at else None,
                     "status": idea.status,
                     "outline_status": idea.outline_status,
                     "draft_status": idea.draft_status,
@@ -112,9 +113,14 @@ def create_content_calendar_routes(
                 month_key = p["date"][:7]  # YYYY-MM
                 month_counts[month_key] = month_counts.get(month_key, 0) + 1
 
+        scheduled = [
+            p for p in pipeline if p.get("scheduled_at")
+        ]
+
         return {
             "published": published,
             "pipeline": pipeline,
+            "scheduled": scheduled,
             "month_counts": month_counts,
         }
 
@@ -125,6 +131,8 @@ def _idea_stage(idea: Any) -> str:
     """Determine the current pipeline stage of a blog idea."""
     if idea.published_blog_post_id:
         return "published"
+    if idea.scheduled_at:
+        return "scheduled"
     if idea.marketing_status == "approved":
         return "marketing_done"
     if idea.technical_review_status == "approved":

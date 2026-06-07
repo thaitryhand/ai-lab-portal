@@ -20,6 +20,12 @@ def create_celery_app(settings: Settings | None = None) -> Celery:
         accept_content=["json"],
         timezone="UTC",
         enable_utc=True,
+        beat_schedule={
+            "publish-scheduled-posts": {
+                "task": "blog.publish_scheduled_posts",
+                "schedule": 900.0,  # every 15 minutes
+            },
+        },
     )
     if resolved_settings.llm_e2e_fake or resolved_settings.environment == "test":
         celery_app.conf.task_always_eager = True

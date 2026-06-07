@@ -38,6 +38,8 @@ import { PipelineStepShell, stepShellState } from "./pipeline-step-shell";
 import { StageStreamButton } from "@/components/admin/stage-stream-button";
 import { ReadabilityBadge } from "@/components/admin/readability-badge";
 import { InternalLinks } from "@/components/admin/internal-links";
+import { ScheduleButton } from "@/components/admin/schedule-button";
+import { ThumbnailButton } from "@/components/admin/thumbnail-button";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -87,6 +89,7 @@ export type BlogIdeaDetail = {
   } | null;
   marketing_status: string | null;
   published_blog_post_id: string | null;
+  scheduled_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -824,15 +827,19 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 Create a published blog post from the approved draft and marketing metadata.
               </p>
             )}
-            <form action={actions.publishToBlog}>
-              <input name="ideaId" type="hidden" value={idea.id} />
-              <ActionSubmitButton
-                disabled={claimsBlockPublish(claims)}
-                icon={Send}
-                label="Publish to blog"
-                variant="default"
-              />
-            </form>
+            <div className="flex flex-wrap items-center gap-3">
+              <form action={actions.publishToBlog}>
+                <input name="ideaId" type="hidden" value={idea.id} />
+                <ActionSubmitButton
+                  disabled={claimsBlockPublish(claims)}
+                  icon={Send}
+                  label="Publish to blog"
+                  variant="default"
+                />
+              </form>
+              <ScheduleButton ideaId={idea.id} scheduledAt={idea.scheduled_at} />
+              <ThumbnailButton ideaId={idea.id} title={idea.title} />
+            </div>
           </div>
         ) : (
           <EmptyState message="Approve marketing metadata to enable publishing to the blog." />
