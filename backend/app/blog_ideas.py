@@ -1125,6 +1125,23 @@ def create_blog_idea_routes(
 
         return {"image_url": image_url}
 
+    @router.post("/batch/approve")
+    async def batch_approve(
+        payload: dict,
+        _identity: AdminIdentity = Depends(require_identity),
+    ) -> list[dict]:
+        """Approve multiple ideas at once."""
+        ids: list[str] = payload.get("ids", [])
+        results = []
+        for idea_id in ids:
+            idea = repository.get_by_id(idea_id)
+            if idea is None:
+                results.append({"id": idea_id, "status": "not_found"})
+                continue
+            repository.update(idea_id, BlogIdeaUpdate(status="approved"))
+            results.append({"id": idea_id, "status": "approved"})
+        return results
+
     @router.get("/{idea_id}/claims")
     async def list_claims(
         idea_id: str,

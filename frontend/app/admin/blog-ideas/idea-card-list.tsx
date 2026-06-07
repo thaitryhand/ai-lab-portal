@@ -67,6 +67,8 @@ type Props = {
   ideas: BlogIdeaSummary[];
   approveIdeaAction: (formData: FormData) => Promise<void>;
   rejectIdeaAction: (formData: FormData) => Promise<void>;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 };
 
 const container = {
@@ -85,6 +87,8 @@ export function BlogIdeaCardList({
   ideas,
   approveIdeaAction,
   rejectIdeaAction,
+  selectedIds,
+  onToggleSelect,
 }: Props) {
   if (ideas.length === 0) {
     return (
@@ -116,7 +120,16 @@ export function BlogIdeaCardList({
             layout
             className={cn(adminListRowClass, "group")}
           >
-            <div>
+            <div className="flex items-start gap-3">
+              {selectedIds && onToggleSelect ? (
+                <input
+                  type="checkbox"
+                  className="mt-2 size-4 shrink-0 rounded border-border accent-brand"
+                  checked={selectedIds.has(idea.id)}
+                  onChange={() => onToggleSelect(idea.id)}
+                />
+              ) : null}
+              <div className="min-w-0 flex-1">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 {/* Left: Content */}
                 <div className="min-w-0 flex-1">
@@ -188,6 +201,7 @@ export function BlogIdeaCardList({
                   </AdminListActionLink>
                 </AdminListActions>
               </div>
+            </div>
             </div>
           </motion.li>
         );

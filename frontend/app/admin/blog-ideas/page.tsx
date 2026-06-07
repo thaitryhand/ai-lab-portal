@@ -10,7 +10,7 @@ import {
   approveIdeaAction,
   rejectIdeaAction,
 } from "./actions";
-import { BlogIdeaCardList } from "./idea-card-list";
+import { BlogIdeaPageClient } from "./blog-idea-page-client";
 
 const backendBaseUrl =
   process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
@@ -66,7 +66,7 @@ export default async function AdminBlogIdeasPage() {
           title="Blog ideas"
         />
 
-        <BlogIdeaCardList
+        <BlogIdeaPageClient
           ideas={ideas}
           approveIdeaAction={approveIdeaAction}
           rejectIdeaAction={rejectIdeaAction}
