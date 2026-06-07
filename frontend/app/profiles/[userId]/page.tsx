@@ -43,7 +43,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               </div>
             </div>
           ) : (
-            <div className="relative aspect-video max-h-[520px] bg-gradient-to-br from-brand/15 via-brand/5 to-brand/25" />
+            <div className="relative aspect-video max-h-130 bg-linear-to-br from-brand/15 via-brand/5 to-brand/25" />
           )}
 
           <div className="px-6 pb-8 sm:px-10 sm:pb-10 lg:px-14">
@@ -60,7 +60,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                     unoptimized
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-4xl sm:text-5xl font-bold text-brand-foreground select-none">
+                  <span className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand/80 to-brand text-4xl sm:text-5xl font-bold text-brand-foreground select-none">
                     {profile.displayName[0]?.toUpperCase() ?? "?"}
                   </span>
                 )}

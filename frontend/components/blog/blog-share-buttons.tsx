@@ -55,7 +55,7 @@ export function BlogShareButtons({
   ];
 
   return (
-    <div className="flex items-center gap-4 border-t border-border/50 pt-6 mt-10">
+    <div className="flex items-center gap-4 border-t border-border/50 pt-14">
       <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Share
       </span>
