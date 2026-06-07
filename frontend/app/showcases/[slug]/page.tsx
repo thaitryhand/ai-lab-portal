@@ -16,7 +16,8 @@ import { getPublishedShowcase } from "@/lib/showcases/items";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// ISR: individual showcase pages change rarely.
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

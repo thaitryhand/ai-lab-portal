@@ -17,7 +17,8 @@ export const metadata: Metadata = createPublicMetadata({
   path: "/blog/tags",
 });
 
-export const dynamic = "force-dynamic";
+// ISR: tag list is stable; revalidate every 5 minutes.
+export const revalidate = 300;
 
 export default async function BlogTagsPage() {
   const tags = await listPublicBlogTags().catch(() => []);

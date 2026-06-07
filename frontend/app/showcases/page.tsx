@@ -28,7 +28,8 @@ export const metadata = createPublicMetadata({
 
 
 
-export const dynamic = "force-dynamic";
+// ISR: showcase content is relatively stable; revalidate every 5 minutes.
+export const revalidate = 300;
 
 
 

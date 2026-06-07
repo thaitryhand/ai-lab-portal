@@ -13,7 +13,8 @@ export const metadata = createPublicMetadata({
   path: "/projects",
 });
 
-export const dynamic = "force-dynamic";
+// ISR: project list is stable; revalidate every 5 minutes.
+export const revalidate = 300;
 
 export default async function ProjectsIndexPage() {
   const projects = await listPublishedProjects();

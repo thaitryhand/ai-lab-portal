@@ -37,7 +37,9 @@ import {
   deleteCommentAction,
 } from "../actions";
 
-export const dynamic = "force-dynamic";
+// ISR: blog article content is cacheable. Social features (comments,
+// reactions, bookmarks) are loaded client-side via hooks and actions.
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

@@ -97,6 +97,9 @@ from backend.app.news_submitted_links import (
     create_public_submitted_link_route,
     create_submitted_link_routes,
 )
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import Response
+
 from backend.app.request_logging import RequestLoggingMiddleware
 from backend.app.settings import Settings, get_settings
 from backend.app.user_follows import (
@@ -291,6 +294,30 @@ def create_app(
         app.state.engine = engine
     app.state.settings = resolved_settings
     app.add_middleware(RequestLoggingMiddleware)
+
+    # Caching middleware for public read-only endpoints
+    PUBLIC_CACHE_MAX_AGE = 60  # seconds
+
+    class PublicCacheMiddleware(BaseHTTPMiddleware):
+        """Add Cache-Control headers to public GET endpoints."""
+
+        async def dispatch(
+            self, request: Request, call_next: RequestResponseEndpoint
+        ) -> Response:
+            response = await call_next(request)
+            path = request.url.path
+            if (
+                request.method == "GET"
+                and path.startswith("/public/")
+                and response.status_code < 400
+            ):
+                response.headers["Cache-Control"] = (
+                    f"public, max-age={PUBLIC_CACHE_MAX_AGE}, "
+                    "s-maxage=300, stale-while-revalidate=600"
+                )
+            return response
+
+    app.add_middleware(PublicCacheMiddleware)
     app.add_api_route("/health", health, methods=["GET"])
 
     def require_configured_admin_identity(

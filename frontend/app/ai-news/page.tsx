@@ -17,7 +17,9 @@ export const metadata = createPublicMetadata({
   path: "/ai-news",
 });
 
-export const dynamic = "force-dynamic";
+// ISR: revalidate every 60 seconds. AI news items are updated via
+// async crawlers and go through admin review before publication.
+export const revalidate = 60;
 
 const topicFilters = [
   { label: "All", value: undefined },

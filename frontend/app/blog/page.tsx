@@ -27,7 +27,9 @@ export const metadata = createPublicMetadata({
   type: "website",
 }) as Metadata;
 
-export const dynamic = "force-dynamic";
+// ISR: revalidate every 60 seconds. Blog posts change infrequently
+// and social feed data is loaded client-side.
+export const revalidate = 60;
 
 export default async function BlogIndexPage({
   searchParams,

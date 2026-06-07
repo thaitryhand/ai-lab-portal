@@ -20,7 +20,8 @@ export const metadata: Metadata = createPublicMetadata({
   path: "/lab",
 });
 
-export const dynamic = "force-dynamic";
+// ISR: lab page aggregates published content; revalidate every 10 minutes.
+export const revalidate = 600;
 
 export default async function LabPage() {
   const [showcases, posts] = await Promise.all([listPublishedShowcases(), listPublishedBlogPosts()]);

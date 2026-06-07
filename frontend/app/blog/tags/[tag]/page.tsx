@@ -13,7 +13,8 @@ import { breadcrumbListSchema, itemListSchema } from "@/lib/seo/json-ld";
 import { JsonLd } from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// ISR: tag pages show published posts; revalidate every 60 seconds.
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
   const { tag } = await params;

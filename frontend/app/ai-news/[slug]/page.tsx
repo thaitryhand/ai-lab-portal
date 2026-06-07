@@ -11,7 +11,9 @@ import { getPublishedAiNewsItem } from "@/lib/ai-news/posts";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// ISR: news article content is static after publication.
+// Revalidate every 5 minutes.
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,

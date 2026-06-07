@@ -16,7 +16,8 @@ import { getPublishedProject } from "@/lib/projects/items";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// ISR: individual project pages change rarely.
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
