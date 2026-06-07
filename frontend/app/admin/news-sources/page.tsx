@@ -13,7 +13,7 @@ const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:180
 export type AdminNewsSource = {
   id: string;
   name: string;
-  source_type: "rss" | "github" | "website";
+  source_type: "rss" | "github" | "website" | "hackernews";
   url_or_identifier: string;
   priority: "high" | "medium" | "low";
   is_enabled: boolean;

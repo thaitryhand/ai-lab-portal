@@ -581,6 +581,7 @@ class TestDefaultSources:
         assert "website" in types
         assert "user_submit" in types
         assert "social_x" in types
+        assert "hackernews" in types
 
 
 # ===========================================================================

@@ -25,9 +25,10 @@ export default async function NewNewsSourcePage() {
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Type</span>
             <select name="sourceType" className="rounded-md border border-border bg-background px-3 py-2">
-              <option value="rss">RSS</option>
-              <option value="github">GitHub</option>
-              <option value="website">Website</option>
+              <option value="rss">RSS Feed</option>
+              <option value="github">GitHub Releases</option>
+              <option value="hackernews">Hacker News (Firebase API)</option>
+              <option value="website">Website (Coming soon)</option>
             </select>
           </label>
           <label className="grid gap-1 text-sm">

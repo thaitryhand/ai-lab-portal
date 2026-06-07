@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from backend.app.news_extraction import ExtractedArticleRepository
     from backend.app.news_scoring import NewsReviewRepository
 
-NewsSourceType = Literal["rss", "github", "website", "user_submit", "social_x"]
+NewsSourceType = Literal["rss", "github", "website", "user_submit", "social_x", "hackernews"]
 NewsPriority = Literal["high", "medium", "low"]
 
 
@@ -123,6 +123,9 @@ class NewsSourceRepository:
 
     def list_due_github(self, *, now: datetime | None = None) -> list[NewsSource]:
         return self.list_due_by_type("github", now=now)
+
+    def list_due_hackernews(self, *, now: datetime | None = None) -> list[NewsSource]:
+        return self.list_due_by_type("hackernews", now=now)
 
     def touch_last_crawled(self, source_id: str, crawled_at: datetime) -> None:
         existing = self._sources.get(source_id)
@@ -223,6 +226,9 @@ class PostgresNewsSourceRepository(NewsSourceRepository):
 
     def list_due_github(self, *, now: datetime | None = None) -> list[NewsSource]:
         return self._list_due_by_type("github", now=now)
+
+    def list_due_hackernews(self, *, now: datetime | None = None) -> list[NewsSource]:
+        return self._list_due_by_type("hackernews", now=now)
 
     def touch_last_crawled(self, source_id: str, crawled_at: datetime) -> None:
         with self._engine.begin() as conn:
@@ -327,6 +333,19 @@ def _default_sources() -> list[NewsSource]:
             crawl_frequency_minutes=720,
             is_enabled=True,
             credibility_base_score=0.85,
+            created_at=now,
+            updated_at=now,
+        ),
+        NewsSource(
+            id="newssrc_hackernews_ai",
+            name="Hacker News (AI/ML)",
+            source_type="hackernews",
+            url_or_identifier="topstories",
+            description="Top AI/ML stories from Hacker News via Firebase API.",
+            priority="medium",
+            crawl_frequency_minutes=30,
+            is_enabled=True,
+            credibility_base_score=0.65,
             created_at=now,
             updated_at=now,
         ),
@@ -478,6 +497,25 @@ def create_news_source_routes(
                     "source_id": source_id,
                     "source_type": "github",
                     "releases_seen": result.releases_seen,
+                    "items_stored": result.items_stored,
+                }
+            except Exception as exc:
+                raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+        if source.source_type == "hackernews":
+            from backend.app.news_hackernews_ingest import run_hackernews_fetch
+            from backend.app.task_support import news_raw_item_repository
+
+            try:
+                result = run_hackernews_fetch(
+                    source_id,
+                    sources=repository,
+                    raw_items=news_raw_item_repository(),
+                )
+                return {
+                    "source_id": source_id,
+                    "source_type": "hackernews",
+                    "stories_seen": result.stories_seen,
                     "items_stored": result.items_stored,
                 }
             except Exception as exc:
