@@ -9,6 +9,7 @@ export type PipelineStageId =
   | "draft"
   | "review"
   | "marketing"
+  | "seo"
   | "claims"
   | "publish";
 
@@ -31,6 +32,8 @@ export type IdeaPipelineSnapshot = {
   technical_review_status: string | null;
   marketing_metadata: unknown | null;
   marketing_status: string | null;
+  seo_audit: unknown | null;
+  seo_audit_status: string | null;
   published_blog_post_id: string | null;
 };
 
@@ -55,6 +58,7 @@ const PROCESSING_LABELS: Record<string, string> = {
   draft: "Writing draft",
   "technical-review": "Running technical review",
   marketing: "Generating marketing metadata",
+  "seo-audit": "Running SEO audit",
   claims: "Extracting claims",
 };
 
@@ -216,8 +220,40 @@ export function getPipelineNextAction(
     };
   }
 
+  if (!idea.seo_audit && !idea.seo_audit_status && idea.marketing_status === "approved") {
+    return {
+      kind: "generate",
+      stageId: "seo",
+      title: "Run SEO audit",
+      description: "Automated SEO audit checks title, meta description, headings, keywords, and readability.",
+      sectionAnchor: "pipeline-section-seo",
+    };
+  }
+
+  if (idea.seo_audit_status === "pending" && idea.seo_audit) {
+    return {
+      kind: "approve",
+      stageId: "seo",
+      title: "Review SEO audit findings",
+      description: approveButtonLabel("seo"),
+      approveGate: "seo",
+      sectionAnchor: "pipeline-section-seo",
+    };
+  }
+
+  if (idea.seo_audit_status === "rejected") {
+    return {
+      kind: "generate",
+      stageId: "seo",
+      title: "Run SEO audit again",
+      description: "Address SEO issues, then re-run the audit.",
+      sectionAnchor: "pipeline-section-seo",
+    };
+  }
+
   if (
-    idea.marketing_status === "approved"
+    idea.seo_audit_status === "approved"
+    && idea.marketing_status === "approved"
     && idea.technical_review_status === "approved"
     && claimsCount === 0
   ) {
@@ -225,12 +261,12 @@ export function getPipelineNextAction(
       kind: "claims",
       stageId: "claims",
       title: "Extract claims",
-      description: "Claims were not extracted yet. Approve marketing again or extract manually.",
+      description: "Claims were not extracted yet. Approve SEO audit again or extract manually.",
       sectionAnchor: "pipeline-section-claims",
     };
   }
 
-  if (idea.marketing_status === "approved" && idea.technical_review_status === "approved") {
+  if (idea.seo_audit_status === "approved" && idea.marketing_status === "approved" && idea.technical_review_status === "approved") {
     return {
       kind: "publish",
       stageId: "publish",
@@ -259,6 +295,8 @@ function stageToStageId(stage: string): PipelineStageId {
       return "review";
     case "marketing":
       return "marketing";
+    case "seo-audit":
+      return "seo";
     case "claims":
       return "claims";
     default:
@@ -276,6 +314,8 @@ function stageToAnchor(stage: string): string {
       return "pipeline-section-review";
     case "marketing":
       return "pipeline-section-marketing";
+    case "seo-audit":
+      return "pipeline-section-seo";
     case "claims":
       return "pipeline-section-claims";
     default:

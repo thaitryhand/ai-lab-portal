@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   /** The pipeline stage to stream-generate (outline, draft, review, marketing). */
-  stage: "outline" | "draft" | "review" | "marketing";
+  stage: "outline" | "draft" | "review" | "marketing" | "seo";
   /** The blog idea ID. */
   ideaId: string;
   /** Optional label override. */

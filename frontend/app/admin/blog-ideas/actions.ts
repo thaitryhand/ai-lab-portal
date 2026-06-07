@@ -21,7 +21,7 @@ import {
 const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
 type AdminSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
-type GenerationStage = "outline" | "draft" | "technical-review" | "marketing";
+type GenerationStage = "outline" | "draft" | "technical-review" | "marketing" | "seo-audit";
 
 async function adminFetch(url: string, init?: RequestInit, session?: AdminSession) {
   return fetch(`${backendBaseUrl}${url}`, {
@@ -398,6 +398,31 @@ export async function rejectMarketingAction(formData: FormData) {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ marketing_status: "rejected" }),
+  }, session);
+  redirect(`/admin/blog-ideas/${ideaId}`);
+}
+
+export async function auditSeoAction(formData: FormData) {
+  await runGenerationAction(formData, "seo-audit", (ideaId) => `/admin/blog-ideas/${ideaId}/audit-seo`);
+}
+
+export async function approveSeoAction(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/admin/login");
+  const ideaId = formData.get("ideaId") as string;
+  await approveAndRunNext(session, ideaId, "seo", {
+    seo_audit_status: "approved",
+  });
+}
+
+export async function rejectSeoAction(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/admin/login");
+  const ideaId = formData.get("ideaId") as string;
+  await adminFetch(`/admin/blog-ideas/${ideaId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seo_audit_status: "rejected" }),
   }, session);
   redirect(`/admin/blog-ideas/${ideaId}`);
 }

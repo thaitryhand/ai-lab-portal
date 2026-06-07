@@ -24,6 +24,9 @@ import {
   extractClaimsAction,
   updateClaimAction,
   waiveAllClaimsAction,
+  auditSeoAction,
+  approveSeoAction,
+  rejectSeoAction,
 } from "../actions";
 
 
@@ -155,6 +158,9 @@ export default async function AdminBlogIdeaDetailPage({
           extractClaims: extractClaimsAction,
           updateClaim: updateClaimAction,
           waiveAllClaims: waiveAllClaimsAction,
+          auditSeo: auditSeoAction,
+          approveSeo: approveSeoAction,
+          rejectSeo: rejectSeoAction,
         }}
       />
     </>

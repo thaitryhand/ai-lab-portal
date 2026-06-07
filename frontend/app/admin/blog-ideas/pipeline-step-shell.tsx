@@ -102,6 +102,7 @@ export function stepShellState(
     "draft",
     "review",
     "marketing",
+    "seo",
     "claims",
     "publish",
   ];

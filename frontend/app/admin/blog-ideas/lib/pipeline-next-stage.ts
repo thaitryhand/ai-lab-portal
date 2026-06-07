@@ -1,10 +1,11 @@
-export type ApproveGate = "idea" | "outline" | "draft" | "review" | "marketing";
+export type ApproveGate = "idea" | "outline" | "draft" | "review" | "marketing" | "seo";
 
 export type PipelineOpStage =
   | "outline"
   | "draft"
   | "technical-review"
   | "marketing"
+  | "seo-audit"
   | "claims";
 
 export type NextPipelineStep = {
@@ -43,6 +44,12 @@ const NEXT_AFTER_APPROVE: Record<ApproveGate, NextPipelineStep> = {
   },
   marketing: {
     gate: "marketing",
+    opStage: "seo-audit",
+    endpoint: (ideaId) => `/admin/blog-ideas/${ideaId}/audit-seo`,
+    completedMessage: "SEO audit completed.",
+  },
+  seo: {
+    gate: "seo",
     opStage: "claims",
     endpoint: (ideaId) => `/admin/blog-ideas/${ideaId}/extract-claims`,
     completedMessage: "Claims extracted from draft.",
@@ -65,6 +72,8 @@ export function approveButtonLabel(gate: ApproveGate): string {
     case "review":
       return "Accept & generate marketing";
     case "marketing":
+      return "Approve & run SEO audit";
+    case "seo":
       return "Approve & extract claims";
   }
 }

@@ -34,6 +34,7 @@ function stepVisualState(
     draft_status: string | null;
     technical_review_status: string | null;
     marketing_status: string | null;
+    seo_audit_status: string | null;
     published_blog_post_id: string | null;
   },
 ): StepVisualState {
@@ -59,6 +60,7 @@ type Props = {
     draft_status: string | null;
     technical_review_status: string | null;
     marketing_status: string | null;
+    seo_audit_status: string | null;
     published_blog_post_id: string | null;
   };
   nextAction: PipelineNextAction;

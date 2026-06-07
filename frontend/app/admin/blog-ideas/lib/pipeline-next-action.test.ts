@@ -13,6 +13,8 @@ const approvedIdea = {
   technical_review_status: "approved",
   marketing_metadata: { seo_title: "SEO" },
   marketing_status: "approved",
+  seo_audit: null,
+  seo_audit_status: null,
   published_blog_post_id: null,
 };
 
@@ -30,6 +32,8 @@ describe("pipeline-next-action", () => {
         technical_review_status: null,
         marketing_metadata: null,
         marketing_status: null,
+        seo_audit: null,
+        seo_audit_status: null,
       },
       0,
     );

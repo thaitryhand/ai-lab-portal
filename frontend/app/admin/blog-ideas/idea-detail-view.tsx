@@ -88,6 +88,23 @@ export type BlogIdeaDetail = {
     tags: string[];
   } | null;
   marketing_status: string | null;
+  seo_audit: {
+    overall_score: number;
+    title_analysis: string;
+    meta_description_analysis: string;
+    heading_structure: string;
+    keyword_analysis: string;
+    readability_assessment: string;
+    internal_linking: string;
+    issues: Array<{
+      severity: string;
+      category: string;
+      text: string;
+      suggestion: string;
+    }>;
+    approval_recommendation: string;
+  } | null;
+  seo_audit_status: string | null;
   published_blog_post_id: string | null;
   scheduled_at: string | null;
   created_at: string;
@@ -181,6 +198,9 @@ type Actions = {
   generateMarketing: (formData: FormData) => Promise<void>;
   approveMarketing: (formData: FormData) => Promise<void>;
   rejectMarketing: (formData: FormData) => Promise<void>;
+  auditSeo: (formData: FormData) => Promise<void>;
+  approveSeo: (formData: FormData) => Promise<void>;
+  rejectSeo: (formData: FormData) => Promise<void>;
   publishToBlog: (formData: FormData) => Promise<void>;
   extractClaims: (formData: FormData) => Promise<void>;
   updateClaim: (formData: FormData) => Promise<void>;
@@ -216,6 +236,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
   const draftStepState = stepShellState("draft", nextAction.stageId, idea);
   const reviewStepState = stepShellState("review", nextAction.stageId, idea);
   const marketingStepState = stepShellState("marketing", nextAction.stageId, idea);
+  const seoStepState = stepShellState("seo", nextAction.stageId, idea);
   const claimsStepState = stepShellState("claims", nextAction.stageId, idea);
   const publishStepState = stepShellState("publish", nextAction.stageId, idea);
 
@@ -758,6 +779,163 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
 
           <PipelineStepShell
             stepNumber={6}
+            title="SEO Audit"
+            sectionId="pipeline-section-seo"
+            state={seoStepState}
+            summary={
+              idea.seo_audit
+                ? `Score: ${idea.seo_audit.overall_score}/100 · ${idea.seo_audit.issues.length} issues`
+                : undefined
+            }
+            lockedMessage="Approve marketing metadata before running the SEO audit."
+            headerActions={
+              idea.seo_audit_status === "pending" ? (
+                <ActionButtons
+                  approveAction={actions.approveSeo}
+                  rejectAction={actions.rejectSeo}
+                  ideaId={idea.id}
+                  approveLabel={approveButtonLabel("seo")}
+                  rejectLabel="Reject"
+                />
+              ) : undefined
+            }
+          >
+        {!idea.seo_audit ? (
+          <>
+          <EmptyState
+            message={
+              idea.marketing_status === "approved"
+                ? "No SEO audit yet. Generation requires the worker and OpenAI key to be configured."
+                : "Approve marketing metadata first to enable SEO audit."
+            }
+            action={
+              idea.marketing_status === "approved" && !idea.seo_audit_status
+                ? {
+                    label: "Run SEO audit",
+                    icon: Search,
+                    actionName: actions.auditSeo,
+                    ideaId: idea.id,
+                  }
+                : undefined
+            }
+          />
+          {idea.marketing_status === "approved" && !idea.seo_audit_status ? (
+            <StageStreamButton stage="seo" ideaId={idea.id} label="Stream SEO audit" />
+          ) : null}
+          </>
+        ) : (
+          <div className="grid gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium",
+                  idea.seo_audit.overall_score >= 80
+                    ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30"
+                    : idea.seo_audit.overall_score >= 50
+                      ? "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30"
+                      : "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/30"
+                )}
+              >
+                <AlertTriangle className="size-3.5" />
+                SEO Score: {idea.seo_audit.overall_score}/100
+              </span>
+              {idea.seo_audit.approval_recommendation && (
+                <span className="text-xs text-muted-foreground">
+                  Recommendation: {idea.seo_audit.approval_recommendation.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
+
+            {idea.seo_audit_status === "rejected" && idea.marketing_status === "approved" ? (
+              <RegenerateAction
+                actionName={actions.auditSeo}
+                ideaId={idea.id}
+                label="Run SEO audit again"
+              />
+            ) : null}
+
+            {/* Analysis sections */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SeoAnalysisField label="Title Analysis" value={idea.seo_audit.title_analysis} />
+              <SeoAnalysisField label="Meta Description" value={idea.seo_audit.meta_description_analysis} />
+              <SeoAnalysisField label="Heading Structure" value={idea.seo_audit.heading_structure} />
+              <SeoAnalysisField label="Keyword Analysis" value={idea.seo_audit.keyword_analysis} />
+              <SeoAnalysisField label="Readability" value={idea.seo_audit.readability_assessment} />
+              <SeoAnalysisField label="Internal Linking" value={idea.seo_audit.internal_linking} />
+            </div>
+
+            {idea.seo_audit.issues.length === 0 ? (
+              <p className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                <CheckCircle className="size-4" />
+                No SEO issues found.
+              </p>
+            ) : (
+              <div className="grid gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Issues ({idea.seo_audit.issues.length})
+                </p>
+                {idea.seo_audit.issues.map((issue, i) => {
+                  const issueKey = `${issue.category}-${issue.text.slice(0, 32)}-${i}`;
+                  const sevConfig =
+                    severityConfig[issue.severity as keyof typeof severityConfig] ??
+                    severityConfig.low;
+                  const SevIcon = sevConfig.icon;
+                  return (
+                    <div
+                      key={issueKey}
+                      className={cn(
+                        "rounded-xl border p-4 transition-all hover:shadow-sm",
+                        sevConfig.className
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <SevIcon
+                            className={cn(
+                              "size-4",
+                              issue.severity === "critical" || issue.severity === "high"
+                                ? "text-red-500"
+                                : issue.severity === "major" || issue.severity === "medium"
+                                  ? "text-amber-500"
+                                  : "text-sky-500"
+                            )}
+                            aria-hidden
+                          />
+                          <span
+                            className={cn(
+                              "inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest",
+                              sevConfig.badge
+                            )}
+                          >
+                            {issue.severity}
+                          </span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                            {issue.category.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid gap-2">
+                        <p className="text-sm leading-snug text-foreground [overflow-wrap:anywhere]">
+                          {issue.text}
+                        </p>
+                        <p className="text-sm leading-snug italic text-brand [overflow-wrap:anywhere]">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground not-italic">
+                            Suggestion:
+                          </span>{" "}
+                          {issue.suggestion}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+          </PipelineStepShell>
+
+          <PipelineStepShell
+            stepNumber={7}
             title="Claims"
             sectionId="pipeline-section-claims"
             state={claimsStepState}
@@ -784,7 +962,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={7}
+            stepNumber={8}
             title="Publish"
             sectionId="pipeline-section-publish"
             state={publishStepState}
@@ -812,7 +990,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
               </Link>
             ) : null}
           </div>
-        ) : idea.marketing_status === "approved" ? (
+        ) : idea.marketing_status === "approved" && idea.seo_audit_status === "approved" ? (
           <div className="grid gap-3">
             {claimsBlockPublish(claims) ? (
               <p className="text-sm text-amber-800 dark:text-amber-200">
@@ -842,7 +1020,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             </div>
           </div>
         ) : (
-          <EmptyState message="Approve marketing metadata to enable publishing to the blog." />
+          <EmptyState message="Approve marketing metadata and SEO audit to enable publishing to the blog." />
         )}
           </PipelineStepShell>
 
@@ -1128,6 +1306,19 @@ function RegenerateAction({
         <input name="ideaId" type="hidden" value={ideaId} />
         <ActionSubmitButton icon={Sparkles} label={label} variant="outline" />
       </form>
+    </div>
+  );
+}
+
+function SeoAnalysisField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/30 p-4">
+      <p className="text-xs font-medium text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1.5 text-sm leading-snug text-foreground [overflow-wrap:anywhere]">
+        {value}
+      </p>
     </div>
   );
 }
