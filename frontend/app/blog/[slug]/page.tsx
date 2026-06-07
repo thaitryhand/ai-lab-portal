@@ -7,6 +7,8 @@ import { Pencil } from "lucide-react";
 
 import { BlogComments } from "@/components/blog/blog-comments";
 import { BlogSocialBar } from "@/components/blog/blog-social-bar";
+import { ReadingProgress } from "@/components/public/reading-progress";
+import { TableOfContents } from "@/components/public/table-of-contents";
 import { RelatedBlogPosts } from "@/components/blog/related-blog-posts";
 import { BlogShareButtons } from "@/components/blog/blog-share-buttons";
 import { BlogTagChips } from "@/components/blog/blog-tag-chips";
@@ -117,6 +119,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           { name: post.title, url: `/blog/${slug}` },
         ])}
       />
+      <ReadingProgress />
       <article className={cn(publicMainWidthClass, "flex flex-col gap-10 sm:gap-12")}>
         <div className="flex items-start justify-between gap-4">
           <PublicBackLink href="/blog">Blog</PublicBackLink>
@@ -160,7 +163,12 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             </div>
           )}
 
-          <PublicProse contentMarkdown={post.contentMarkdown} />
+          <div className="flex gap-8">
+            <TableOfContents contentSelector="[data-prose]" />
+            <div className="min-w-0 flex-1" data-prose>
+              <PublicProse contentMarkdown={post.contentMarkdown} />
+            </div>
+          </div>
 
         {/* max-w-[72ch] */}
         <div className="mx-auto w-full max-w-full">

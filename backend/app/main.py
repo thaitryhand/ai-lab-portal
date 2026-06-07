@@ -87,6 +87,9 @@ from backend.app.news_sources import (
     PostgresNewsSourceRepository,
     create_news_source_routes,
 )
+from backend.app.news_streaming import create_news_streaming_router
+from backend.app.seo_analytics import create_seo_analytics_routes
+from backend.app.content_calendar import create_content_calendar_routes
 from backend.app.news_submitted_links import (
     InMemorySubmittedLinkRepository,
     PostgresSubmittedLinkRepository,
@@ -318,6 +321,15 @@ def create_app(
         ai_runs_repository=ai_runs_repo,
     )
     app.include_router(ideas_router)
+
+    # AI observability dashboard
+    from backend.app.ai_observability_api import create_ai_observability_routes
+
+    obs_router = create_ai_observability_routes(
+        resolved_settings, ai_runs_repository=ai_runs_repo
+    )
+    app.include_router(obs_router)
+
     crawl_enqueue: Callable[[str], str] | None = None
     extract_enqueue: Callable[[str], str] | None = None
     rescore_enqueue: Callable[[str], str] | None = None
@@ -382,9 +394,28 @@ def create_app(
         )
     )
     app.include_router(
+        create_news_streaming_router(resolved_settings),
+        prefix="/admin/news",
+    )
+    app.include_router(
         create_public_submitted_link_route(
             submitted_repo,
             enqueue_process=process_submission_enqueue,
+        )
+    )
+    app.include_router(
+        create_seo_analytics_routes(
+            resolved_settings,
+            blog_repository=repository,
+            blog_idea_repository=ideas_repo,
+            blog_tag_repository=tag_repo,
+        )
+    )
+    app.include_router(
+        create_content_calendar_routes(
+            resolved_settings,
+            blog_repository=repository,
+            blog_idea_repository=ideas_repo,
         )
     )
 

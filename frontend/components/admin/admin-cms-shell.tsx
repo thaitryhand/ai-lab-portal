@@ -6,7 +6,10 @@ import { useSyncExternalStore, type ReactNode } from "react";
 
 import { motion } from "framer-motion";
 import {
+  Activity,
+  BarChart3,
   Briefcase,
+  CalendarDays,
   ExternalLink,
   FileText,
   LayoutDashboard,
@@ -25,6 +28,9 @@ import { cn } from "@/lib/utils";
 
 type NavKey =
   | "dashboard"
+  | "observability"
+  | "seo"
+  | "calendar"
   | "blog"
   | "projects"
   | "showcases"
@@ -46,6 +52,9 @@ function useActiveNavKey(): NavKey {
   if (pathname.startsWith("/admin/blog")) return "blog";
   if (pathname.startsWith("/admin/projects")) return "projects";
   if (pathname.startsWith("/admin/showcases")) return "showcases";
+  if (pathname.startsWith("/admin/ai-observability")) return "observability";
+  if (pathname.startsWith("/admin/seo-analytics")) return "seo";
+  if (pathname.startsWith("/admin/content-calendar")) return "calendar";
   if (pathname.startsWith("/admin/news-review")) return "news-review";
   if (pathname.startsWith("/admin/news-sources")) return "news";
   if (pathname.startsWith("/admin/news")) return "submitted-links";
@@ -64,6 +73,9 @@ const navGroups: NavGroup[] = [
     label: "Overview",
     items: [
       { key: "dashboard", href: "/admin", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
+      { key: "observability", href: "/admin/ai-observability", label: "Observability", icon: <Activity className="size-4" /> },
+      { key: "seo", href: "/admin/seo-analytics", label: "SEO", icon: <BarChart3 className="size-4" /> },
+      { key: "calendar", href: "/admin/content-calendar", label: "Calendar", icon: <CalendarDays className="size-4" /> },
     ],
   },
   {
