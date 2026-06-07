@@ -22,6 +22,7 @@ blog_posts = Table(
     Column("content_markdown", Text, nullable=False),
     Column("image_url", String(2048), nullable=True),
     Column("author_user_id", String(255), nullable=True),
+    Column("updated_at", DateTime(timezone=True), nullable=True),
 )
 
 user_follows = Table(
@@ -136,6 +137,24 @@ blog_ideas = Table(
     Index("ix_blog_ideas_seo_audit_status", "seo_audit_status"),
     Index("ix_blog_ideas_published_blog_post_id", "published_blog_post_id"),
 )
+
+blog_post_revisions = Table(
+    "blog_post_revisions",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("post_id", String(64), nullable=False),
+    Column("revision_number", Integer, nullable=False),
+    Column("title", String(240), nullable=False),
+    Column("content_markdown", Text, nullable=False),
+    Column("excerpt", Text, nullable=False),
+    Column("slug", String(160), nullable=False),
+    Column("image_url", String(2048), nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("created_by_user_id", String(255), nullable=True),
+    UniqueConstraint("post_id", "revision_number", name="uq_post_revision"),
+    Index("ix_blog_post_revisions_post_id", "post_id"),
+)
+
 
 ai_runs = Table(
     "ai_runs",

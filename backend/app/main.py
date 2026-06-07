@@ -33,6 +33,7 @@ from backend.app.blog import (
     BlogPost,
     BlogPostCreate,
     BlogPostDetail,
+    BlogPostRevision,
     BlogPostSummary,
     BlogPostUpdate,
     BlogRepository,
@@ -575,6 +576,37 @@ def create_app(
             raise HTTPException(status_code=404, detail="Blog post not found")
         record_blog_audit(identity, "blog_post.updated", post.id)
         return post
+
+    @app.get("/admin/blog-posts/{post_id}/revisions")
+    async def list_revisions(
+        post_id: str,
+        _identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> list[BlogPostRevision]:
+        return repository.list_revisions(post_id)
+
+    @app.get("/admin/blog-posts/{post_id}/revisions/{revision_id}")
+    async def get_revision(
+        post_id: str,
+        revision_id: str,
+        _identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> BlogPostRevision:
+        revision = repository.get_revision(revision_id)
+        if revision is None:
+            raise HTTPException(status_code=404, detail="Revision not found")
+        return revision
+
+    @app.post("/admin/blog-posts/{post_id}/revisions/{revision_id}/restore")
+    async def restore_revision(
+        post_id: str,
+        revision_id: str,
+        identity: AdminIdentity = Depends(require_configured_admin_identity),
+    ) -> BlogPost:
+        try:
+            post = repository.restore_revision(post_id, revision_id)
+            record_blog_audit(identity, "blog_post.revision_restored", post.id)
+            return post
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.post("/admin/blog-posts/{post_id}/publish")
     async def publish_blog_post(

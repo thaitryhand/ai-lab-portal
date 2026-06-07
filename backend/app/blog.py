@@ -5,7 +5,7 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 from sqlalchemy import Engine, insert, select, update
 
-from backend.app.database import audit_events, blog_posts
+from backend.app.database import audit_events, blog_post_revisions, blog_posts
 
 BlogStatus = Literal["draft", "published"]
 
@@ -41,6 +41,19 @@ class BlogPostUpdate(BaseModel):
     content_markdown: str | None = Field(default=None, min_length=1)
     image_url: str | None = Field(default=None, max_length=2048)
     author_user_id: str | None = Field(default=None, max_length=255)
+
+
+class BlogPostRevision(BaseModel):
+    id: str
+    post_id: str
+    revision_number: int
+    title: str
+    content_markdown: str
+    excerpt: str
+    slug: str
+    image_url: str | None = None
+    created_at: datetime
+    created_by_user_id: str | None = None
 
 
 class BlogPostSummary(BaseModel):
@@ -109,12 +122,21 @@ class BlogRepositoryProtocol(Protocol):
 
     def list_audit_events(self) -> list[AuditEvent]: ...
 
+    def save_revision(self, post_id: str, request: BlogPostUpdate, user_id: str | None = None) -> BlogPostRevision: ...
+
+    def list_revisions(self, post_id: str) -> list[BlogPostRevision]: ...
+
+    def get_revision(self, revision_id: str) -> BlogPostRevision | None: ...
+
+    def restore_revision(self, post_id: str, revision_id: str) -> BlogPost: ...
+
 
 class BlogRepository:
     def __init__(self, posts: list[BlogPost] | None = None) -> None:
         seed_posts = list(DEFAULT_BLOG_POSTS) if posts is None else posts
         self.posts: dict[str, BlogPost] = {post.id: post for post in seed_posts}
         self.audit_events: list[AuditEvent] = []
+        self._revisions: list[BlogPostRevision] = []
 
     def get_by_id(self, post_id: str) -> AdminBlogPostDetail | None:
         post = self.posts.get(post_id)
@@ -233,16 +255,82 @@ class BlogRepository:
         if post is None:
             return None
         update_data = request.model_dump(exclude_unset=True)
+        update_data["updated_at"] = datetime.now(UTC)
         updated = post.model_copy(update=update_data)
         self.posts[post_id] = updated
+        # Auto-save revision if content or title changed
+        if "content_markdown" in update_data or "title" in update_data:
+            self.save_revision(post_id, request)
         return updated
+
+    def save_revision(self, post_id: str, request: BlogPostUpdate, user_id: str | None = None) -> BlogPostRevision:
+        post = self.posts.get(post_id)
+        if post is None:
+            raise ValueError(f"Post {post_id} not found")
+        merged = post.model_copy(update=request.model_dump(exclude_unset=True))
+        now = datetime.now(UTC)
+        rev_number = len([r for r in self._revisions if r.post_id == post_id]) + 1
+        revision = BlogPostRevision(
+            id=f"rev_{uuid4().hex}",
+            post_id=post_id,
+            revision_number=rev_number,
+            title=merged.title,
+            content_markdown=merged.content_markdown,
+            excerpt=merged.excerpt,
+            slug=merged.slug,
+            image_url=merged.image_url,
+            created_at=now,
+            created_by_user_id=user_id,
+        )
+        self._revisions.append(revision)
+        return revision
+
+    def list_revisions(self, post_id: str) -> list[BlogPostRevision]:
+        return sorted(
+            [r for r in self._revisions if r.post_id == post_id],
+            key=lambda r: r.revision_number,
+            reverse=True,
+        )
+
+    def get_revision(self, revision_id: str) -> BlogPostRevision | None:
+        for r in self._revisions:
+            if r.id == revision_id:
+                return r
+        return None
+
+    def restore_revision(self, post_id: str, revision_id: str) -> BlogPost:
+        revision = self.get_revision(revision_id)
+        if revision is None:
+            raise ValueError(f"Revision {revision_id} not found")
+        post = self.posts.get(post_id)
+        if post is None:
+            raise ValueError(f"Post {post_id} not found")
+        # Save current state as a revision first
+        self.save_revision(post_id, BlogPostUpdate(
+            title=post.title,
+            content_markdown=post.content_markdown,
+            excerpt=post.excerpt,
+            slug=post.slug,
+            image_url=post.image_url,
+        ))
+        # Apply revision content
+        restored = post.model_copy(update={
+            "title": revision.title,
+            "content_markdown": revision.content_markdown,
+            "excerpt": revision.excerpt,
+            "slug": revision.slug,
+            "image_url": revision.image_url,
+            "updated_at": datetime.now(UTC),
+        })
+        self.posts[post_id] = restored
+        return restored
 
     def publish(self, post_id: str) -> BlogPost | None:
         post = self.posts.get(post_id)
         if post is None:
             return None
         published = post.model_copy(
-            update={"status": "published", "published_at": datetime.now(UTC)}
+            update={"status": "published", "published_at": datetime.now(UTC), "updated_at": datetime.now(UTC)}
         )
         self.posts[post_id] = published
         return published
@@ -251,7 +339,7 @@ class BlogRepository:
         post = self.posts.get(post_id)
         if post is None:
             return None
-        draft = post.model_copy(update={"status": "draft", "published_at": None})
+        draft = post.model_copy(update={"status": "draft", "published_at": None, "updated_at": datetime.now(UTC)})
         self.posts[post_id] = draft
         return draft
 
@@ -452,6 +540,7 @@ class PostgresBlogRepository:
 
     def update(self, post_id: str, request: BlogPostUpdate) -> BlogPost | None:
         update_data = request.model_dump(exclude_unset=True)
+        update_data["updated_at"] = datetime.now(UTC)
         with self.engine.begin() as connection:
             existing = (
                 connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
@@ -461,6 +550,9 @@ class PostgresBlogRepository:
             if existing is None:
                 return None
             if update_data:
+                # Auto-save revision if content or title changed
+                if "content_markdown" in update_data or "title" in update_data:
+                    self.save_revision(post_id, request)
                 connection.execute(
                     update(blog_posts)
                     .where(blog_posts.c.id == post_id)
@@ -473,13 +565,103 @@ class PostgresBlogRepository:
             )
         return BlogPost.model_validate(dict(row))
 
+    def save_revision(self, post_id: str, request: BlogPostUpdate, user_id: str | None = None) -> BlogPostRevision:
+        with self.engine.begin() as connection:
+            existing = (
+                connection.execute(select(blog_posts).where(blog_posts.c.id == post_id))
+                .mappings()
+                .first()
+            )
+            if existing is None:
+                raise ValueError(f"Post {post_id} not found")
+            merged = dict(existing)
+            for k, v in request.model_dump(exclude_unset=True).items():
+                if v is not None:
+                    merged[k] = v
+            now = datetime.now(UTC)
+            # Get next revision number
+            max_rev = connection.execute(
+                select(blog_post_revisions.c.revision_number)
+                .where(blog_post_revisions.c.post_id == post_id)
+                .order_by(blog_post_revisions.c.revision_number.desc())
+                .limit(1)
+            ).scalar()
+            rev_number = (max_rev or 0) + 1
+            revision = BlogPostRevision(
+                id=f"rev_{uuid4().hex}",
+                post_id=post_id,
+                revision_number=rev_number,
+                title=merged.get("title", ""),
+                content_markdown=merged.get("content_markdown", ""),
+                excerpt=merged.get("excerpt", ""),
+                slug=merged.get("slug", ""),
+                image_url=merged.get("image_url"),
+                created_at=now,
+                created_by_user_id=user_id,
+            )
+            connection.execute(insert(blog_post_revisions).values(**revision.model_dump()))
+        return revision
+
+    def list_revisions(self, post_id: str) -> list[BlogPostRevision]:
+        with self.engine.begin() as connection:
+            rows = connection.execute(
+                select(blog_post_revisions)
+                .where(blog_post_revisions.c.post_id == post_id)
+                .order_by(blog_post_revisions.c.revision_number.desc())
+            ).mappings()
+            return [BlogPostRevision.model_validate(dict(row)) for row in rows]
+
+    def get_revision(self, revision_id: str) -> BlogPostRevision | None:
+        with self.engine.begin() as connection:
+            row = connection.execute(
+                select(blog_post_revisions).where(blog_post_revisions.c.id == revision_id)
+            ).mappings().first()
+            if row is None:
+                return None
+            return BlogPostRevision.model_validate(dict(row))
+
+    def restore_revision(self, post_id: str, revision_id: str) -> BlogPost:
+        revision = self.get_revision(revision_id)
+        if revision is None:
+            raise ValueError(f"Revision {revision_id} not found")
+        # Save current state as revision first
+        current = self.get_by_id(post_id)
+        if current is None:
+            raise ValueError(f"Post {post_id} not found")
+        self.save_revision(post_id, BlogPostUpdate(
+            title=current.title,
+            content_markdown=current.content_markdown,
+            excerpt=current.excerpt,
+            slug=current.slug,
+            image_url=current.image_url,
+        ))
+        # Apply revision
+        now = datetime.now(UTC)
+        with self.engine.begin() as connection:
+            connection.execute(
+                update(blog_posts)
+                .where(blog_posts.c.id == post_id)
+                .values(
+                    title=revision.title,
+                    content_markdown=revision.content_markdown,
+                    excerpt=revision.excerpt,
+                    slug=revision.slug,
+                    image_url=revision.image_url,
+                    updated_at=now,
+                )
+            )
+            row = connection.execute(
+                select(blog_posts).where(blog_posts.c.id == post_id)
+            ).mappings().one()
+        return BlogPost.model_validate(dict(row))
+
     def publish(self, post_id: str) -> BlogPost | None:
         published_at = datetime.now(UTC)
         with self.engine.begin() as connection:
             result = connection.execute(
                 update(blog_posts)
                 .where(blog_posts.c.id == post_id)
-                .values(status="published", published_at=published_at)
+                .values(status="published", published_at=published_at, updated_at=published_at)
             )
             if result.rowcount == 0:
                 return None
@@ -495,7 +677,7 @@ class PostgresBlogRepository:
             result = connection.execute(
                 update(blog_posts)
                 .where(blog_posts.c.id == post_id)
-                .values(status="draft", published_at=None)
+                .values(status="draft", published_at=None, updated_at=datetime.now(UTC))
             )
             if result.rowcount == 0:
                 return None
