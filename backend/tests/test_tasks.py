@@ -1641,9 +1641,9 @@ class TestPublishScheduledPostsTask:
             slug = "ready-idea"
         mock_publish.return_value = PublishResult()
 
-        with patch("backend.app.blog_ideas.BlogIdeaRepository") as mock_idea_cls, \
-             patch("backend.app.blog.BlogRepository") as mock_blog_cls:
-            mock_idea_cls.return_value = idea_repo
+        with patch("backend.app.task_support.idea_repository") as mock_idea_fn, \
+             patch("backend.app.task_support.blog_repository") as mock_blog_fn:
+            mock_idea_fn.return_value = idea_repo
 
             results = publish_scheduled_posts_task.__wrapped__()
 
@@ -1687,9 +1687,9 @@ class TestPublishScheduledPostsTask:
 
         mock_publish.side_effect = _mock_publish
 
-        with patch("backend.app.blog_ideas.BlogIdeaRepository") as mock_idea_cls, \
-             patch("backend.app.blog.BlogRepository") as mock_blog_cls:
-            mock_idea_cls.return_value = idea_repo
+        with patch("backend.app.task_support.idea_repository") as mock_idea_fn, \
+             patch("backend.app.task_support.blog_repository") as mock_blog_fn:
+            mock_idea_fn.return_value = idea_repo
 
             results = publish_scheduled_posts_task.__wrapped__()
 

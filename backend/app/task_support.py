@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from backend.app.ai_runs import AiRunRepository, PostgresAiRunRepository
+from backend.app.blog import BlogRepository, BlogRepositoryProtocol, PostgresBlogRepository
 from backend.app.blog_ideas import BlogIdeaRepository, PostgresBlogIdeaRepository
 from backend.app.database import create_database_engine
 from backend.app.generation_jobs import (
@@ -85,6 +86,13 @@ def idea_repository(settings: Settings | None = None) -> BlogIdeaRepository:
     if resolved.environment == "test":
         return BlogIdeaRepository()
     return PostgresBlogIdeaRepository(create_database_engine(resolved))
+
+
+def blog_repository(settings: Settings | None = None) -> BlogRepositoryProtocol:
+    resolved = settings or Settings()
+    if resolved.environment == "test":
+        return BlogRepository()
+    return PostgresBlogRepository(create_database_engine(resolved))
 
 
 def ai_run_repository(settings: Settings | None = None) -> AiRunRepository | None:

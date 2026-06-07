@@ -17,6 +17,7 @@ from backend.app.llm.schemas import (
     BlogDraftSection,
     BlogOutline,
     MarketingMetadata,
+    SeoAudit,
     TechnicalReview,
 )
 from backend.app.llm.schemas import BlogIdea as BlogIdeaSchema
@@ -399,6 +400,46 @@ def generate_marketing_metadata_task(self, idea_id: str) -> dict:
         raise self.retry(exc=exc)
 
 
+@celery_app.task(name="blog_ideas.audit_seo", bind=True, max_retries=2)
+def audit_seo_task(self, idea_id: str) -> dict:
+    jobs = track_job_lifecycle(self)
+    repo = idea_repository()
+    idea = repo.get_by_id(idea_id)
+    if idea is None:
+        _finish_job(self, jobs, ValueError(f"Blog idea {idea_id} not found"))
+        raise ValueError(f"Blog idea {idea_id} not found")
+    if idea.draft_status != "approved" or not idea.marketing_metadata:
+        err = ValueError(
+            f"Blog idea {idea_id} requires an approved draft and marketing metadata"
+        )
+        _finish_job(self, jobs, err)
+        raise err
+
+    try:
+        service = llm_service_for_idea(idea_id)
+        result = cast(
+            SeoAudit,
+            service.generate(
+                "seo_audit",
+                inputs={
+                    "draft_markdown": idea.draft_markdown or "",
+                    "marketing_metadata": json.dumps(idea.marketing_metadata, indent=2),
+                },
+                output_schema=SeoAudit,
+            ),
+        )
+        updated = repo.set_seo_audit(
+            idea_id, result.model_dump(), status="pending"
+        )
+        if updated is None:
+            raise RuntimeError(f"Failed to store SEO audit for idea {idea_id}")
+        _finish_job(self, jobs)
+        return updated.model_dump()
+    except Exception as exc:
+        _finish_job(self, jobs, exc)
+        raise self.retry(exc=exc)
+
+
 @celery_app.task(name="news.crawl_rss_source")
 def crawl_rss_source_task(source_id: str) -> dict:
     sources = news_source_repository()
@@ -412,6 +453,32 @@ def crawl_due_rss_sources_task() -> list[dict]:
     sources = news_source_repository()
     raw_items = news_raw_item_repository()
     results = run_crawl_due_rss_sources(sources=sources, raw_items=raw_items)
+    return [r.model_dump() for r in results]
+
+
+# --- Hacker News ingestion ---
+
+
+@celery_app.task(name="news.ingest_hackernews_source")
+def ingest_hackernews_source_task(source_id: str) -> dict:
+    from backend.app.news_hackernews_ingest import run_hackernews_fetch
+
+    result = run_hackernews_fetch(
+        source_id,
+        sources=news_source_repository(),
+        raw_items=news_raw_item_repository(),
+    )
+    return result.model_dump()
+
+
+@celery_app.task(name="news.ingest_due_hackernews_sources")
+def ingest_due_hackernews_sources_task() -> list[dict]:
+    from backend.app.news_hackernews_ingest import run_due_hackernews_sources
+
+    results = run_due_hackernews_sources(
+        sources=news_source_repository(),
+        raw_items=news_raw_item_repository(),
+    )
     return [r.model_dump() for r in results]
 
 
@@ -523,12 +590,11 @@ def fetch_github_source_task(source_id: str) -> dict:
 def publish_scheduled_posts_task() -> list[dict]:
     """Publish all blog ideas where scheduled_at <= now."""
     from datetime import UTC, datetime
-    from backend.app.blog import BlogRepository
-    from backend.app.blog_ideas import BlogIdeaRepository
     from backend.app.blog_publish import publish_idea_to_blog
+    from backend.app.task_support import idea_repository, blog_repository
 
-    ideas_repo = BlogIdeaRepository()
-    blog_repo = BlogRepository()
+    ideas_repo = idea_repository()
+    blog_repo = blog_repository()
     now = datetime.now(UTC)
     results: list[dict] = []
 

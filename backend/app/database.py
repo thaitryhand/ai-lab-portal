@@ -121,7 +121,10 @@ blog_ideas = Table(
     Column("technical_review_status", String(32), nullable=True),
     Column("marketing_metadata", Text, nullable=True),
     Column("marketing_status", String(32), nullable=True),
+    Column("seo_audit", Text, nullable=True),
+    Column("seo_audit_status", String(32), nullable=True),
     Column("published_blog_post_id", String(64), nullable=True),
+    Column("scheduled_at", DateTime(timezone=True), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Index("ix_blog_ideas_status", "status"),
@@ -130,6 +133,7 @@ blog_ideas = Table(
     Index("ix_blog_ideas_draft_status", "draft_status"),
     Index("ix_blog_ideas_review_status", "technical_review_status"),
     Index("ix_blog_ideas_marketing_status", "marketing_status"),
+    Index("ix_blog_ideas_seo_audit_status", "seo_audit_status"),
     Index("ix_blog_ideas_published_blog_post_id", "published_blog_post_id"),
 )
 
