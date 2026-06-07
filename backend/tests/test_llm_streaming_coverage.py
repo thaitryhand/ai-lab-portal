@@ -13,7 +13,7 @@ Targets uncovered paths identified in the coverage audit:
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from agents import Runner
@@ -110,7 +110,7 @@ class TestStreamGenerateErrorsExtended:
 
     @pytest.fixture
     def mock_runner_run_streamed(self):
-        with patch.object(Runner, "run_streamed", new=AsyncMock()) as mock:
+        with patch.object(Runner, "run_streamed", new=MagicMock()) as mock:
             yield mock
 
     @pytest.mark.asyncio
@@ -186,7 +186,7 @@ class TestStreamGenerateNonStandardEvents:
 
     @pytest.fixture
     def mock_runner_run_streamed(self):
-        with patch.object(Runner, "run_streamed", new=AsyncMock()) as mock:
+        with patch.object(Runner, "run_streamed", new=MagicMock()) as mock:
             yield mock
 
     @pytest.mark.asyncio
@@ -230,7 +230,7 @@ class TestStreamGenerateRecordingExtended:
 
     @pytest.fixture
     def mock_runner_run_streamed(self):
-        with patch.object(Runner, "run_streamed", new=AsyncMock()) as mock:
+        with patch.object(Runner, "run_streamed", new=MagicMock()) as mock:
             yield mock
 
     @pytest.mark.asyncio

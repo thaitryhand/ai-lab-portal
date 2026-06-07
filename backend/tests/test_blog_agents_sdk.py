@@ -904,7 +904,8 @@ class TestHooksToolTracking:
         assert hooks.tool_call_count == 0
         assert hooks.tool_calls == []
 
-    def test_tool_tracking_with_calls(self):
+    @pytest.mark.asyncio
+    async def test_tool_tracking_with_calls(self):
         """Tool start/end hooks record name and duration."""
         import time
         from backend.app.llm.hooks import AiRunTimingHooks
@@ -914,16 +915,17 @@ class TestHooksToolTracking:
         class FakeTool:
             name = "blog_agent__search_posts"
 
-        hooks.on_tool_start(None, None, FakeTool())
+        await hooks.on_tool_start(None, None, FakeTool())
         time.sleep(0.001)
-        hooks.on_tool_end(None, None, FakeTool(), "result")
+        await hooks.on_tool_end(None, None, FakeTool(), "result")
 
         assert hooks.tool_call_count == 1
         assert len(hooks.tool_calls) == 1
         assert hooks.tool_calls[0]["name"] == "blog_agent__search_posts"
         assert hooks.tool_calls[0]["duration_ms"] >= 1
 
-    def test_tool_tracking_multiple_calls(self):
+    @pytest.mark.asyncio
+    async def test_tool_tracking_multiple_calls(self):
         """Multiple tool calls are tracked independently."""
         import time
         from backend.app.llm.hooks import AiRunTimingHooks
@@ -936,19 +938,20 @@ class TestHooksToolTracking:
         class Tool2:
             name = "tool_two"
 
-        hooks.on_tool_start(None, None, Tool1())
+        await hooks.on_tool_start(None, None, Tool1())
         time.sleep(0.001)
-        hooks.on_tool_start(None, None, Tool2())
+        await hooks.on_tool_start(None, None, Tool2())
         time.sleep(0.001)
-        hooks.on_tool_end(None, None, Tool1(), "result")
-        hooks.on_tool_end(None, None, Tool2(), "result")
+        await hooks.on_tool_end(None, None, Tool1(), "result")
+        await hooks.on_tool_end(None, None, Tool2(), "result")
 
         assert hooks.tool_call_count == 2
         names = [t["name"] for t in hooks.tool_calls]
         assert "tool_one" in names
         assert "tool_two" in names
 
-    def test_tool_tracking_with_same_name(self):
+    @pytest.mark.asyncio
+    async def test_tool_tracking_with_same_name(self):
         """Consecutive calls to the same tool are tracked correctly."""
         import time
         from backend.app.llm.hooks import AiRunTimingHooks
@@ -958,12 +961,12 @@ class TestHooksToolTracking:
         class T:
             name = "same_tool"
 
-        hooks.on_tool_start(None, None, T())
+        await hooks.on_tool_start(None, None, T())
         time.sleep(0.001)
-        hooks.on_tool_end(None, None, T(), "result")
-        hooks.on_tool_start(None, None, T())
+        await hooks.on_tool_end(None, None, T(), "result")
+        await hooks.on_tool_start(None, None, T())
         time.sleep(0.001)
-        hooks.on_tool_end(None, None, T(), "result")
+        await hooks.on_tool_end(None, None, T(), "result")
 
         assert hooks.tool_call_count == 2
         assert all(t["name"] == "same_tool" for t in hooks.tool_calls)

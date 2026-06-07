@@ -171,7 +171,7 @@ def _failed_event(code: str = "FAIL", message: str = "Test failure"):
 @pytest.fixture
 def mock_runner_run_streamed():
     """Patch Runner.run_streamed to return a controllable mock."""
-    with patch.object(Runner, "run_streamed", new=AsyncMock()) as mock:
+    with patch.object(Runner, "run_streamed", new=MagicMock()) as mock:
         yield mock
 
 
@@ -559,7 +559,7 @@ class TestStreamGenerateWithRealAgent:
             pass
 
         # Runner.run_streamed should have been called
-        mock_runner_run_streamed.assert_awaited_once()
+        mock_runner_run_streamed.assert_called_once()
         call_args = mock_runner_run_streamed.call_args
         agent_arg = call_args[0][0]  # first positional: starting_agent
         assert agent_arg is not None
