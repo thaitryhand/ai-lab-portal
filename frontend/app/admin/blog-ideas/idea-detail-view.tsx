@@ -35,6 +35,7 @@ import { approveButtonLabel } from "./lib/pipeline-next-stage";
 import { getPipelineNextAction } from "./lib/pipeline-next-action";
 import { PipelineStepNav } from "./pipeline-step-nav";
 import { PipelineStepShell, stepShellState } from "./pipeline-step-shell";
+import { StageStreamButton } from "@/components/admin/stage-stream-button";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -326,6 +327,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             }
           >
         {idea.outline_sections.length === 0 ? (
+          <>
           <EmptyState
             message={
               idea.status === "approved"
@@ -343,6 +345,10 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 : undefined
             }
           />
+          {idea.status === "approved" && !idea.outline_status ? (
+            <StageStreamButton stage="outline" ideaId={idea.id} label="Stream outline" />
+          ) : null}
+          </>
         ) : (
           <div className="grid gap-4">
             {idea.outline_status === "rejected" && idea.status === "approved" ? (
@@ -402,6 +408,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             }
           >
         {!idea.draft_markdown ? (
+          <>
           <EmptyState
             message={
               idea.outline_status === "approved"
@@ -419,6 +426,10 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 : undefined
             }
           />
+          {idea.outline_status === "approved" && !idea.draft_status ? (
+            <StageStreamButton stage="draft" ideaId={idea.id} label="Stream draft" />
+          ) : null}
+          </>
         ) : (
           <div className="grid gap-4">
             {idea.draft_status === "rejected" && idea.outline_status === "approved" ? (
@@ -511,6 +522,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             }
           >
         {!idea.technical_review ? (
+          <>
           <EmptyState
             message={
               idea.draft_status === "approved"
@@ -528,6 +540,10 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 : undefined
             }
           />
+          {idea.draft_status === "approved" && !idea.technical_review_status ? (
+            <StageStreamButton stage="review" ideaId={idea.id} label="Stream review" />
+          ) : null}
+          </>
         ) : (
           <div className="grid gap-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -655,6 +671,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             }
           >
         {!idea.marketing_metadata ? (
+          <>
           <EmptyState
             message={
               idea.technical_review_status === "approved"
@@ -672,6 +689,10 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 : undefined
             }
           />
+          {idea.technical_review_status === "approved" && !idea.marketing_status ? (
+            <StageStreamButton stage="marketing" ideaId={idea.id} label="Stream marketing" />
+          ) : null}
+          </>
         ) : (
           <div className="grid gap-5">
             {idea.marketing_status === "rejected" && idea.technical_review_status === "approved" ? (

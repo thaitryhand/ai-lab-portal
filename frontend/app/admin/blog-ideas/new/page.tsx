@@ -10,11 +10,14 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { cn } from "@/lib/utils";
 import { createIdeaAction } from "../actions";
 import {
+  fetchProjectContextDetail,
+  fetchShowcaseContextDetail,
   listContextPickerProjects,
   listContextPickerShowcases,
 } from "./data";
 import { GenerateFromContextForm } from "./generate-from-context-form";
 import { IdeaGenerationPoller } from "./idea-generation-poller";
+import { StreamingIdeaGenerator } from "@/components/admin/streaming-idea-generator";
 
 type Props = {
   searchParams: Promise<{
@@ -33,8 +36,48 @@ export default async function NewBlogIdeaPage({ searchParams }: Props) {
   ]);
 
   const manualMode = params.mode === "manual";
+  const streamMode = params.mode === "stream";
   const hasContextSources = projects.length > 0 || showcases.length > 0;
-  const showGenerate = !manualMode && hasContextSources;
+  const showGenerate = !manualMode && !streamMode && hasContextSources;
+
+  // Pre-fetch context for streaming mode
+  let streamPayload: {
+    project_name: string;
+    project_summary: string;
+    ai_capabilities: string;
+    technical_highlights: string;
+    business_value: string;
+  } | null = null;
+
+  if (streamMode && hasContextSources) {
+    const firstProject = projects[0];
+    if (firstProject) {
+      const detail = await fetchProjectContextDetail(firstProject.id);
+      if (detail) {
+        streamPayload = {
+          project_name: detail.title,
+          project_summary: detail.description || detail.content_markdown.slice(0, 500),
+          ai_capabilities: "",
+          technical_highlights: "",
+          business_value: "",
+        };
+      }
+    }
+
+    // Fall back to first showcase if no project
+    if (!streamPayload && showcases[0]) {
+      const detail = await fetchShowcaseContextDetail(showcases[0].id);
+      if (detail) {
+        streamPayload = {
+          project_name: detail.title,
+          project_summary: detail.hero_summary || detail.content_markdown.slice(0, 500),
+          ai_capabilities: detail.use_case ?? "",
+          technical_highlights: "",
+          business_value: "",
+        };
+      }
+    }
+  }
 
   return (
     <div className={adminPageStackClass}>
@@ -61,6 +104,17 @@ export default async function NewBlogIdeaPage({ searchParams }: Props) {
         <Link
           className={cn(
             "rounded-[var(--radius-admin-sm)] border px-3 py-1.5 text-sm transition-colors",
+            streamMode
+              ? "border-brand/40 bg-brand/10 text-foreground"
+              : "border-border/60 text-muted-foreground hover:text-foreground",
+          )}
+          href="/admin/blog-ideas/new?mode=stream"
+        >
+          Live stream
+        </Link>
+        <Link
+          className={cn(
+            "rounded-[var(--radius-admin-sm)] border px-3 py-1.5 text-sm transition-colors",
             manualMode || !hasContextSources
               ? "border-brand/40 bg-brand/10 text-foreground"
               : "border-border/60 text-muted-foreground hover:text-foreground",
@@ -71,7 +125,41 @@ export default async function NewBlogIdeaPage({ searchParams }: Props) {
         </Link>
       </div>
 
-      {showGenerate ? (
+      {streamMode && streamPayload ? (
+        <AdminCard>
+          <AdminCardBody>
+            <div className="mb-4">
+              <p className="text-sm font-medium">
+                Live stream: {streamPayload.project_name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Generates a blog idea in real-time using the Agents SDK streaming API.
+                Tokens appear as they are generated.
+              </p>
+            </div>
+            <StreamingIdeaGenerator
+              payload={streamPayload}
+              sourceLabel="project"
+            />
+          </AdminCardBody>
+        </AdminCard>
+      ) : streamMode && !streamPayload ? (
+        <AdminCard>
+          <AdminCardBody>
+            <p className="text-sm text-muted-foreground">
+              No projects or showcases available for streaming. Create one first.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <ButtonLink href="/admin/projects/editor" variant="brand">
+                New project
+              </ButtonLink>
+              <ButtonLink href="/admin/blog-ideas/new?mode=manual" variant="outline">
+                Manual entry
+              </ButtonLink>
+            </div>
+          </AdminCardBody>
+        </AdminCard>
+      ) : showGenerate ? (
         <GenerateFromContextForm projects={projects} showcases={showcases} />
       ) : (
         <AdminCard>
