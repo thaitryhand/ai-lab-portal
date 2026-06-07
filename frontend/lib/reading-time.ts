@@ -38,6 +38,7 @@ export function estimateReadingTime(markdown: string): number {
   if (!markdown) return 0;
   const text = stripMarkdown(markdown);
   const words = text.split(/\s+/).filter(Boolean).length;
+  if (words === 0) return 0;
   const minutes = Math.ceil(words / WPM);
   return Math.max(1, minutes);
 }

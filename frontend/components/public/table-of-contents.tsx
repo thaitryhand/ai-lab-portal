@@ -35,7 +35,9 @@ export function TableOfContents({ contentSelector }: { contentSelector: string }
       });
     });
 
-    setItems(tocItems);
+    const rafId = requestAnimationFrame(() => {
+      setItems(tocItems);
+    });
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -50,7 +52,10 @@ export function TableOfContents({ contentSelector }: { contentSelector: string }
     );
 
     headings.forEach((h) => observer.observe(h));
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
   }, [contentSelector]);
 
   if (items.length < 2) return null;

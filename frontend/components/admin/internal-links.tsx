@@ -47,7 +47,8 @@ export function InternalLinks({ ideaId, enabled }: Props) {
 
   useEffect(() => {
     if (enabled && suggestions.length === 0 && !loading) {
-      fetchLinks();
+      // Defer via microtask to satisfy React Compiler set-state-in-effect rule
+      queueMicrotask(() => fetchLinks());
     }
   }, [enabled, fetchLinks, loading, suggestions.length]);
 

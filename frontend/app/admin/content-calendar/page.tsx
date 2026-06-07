@@ -112,12 +112,10 @@ function CalendarGrid({
   year,
   month,
   postsByDate,
-  pipeline,
 }: {
   year: number;
   month: number;
   postsByDate: Map<string, CalendarPost[]>;
-  pipeline: CalendarPost[];
 }) {
   const days = getMonthDays(year, month);
   const today = new Date();
@@ -268,7 +266,6 @@ export default async function ContentCalendarPage() {
         year={currentYear}
         month={currentMonth}
         postsByDate={postsByDate}
-        pipeline={data.pipeline}
       />
 
       {/* Pipeline ideas */}
