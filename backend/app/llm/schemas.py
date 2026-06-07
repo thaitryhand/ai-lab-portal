@@ -157,3 +157,21 @@ class MarketingMetadata(BaseModel):
     cta: str = Field(
         description="Call to action for the end of the article",
     )
+
+
+class ReadabilityScore(BaseModel):
+    """Readability metrics for a blog draft."""
+
+    flesch_reading_ease: float = Field(
+        ge=0.0, le=100.0,
+        description="Flesch Reading Ease score (0=very hard, 100=very easy)",
+    )
+    avg_sentence_length: float = Field(description="Average words per sentence")
+    avg_word_length: float = Field(description="Average characters per word")
+    reading_level: str = Field(
+        description="Reading level: 'college', 'high_school', 'middle_school', 'elementary'"
+    )
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description="Suggestions to improve readability",
+    )

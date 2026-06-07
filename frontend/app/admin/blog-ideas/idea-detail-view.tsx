@@ -36,6 +36,7 @@ import { getPipelineNextAction } from "./lib/pipeline-next-action";
 import { PipelineStepNav } from "./pipeline-step-nav";
 import { PipelineStepShell, stepShellState } from "./pipeline-step-shell";
 import { StageStreamButton } from "@/components/admin/stage-stream-button";
+import { ReadabilityBadge } from "@/components/admin/readability-badge";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -432,6 +433,14 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </>
         ) : (
           <div className="grid gap-4">
+            {idea.draft_markdown ? (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>
+                  {idea.draft_markdown.split(/\s+/).filter(Boolean).length.toLocaleString()} words
+                </span>
+                <ReadabilityBadge text={idea.draft_markdown} />
+              </div>
+            ) : null}
             {idea.draft_status === "rejected" && idea.outline_status === "approved" ? (
               <RegenerateAction
                 actionName={actions.generateDraft}

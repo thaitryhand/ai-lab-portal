@@ -236,7 +236,8 @@ class TestNewsMCPTools:
 
         result = get_article_context("nonexistent_article_xyz")
         assert isinstance(result, str)
-        assert "not found" in result.lower() or "unable" in result.lower()
+        # Should mention the article ID or table not available
+        assert any(word in result.lower() for word in ["not found", "unable", "not available"])
 
     def test_mcp_tools_registered(self):
         """All news MCP tools are registered on the server instance."""

@@ -501,6 +501,64 @@ class TestMultiAgentReview:
 
 
 # ===========================================================================
+# Readability
+# ===========================================================================
+
+
+class TestReadability:
+    """Verify the readability analyzer."""
+
+    def test_simple_text(self):
+        """Simple text gets high Flesch score."""
+        from backend.app.llm.readability import analyze_readability
+
+        score = analyze_readability("The cat sat on the mat. The dog ran in the park.")
+        assert score.flesch_reading_ease >= 80
+        assert score.reading_level == "elementary"
+
+    def test_complex_text(self):
+        """Complex text gets low Flesch score."""
+        from backend.app.llm.readability import analyze_readability
+
+        text = (
+            "Notwithstanding the aforementioned implementation considerations, "
+            "the utilization of sophisticated algorithmic methodologies necessitates "
+            "a comprehensive understanding of the underlying computational paradigms."
+        )
+        score = analyze_readability(text)
+        assert score.flesch_reading_ease < 30
+        assert score.reading_level == "college"
+
+    def test_empty_text(self):
+        """Empty text returns fallback score."""
+        from backend.app.llm.readability import analyze_readability
+
+        score = analyze_readability("")
+        assert score.flesch_reading_ease == 50.0
+        assert score.suggestions is not None
+
+    def test_suggestions_for_long_sentences(self):
+        """Long sentences generate suggestions."""
+        from backend.app.llm.readability import analyze_readability
+
+        text = "This is a very long sentence that goes on and on and on without any breaks " \
+               "or punctuation that would help the reader understand what is being said " \
+               "because it keeps going with more and more words strung together."
+        score = analyze_readability(text)
+        assert len(score.suggestions) >= 1
+        assert any("sentence" in s.lower() for s in score.suggestions)
+
+    def test_reading_level_label(self):
+        """Reading level labels are human-readable."""
+        from backend.app.llm.readability import reading_level_label, flesch_label
+
+        assert reading_level_label("college") == "College / Advanced"
+        assert reading_level_label("elementary") == "Elementary"
+        assert flesch_label(90) == "Very easy"
+        assert flesch_label(30) == "Difficult"
+
+
+# ===========================================================================
 # LLM Service layer
 # ===========================================================================
 
