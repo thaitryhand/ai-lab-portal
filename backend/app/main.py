@@ -89,6 +89,11 @@ from backend.app.news_sources import (
     create_news_source_routes,
 )
 from backend.app.news_streaming import create_news_streaming_router
+from backend.app.blog_analytics import (
+    BlogAnalyticsRepository,
+    PostgresBlogAnalyticsRepository,
+    create_blog_analytics_routes,
+)
 from backend.app.seo_analytics import create_seo_analytics_routes
 from backend.app.content_calendar import create_content_calendar_routes
 from backend.app.news_submitted_links import (
@@ -260,6 +265,7 @@ def create_app(
         follow_repo = user_follow_repository or InMemoryUserFollowRepository()
         contact_repo: ContactMessageRepository = contact_repository or InMemoryContactMessageRepository()
         projects_repo = project_repository or InMemoryProjectRepository()
+        analytics_repo = BlogAnalyticsRepository()
         notif_repo = notification_repository or InMemoryNotificationRepository()
     else:
         engine = create_database_engine(resolved_settings)
@@ -288,6 +294,7 @@ def create_app(
         follow_repo = user_follow_repository or PostgresUserFollowRepository(engine)
         contact_repo: ContactMessageRepository = contact_repository or PostgresContactMessageRepository(engine)
         projects_repo = project_repository or PostgresProjectRepository(engine)
+        analytics_repo = PostgresBlogAnalyticsRepository(engine)
         notif_repo = notification_repository or PostgresNotificationRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
@@ -732,6 +739,11 @@ def create_app(
         post = repository.get_published_by_slug(slug)
         if post is None:
             raise HTTPException(status_code=404, detail="Published blog post not found")
+        # Record page view asynchronously (best-effort)
+        analytics_repo.record_view(
+            post_id=post.id,
+            path=f"/blog/{slug}",
+        )
         return post
 
     @app.get("/public/showcases")

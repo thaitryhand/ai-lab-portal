@@ -138,6 +138,21 @@ blog_ideas = Table(
     Index("ix_blog_ideas_published_blog_post_id", "published_blog_post_id"),
 )
 
+blog_page_views = Table(
+    "blog_page_views",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("post_id", String(64), nullable=False),
+    Column("viewed_at", DateTime(timezone=True), nullable=False),
+    Column("visitor_id", String(64), nullable=True),
+    Column("referrer", String(512), nullable=True),
+    Column("user_agent", String(512), nullable=True),
+    Column("path", String(256), nullable=True),
+    Index("ix_page_views_post_id", "post_id"),
+    Index("ix_page_views_viewed_at", "viewed_at"),
+)
+
+
 blog_post_revisions = Table(
     "blog_post_revisions",
     metadata,
