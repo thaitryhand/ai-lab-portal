@@ -42,7 +42,10 @@ export async function POST(
   const streamType = path?.[0]; // first segment after "generate-stream"
 
   let backendPath: string;
-  if (streamType && streamType !== "generate-stream") {
+  if (!streamType || streamType === "idea" || streamType === "generate-stream") {
+    // Idea generation endpoint: payload has project context fields, no ideaId
+    backendPath = `/admin/blog-ideas/generate-stream/idea`;
+  } else {
     // Per-stage endpoint: /{idea_id}/generate-stream/{stage}
     const ideaId = payload.ideaId;
     if (!ideaId) {
@@ -52,9 +55,6 @@ export async function POST(
       );
     }
     backendPath = `/admin/blog-ideas/${ideaId}/generate-stream/${streamType}`;
-  } else {
-    // Idea generation endpoint: payload has project context fields
-    backendPath = `/admin/blog-ideas/generate-stream/idea`;
   }
 
   const backendResponse = await fetch(
