@@ -139,7 +139,7 @@ function CalendarGrid({
       <div className="grid grid-cols-7">
         {days.map((day, idx) => {
           if (day === null) {
-            return <div key={`empty-${idx}`} className="min-h-[100px] border-r border-b border-border/30 last:border-r-0 bg-muted/20" />;
+            return <div key={`empty-${idx}`} className="min-h-25 border-r border-b border-border/30 last:border-r-0 bg-muted/20" />;
           }
 
           const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -150,8 +150,8 @@ function CalendarGrid({
             <div
               key={dateStr}
               className={cn(
-                "min-h-[100px] p-1.5 border-r border-b border-border/30 last:border-r-0 relative",
-                isToday && "bg-brand/[0.03]",
+                "min-h-25 p-1.5 border-r border-b border-border/30 last:border-r-0 relative",
+                isToday && "bg-brand/3",
               )}
             >
               <span
