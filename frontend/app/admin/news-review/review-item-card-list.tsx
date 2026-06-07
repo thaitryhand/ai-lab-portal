@@ -14,6 +14,7 @@ import {
 import { adminListPanelClass } from "@/components/admin/admin-ui";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { NewsStreamButton } from "@/components/admin/news-stream-button";
 import type { AdminNewsReviewItem, SocialMetadata } from "./page";
 
 type Props = {
@@ -162,6 +163,7 @@ function ReviewItemActions({
             Reject
           </AdminListSubmitButton>
         </AdminListActionForm>
+        <NewsStreamButton articleId={item.extracted_article_id} />
       </>
     );
   }
