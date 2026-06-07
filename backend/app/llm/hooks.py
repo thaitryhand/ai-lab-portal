@@ -53,11 +53,11 @@ class AiRunTimingHooks(RunHooks):
 
     # ── Agent lifecycle ────────────────────────────────────────────────
 
-    def on_agent_start(self, context: AgentHookContext[Any], agent: Any) -> None:
+    async def on_agent_start(self, context: AgentHookContext[Any], agent: Any) -> None:
         """Capture the moment an agent begins execution."""
         self._agent_start = time.perf_counter()
 
-    def on_agent_end(
+    async def on_agent_end(
         self, context: AgentHookContext[Any], agent: Any, output: Any
     ) -> None:
         """Capture the moment an agent finishes execution."""
@@ -65,7 +65,7 @@ class AiRunTimingHooks(RunHooks):
 
     # ── LLM call lifecycle ─────────────────────────────────────────────
 
-    def on_llm_start(
+    async def on_llm_start(
         self,
         context: Any,
         agent: Any,
@@ -75,7 +75,7 @@ class AiRunTimingHooks(RunHooks):
         """Capture the start of each LLM call within an agent run."""
         self._llm_starts.append(time.perf_counter())
 
-    def on_llm_end(
+    async def on_llm_end(
         self, context: Any, agent: Any, response: Any
     ) -> None:
         """Capture the end of each LLM call within an agent run."""
@@ -92,7 +92,7 @@ class AiRunTimingHooks(RunHooks):
         )
         return str(raw)
 
-    def on_tool_start(
+    async def on_tool_start(
         self,
         context: AgentHookContext[Any],
         agent: Any,
@@ -106,7 +106,7 @@ class AiRunTimingHooks(RunHooks):
             "start": time.perf_counter(),
         }
 
-    def on_tool_end(
+    async def on_tool_end(
         self,
         context: AgentHookContext[Any],
         agent: Any,
