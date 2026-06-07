@@ -11,6 +11,7 @@
     "prepare": "node ../scripts/setup-git-hooks.mjs",
     "quality:precommit": "lint-staged && npm run typecheck && npm run build",
     "test": "tsx --test lib/**/*.test.ts",
+    "test:component": "vitest run",
     "test:e2e": "playwright test",
     "seed:admin": "node scripts/seed-admin.mjs",
     "postinstall": "node scripts/ensure-better-auth-sso-stub.mjs"
@@ -71,6 +72,9 @@
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.7",
@@ -78,12 +82,14 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.6",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "lightningcss": "^1.32.0",
     "lint-staged": "^17.0.7",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint --max-warnings=0"
