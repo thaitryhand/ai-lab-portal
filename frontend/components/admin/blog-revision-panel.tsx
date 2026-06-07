@@ -1,17 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Clock, History, RotateCcw } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Clock, History, RotateCcw, X } from "lucide-react";
 
 type Revision = {
   id: string;
@@ -19,11 +9,7 @@ type Revision = {
   revision_number: number;
   title: string;
   content_markdown: string;
-  excerpt: string;
-  slug: string;
-  image_url: string | null;
   created_at: string;
-  created_by_user_id: string | null;
 };
 
 type Props = {
@@ -91,97 +77,112 @@ export function BlogRevisionPanel({ postId, open, onClose, onRestore }: Props) {
     }
   }, [selected, postId, onRestore, onClose]);
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            Revision History
-          </SheetTitle>
-          <SheetDescription>
-            View and restore previous versions of this post.
-          </SheetDescription>
-        </SheetHeader>
-
-        {loading && (
-          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-            Loading revisions...
+    <div className="fixed inset-0 z-50 flex">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      {/* Panel */}
+      <div className="relative ml-auto flex h-full w-full max-w-lg flex-col border-l bg-background shadow-lg">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <History className="h-4 w-4" />
+              Revision History
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              View and restore previous versions of this post.
+            </p>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-        {error && (
-          <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading && (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Loading revisions...
+            </div>
+          )}
 
-        {!loading && !error && revisions.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Clock className="mb-2 h-8 w-8 opacity-40" />
-            <p className="text-sm">No revisions yet</p>
-            <p className="text-xs">Revisions are saved automatically when you edit this post.</p>
-          </div>
-        )}
+          {error && (
+            <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
-        {!loading && revisions.length > 0 && (
-          <div className="mt-4 grid gap-4">
-            {/* Revision list */}
-            <ScrollArea className="h-48 rounded-md border">
-              {revisions.map((rev) => (
-                <button
-                  key={rev.id}
-                  type="button"
-                  className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left text-sm transition-colors last:border-0 hover:bg-muted/50 ${
-                    selected?.id === rev.id ? "bg-muted" : ""
-                  }`}
-                  onClick={() => setSelected(rev)}
-                >
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[10px] font-bold text-brand">
-                    {rev.revision_number}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{rev.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatTime(rev.created_at)}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </ScrollArea>
+          {!loading && !error && revisions.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Clock className="mb-2 h-8 w-8 opacity-40" />
+              <p className="text-sm">No revisions yet</p>
+              <p className="text-xs">Revisions are saved automatically when you edit this post.</p>
+            </div>
+          )}
 
-            {/* Preview */}
-            {selected && (
-              <div className="rounded-md border">
-                <div className="border-b bg-muted/50 px-4 py-2 text-xs font-medium text-muted-foreground">
-                  Revision {selected.revision_number} — {formatTime(selected.created_at)}
-                </div>
-                <div className="prose prose-sm max-h-48 overflow-y-auto p-4 dark:prose-invert">
-                  <p className="text-xs text-muted-foreground">{selected.excerpt}</p>
-                  <div className="mt-2 line-clamp-6 text-xs">
-                    {selected.content_markdown.slice(0, 500)}
-                    {selected.content_markdown.length > 500 && "..."}
-                  </div>
-                </div>
+          {!loading && revisions.length > 0 && (
+            <div className="space-y-4">
+              {/* Revision list */}
+              <div className="max-h-48 overflow-y-auto rounded-md border">
+                {revisions.map((rev) => (
+                  <button
+                    key={rev.id}
+                    type="button"
+                    className={`flex w-full items-start gap-3 border-b px-4 py-3 text-left text-sm transition-colors last:border-0 hover:bg-muted/50 ${
+                      selected?.id === rev.id ? "bg-muted" : ""
+                    }`}
+                    onClick={() => setSelected(rev)}
+                  >
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[10px] font-bold text-brand">
+                      {rev.revision_number}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{rev.title}</p>
+                      <p className="text-xs text-muted-foreground">{formatTime(rev.created_at)}</p>
+                    </div>
+                  </button>
+                ))}
               </div>
-            )}
 
-            {/* Restore button */}
-            {selected && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-                onClick={handleRestore}
-                disabled={restoring}
-              >
-                <RotateCcw className={`h-3.5 w-3.5 ${restoring ? "animate-spin" : ""}`} />
-                {restoring ? "Restoring..." : `Restore revision ${selected.revision_number}`}
-              </Button>
-            )}
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
+              {/* Preview */}
+              {selected && (
+                <div className="rounded-md border">
+                  <div className="border-b bg-muted/50 px-4 py-2 text-xs font-medium text-muted-foreground">
+                    Revision {selected.revision_number} — {formatTime(selected.created_at)}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-4 text-sm text-muted-foreground">
+                    <div className="line-clamp-6">
+                      {selected.content_markdown.slice(0, 500)}
+                      {selected.content_markdown.length > 500 && "..."}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Restore button */}
+              {selected && (
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted/50 disabled:opacity-50"
+                  onClick={handleRestore}
+                  disabled={restoring}
+                >
+                  <RotateCcw className={`h-3.5 w-3.5 ${restoring ? "animate-spin" : ""}`} />
+                  {restoring ? "Restoring..." : `Restore revision ${selected.revision_number}`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
