@@ -15,7 +15,7 @@ const E2E_PUBLIC_SLUG = "e2e-golden-path-blog-idea";
 test.describe("US-086: AI Blog Agent golden path", () => {
   test.describe.configure({ mode: "serial", timeout: 180_000 });
 
-  test("generate from project → semi-auto pipeline → publish → public blog", async ({
+  test("generate from project → semi-auto pipeline (with SEO audit) → publish → public blog", async ({
     context,
     page,
   }, testInfo) => {
@@ -62,27 +62,39 @@ test.describe("US-086: AI Blog Agent golden path", () => {
       ideaId = url.match(/\/admin\/blog-ideas\/([^/?]+)/)?.[1];
       expect(ideaId).toBeTruthy();
 
+      // Gate 1: Approve idea → generate outline
       await clickPipelineActionAndWait(page, /Approve & generate outline/i);
       await expect(page.getByText("Context").first()).toBeVisible({ timeout: 30_000 });
 
+      // Gate 2: Approve outline → generate draft
       await clickPipelineActionAndWait(page, /Approve & generate draft/i);
       await expect(page.getByText("Semi-auto keeps humans in the loop").first()).toBeVisible({
         timeout: 30_000,
       });
 
+      // Gate 3: Approve draft → run technical review
       await clickPipelineActionAndWait(page, /Approve & run review/i);
       await expect(page.getByText("Risk: low").first()).toBeVisible({
         timeout: 30_000,
       });
 
+      // Gate 4: Accept review → generate marketing metadata
       await clickPipelineActionAndWait(page, /Accept & generate marketing/i);
       await expect(page.getByText("SEO Title").first()).toBeVisible({ timeout: 30_000 });
 
+      // Gate 5: Approve marketing → run SEO audit (new stage)
+      await clickPipelineActionAndWait(page, /Approve & run SEO audit/i);
+      await expect(page.getByText(/SEO Score|Overall Score|Title Analysis/i).first()).toBeVisible({
+        timeout: 30_000,
+      });
+
+      // Gate 6: Approve SEO audit → extract claims
       await clickPipelineActionAndWait(page, /Approve & extract claims/i);
       await expect(page.getByText(/Claims|No claims in the ledger/i).first()).toBeVisible({
         timeout: 30_000,
       });
 
+      // Gate 7: Publish
       await expect(page.getByRole("button", { name: /Publish to blog/i })).toBeVisible({
         timeout: 15_000,
       });
