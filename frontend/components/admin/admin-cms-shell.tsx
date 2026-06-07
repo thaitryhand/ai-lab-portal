@@ -38,6 +38,7 @@ type NavKey =
   | "news"
   | "news-review"
   | "submitted-links"
+  | "blog-analytics"
   | "blog-comments";
 
 type Props = { children: ReactNode };
@@ -48,6 +49,7 @@ function useActiveNavKey(): NavKey {
   const pathname = usePathname();
   if (pathname.startsWith("/admin/login")) return "dashboard";
   if (pathname.startsWith("/admin/blog-ideas")) return "ideas";
+  if (pathname.startsWith("/admin/blog-analytics")) return "blog-analytics";
   if (pathname.startsWith("/admin/blog-comments")) return "blog-comments";
   if (pathname.startsWith("/admin/blog")) return "blog";
   if (pathname.startsWith("/admin/projects")) return "projects";
@@ -74,6 +76,7 @@ const navGroups: NavGroup[] = [
     items: [
       { key: "dashboard", href: "/admin", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
       { key: "observability", href: "/admin/ai-observability", label: "Observability", icon: <Activity className="size-4" /> },
+      { key: "blog-analytics", href: "/admin/blog-analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
       { key: "seo", href: "/admin/seo-analytics", label: "SEO", icon: <BarChart3 className="size-4" /> },
       { key: "calendar", href: "/admin/content-calendar", label: "Calendar", icon: <CalendarDays className="size-4" /> },
     ],
