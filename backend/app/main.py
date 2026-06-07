@@ -94,6 +94,14 @@ from backend.app.blog_analytics import (
     PostgresBlogAnalyticsRepository,
     create_blog_analytics_routes,
 )
+from backend.app.blog_series import (
+    BlogSeriesRepository,
+    InMemoryBlogSeriesRepository,
+    PostgresBlogSeriesRepository,
+    create_blog_series_admin_routes,
+    create_blog_series_public_routes,
+    create_blog_series_post_routes,
+)
 from backend.app.seo_analytics import create_seo_analytics_routes
 from backend.app.content_calendar import create_content_calendar_routes
 from backend.app.news_submitted_links import (
@@ -245,6 +253,7 @@ def create_app(
     contact_repository: ContactMessageRepository | None = None,
     project_repository: InMemoryProjectRepository | None = None,
     notification_repository: InMemoryNotificationRepository | None = None,
+    blog_series_repository: BlogSeriesRepository | None = None,
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     if resolved_settings.environment == "test":
@@ -266,6 +275,7 @@ def create_app(
         contact_repo: ContactMessageRepository = contact_repository or InMemoryContactMessageRepository()
         projects_repo = project_repository or InMemoryProjectRepository()
         analytics_repo = BlogAnalyticsRepository()
+        series_repo = blog_series_repository or InMemoryBlogSeriesRepository()
         notif_repo = notification_repository or InMemoryNotificationRepository()
     else:
         engine = create_database_engine(resolved_settings)
@@ -295,6 +305,7 @@ def create_app(
         contact_repo: ContactMessageRepository = contact_repository or PostgresContactMessageRepository(engine)
         projects_repo = project_repository or PostgresProjectRepository(engine)
         analytics_repo = PostgresBlogAnalyticsRepository(engine)
+        series_repo = blog_series_repository or PostgresBlogSeriesRepository(engine)
         notif_repo = notification_repository or PostgresNotificationRepository(engine)
 
     app = FastAPI(title=resolved_settings.app_name)
@@ -857,6 +868,17 @@ def create_app(
         if msg is None:
             raise HTTPException(status_code=404, detail="Contact message not found")
         return msg
+
+    # Blog series routes
+    app.include_router(create_blog_series_admin_routes(
+        series_repo, repository, resolved_settings
+    ))
+    app.include_router(create_blog_series_public_routes(
+        series_repo, repository
+    ))
+    app.include_router(create_blog_series_post_routes(
+        series_repo, repository
+    ))
 
     # Project routes (admin)
     def record_project_audit(identity: AdminIdentity, action: str, project_id: str) -> None:

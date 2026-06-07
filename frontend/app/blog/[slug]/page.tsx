@@ -21,6 +21,9 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { getPublishedBlogPost, listPublishedBlogPosts } from "@/lib/blog/posts";
 import { getSocialStats, listComments } from "@/lib/blog/social";
 import { listPublicPostTags } from "@/lib/blog/tags";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+
 import { auth } from "@/lib/auth/server";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { blogPostingSchema, breadcrumbListSchema } from "@/lib/seo/json-ld";
@@ -74,6 +77,19 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   if (!post) {
     notFound();
   }
+
+  const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
+
+  let seriesInfo: { title: string; slug: string; posts: Array<{ part_number: number; post_title: string; post_slug: string }> } | null = null;
+  try {
+    const seriesRes = await fetch(`${backendBaseUrl}/public/blog-series?post_id=${post.id}`, { cache: "no-store" });
+    if (seriesRes.ok) {
+      const seriesData = await seriesRes.json();
+      if (Array.isArray(seriesData) && seriesData.length > 0) {
+        seriesInfo = seriesData[0];
+      }
+    }
+  } catch { /* ignore */ }
 
   const [socialStats, comments, tags, allPosts] = await Promise.all([
     session ? getSocialStats(slug, session).catch(() => null) : Promise.resolve(null),

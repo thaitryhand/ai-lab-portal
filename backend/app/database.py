@@ -462,3 +462,28 @@ notifications = Table(
     Index("ix_notifications_user_read", "user_id", "read"),
     Index("ix_notifications_user_created", "user_id", "created_at"),
 )
+
+blog_series = Table(
+    "blog_series",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("title", String(240), nullable=False),
+    Column("description", Text, nullable=True),
+    Column("slug", String(160), nullable=False, unique=True),
+    Column("cover_image_url", String(2048), nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+)
+
+blog_series_posts = Table(
+    "blog_series_posts",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("series_id", String(64), nullable=False),
+    Column("post_id", String(64), nullable=False),
+    Column("part_number", Integer, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("series_id", "post_id", name="uq_series_post"),
+    UniqueConstraint("series_id", "part_number", name="uq_series_part"),
+    Index("ix_series_posts_series", "series_id"),
+)
