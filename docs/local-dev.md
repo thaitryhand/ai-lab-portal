@@ -110,7 +110,14 @@ With Docker Postgres on host port `15432`:
 ## Frontend pre-commit hooks
 
 After `npm install` in `frontend/`, git uses repo-root `.husky/pre-commit` to run
-`lint-staged`, `tsc --noEmit`, and `npm run build` before each commit.
+`lint-staged` and `tsc --noEmit` (via `npm run quality:precommit`). The `next build`
+step was moved to `npm run quality:full` to avoid agent timeouts on grouped commits (backlog #21).
+
+Run full quality (lint-staged + typecheck + build) before pushing or in CI:
+
+```bash
+cd frontend && npm run quality:full
+```
 
 If hooks are missing on an existing clone, run once from repo root:
 
@@ -127,6 +134,23 @@ scripts/bin/harness-cli story verify US-XXX
 scripts/bin/harness-cli query matrix
 git status --short   # requires a git worktree
 ```
+
+## TurboPack + Kysely dependency check (backlog #19)
+
+Next.js turbopack dev mode (`next dev --turbo`) and Kysely have known
+dependency-resolution interactions. The `next.config.ts` sets
+`serverExternalPackages: ["kysely"]` to keep Kysely as an external server
+package during webpack builds.
+
+When upgrading Next.js or Kysely, run the compatibility check:
+
+```bash
+scripts/check-turbopack-compat.sh
+```
+
+This runs `next build` (webpack) and prints the detected versions. It does
+not test turbopack dev mode — manually verify with `cd frontend && npm run dev`
+when upgrading.
 
 ### Harness hygiene (2026-06-06)
 
