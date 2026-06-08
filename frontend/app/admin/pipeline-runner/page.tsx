@@ -95,9 +95,9 @@ export default function PipelineRunnerPage() {
       .then((data: ProjectOption[]) => {
         // The public endpoint returns ProjectSummary which doesn't have `id`
         // Map slug to id fallback
-        const mapped = data.map((p: Record<string, unknown>) => ({
+        const mapped = data.map((p) => ({
           ...p,
-          id: ('id' in p ? p.id : p.slug) as string,
+          id: p.id ?? p.slug,
         }));
         setProjects(mapped);
         if (mapped.length > 0) {

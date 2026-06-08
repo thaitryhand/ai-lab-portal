@@ -61,6 +61,23 @@ def create_ai_observability_routes(
             }
         return ai_runs_repository.get_stats(entity_type=entity_type)
 
+    @router.get("/cost-stats")
+    async def get_cost_stats(
+        _identity: AdminIdentity = Depends(require_identity),
+    ) -> dict:
+        """Return cost breakdown by model, stage, month, and entity."""
+        if ai_runs_repository is None:
+            return {
+                "total_cost": 0.0,
+                "avg_cost_per_run": 0.0,
+                "cost_by_model": {},
+                "cost_by_stage": {},
+                "cost_by_month": {},
+                "top_entities": [],
+            }
+        stats = ai_runs_repository.get_cost_stats()
+        return stats.model_dump()
+
     @router.get("/runs")
     async def list_runs(
         limit: int = Query(default=50, ge=1, le=200),

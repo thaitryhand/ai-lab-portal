@@ -366,15 +366,15 @@ export function CalendarClientShell({
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const goPrev = React.useCallback(
+  const goPrev = useCallback(
     () => setMonth((m) => (m === 0 ? (setYear((y) => y - 1), 11) : m - 1)),
     [setYear],
   );
-  const goNext = React.useCallback(
+  const goNext = useCallback(
     () => setMonth((m) => (m === 11 ? (setYear((y) => y + 1), 0) : m + 1)),
     [setYear],
   );
-  const goToday = React.useCallback(() => {
+  const goToday = useCallback(() => {
     const n = new Date();
     setYear(n.getFullYear());
     setMonth(n.getMonth());
