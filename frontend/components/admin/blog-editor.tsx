@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
 import { Globe, History, Pencil, Save, FileText } from "lucide-react";
 
 import { AdminCard, AdminCardBody, AdminCardSection, AdminWorkflowCard } from "@/components/admin/admin-card";
@@ -105,6 +105,7 @@ export function BlogEditor({
     ...initialActionState,
     postId: initialPostId,
   });
+  const [, startTransition] = useTransition();
   const [publishState, publishFormAction] = useActionState(publishAction, {
     ...initialActionState,
     postId: initialPostId,
@@ -146,7 +147,9 @@ export function BlogEditor({
     title: titleRef.current,
     slug: slugState.slug,
     saveAction: async (fd) => {
-      await saveFormAction(fd);
+      startTransition(() => {
+        saveFormAction(fd);
+      });
     },
   });
 

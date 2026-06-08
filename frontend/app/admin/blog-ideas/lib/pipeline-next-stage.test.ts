@@ -12,7 +12,7 @@ describe("pipeline-next-stage", () => {
     assert.equal(nextStepAfterApprove("outline").opStage, "draft");
     assert.equal(nextStepAfterApprove("draft").opStage, "technical-review");
     assert.equal(nextStepAfterApprove("review").opStage, "marketing");
-    assert.equal(nextStepAfterApprove("marketing").synchronous, true);
+    assert.equal(nextStepAfterApprove("seo").synchronous, true);
   });
 
   it("returns human-readable approve labels", () => {

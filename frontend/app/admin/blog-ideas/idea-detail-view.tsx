@@ -229,7 +229,7 @@ type Props = {
 export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operationalStatus, actions }: Props) {
   const nextAction = getPipelineNextAction(idea, claims.length, operationalStatus);
   const showOpBanner =
-    Boolean(operationalStatus?.message) && operationalStatus?.opStatus !== "queued";
+    Boolean(operationalStatus?.opStatus) && (operationalStatus?.opStatus !== "completed" || Boolean(operationalStatus?.blogPostId));
 
   const ideaStepState = stepShellState("idea", nextAction.stageId, idea);
   const outlineStepState = stepShellState("outline", nextAction.stageId, idea);

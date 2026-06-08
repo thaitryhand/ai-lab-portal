@@ -45,7 +45,12 @@ const proseOverrides =
   /* Code blocks */
   "prose-pre:rounded-lg prose-pre:border prose-pre:border-border/70 prose-pre:bg-[var(--mt-pre-background,#080808)] prose-pre:text-[var(--mt-pre-color,#e3e4e6)] prose-pre:shadow-sm " +
   /* Lists */
-  "prose-li:my-0 ";
+  "prose-li:my-0 " +
+  /* Tables — match editor layout */
+  "prose-table:w-full prose-table:border-collapse prose-table:text-sm " +
+  "prose-th:border prose-th:border-border/70 prose-th:bg-muted/50 prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground " +
+  "prose-td:border prose-td:border-border/70 prose-td:px-3 prose-td:py-2 prose-td:text-foreground/80 " +
+  "prose-tr:even:bg-muted/20 ";
 
 /**
  * Highlight.js CSS theme matching the editor's dark code colors.

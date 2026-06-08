@@ -2,13 +2,18 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   Activity,
+  BarChart3,
   Briefcase,
+  Calendar,
   FileText,
+  GitBranch,
   Lightbulb,
   MessageSquare,
   Newspaper,
   PencilLine,
+  Play,
   Rss,
+  Search,
   Shield,
   Sparkles,
 } from "lucide-react";
@@ -31,13 +36,18 @@ const liveModules: AdminModuleCardProps[] = [
   { title: "Projects", description: "Showcase company projects and internal tools with full CRUD workflow.", href: "/admin/projects", icon: Briefcase, status: "live" },
   { title: "Showcases", description: "Publish client-ready delivery stories with industry metadata.", href: "/admin/showcases", icon: Briefcase, status: "live" },
   { title: "AI News review", description: "Approve, reject, and publish scored intelligence candidates.", href: "/admin/news-review", icon: Newspaper, status: "live" },
+  { title: "Content Calendar", description: "View published posts and pipeline ideas on a calendar.", href: "/admin/content-calendar", icon: Calendar, status: "live" },
   { title: "AI News sources", description: "Configure RSS and official feeds for the intelligence pipeline.", href: "/admin/news-sources", icon: Rss, status: "live" },
+  { title: "Pipeline Dashboard", description: "Stage distribution, throughput, cycle time, and Gantt overview.", href: "/admin/pipeline-dashboard", icon: GitBranch, status: "live" },
+  { title: "SEO Analytics", description: "SEO scores, keyword analysis, and per-post optimization insights.", href: "/admin/seo-analytics", icon: Search, status: "live" },
+  { title: "Seed Studio", description: "Populate demo content for tours, blog, and showcases.", href: "/admin/seed-studio", icon: Sparkles, status: "live" },
+  { title: "AI Observability", description: "Run metrics, latency, token usage, and AI cost tracking across pipeline stages.", href: "/admin/ai-observability", icon: Activity, status: "live" },
+  { title: "Pipeline Runner", description: "Run the full seed pipeline: generate idea, auto-approve gates, and publish to blog.", href: "/admin/pipeline-runner", icon: Play, status: "live" },
 ];
 
 const plannedModules: AdminModuleCardProps[] = [
   { title: "Editorial queue", description: "AI-assisted review queues and human approval routing.", icon: Sparkles, status: "planned" },
   { title: "Prompt registry", description: "Versioned prompts and provider configuration.", icon: Sparkles, status: "planned" },
-  { title: "Publishing checks", description: "Preflight SEO, link, and metadata validation.", icon: Sparkles, status: "planned" },
 ];
 
 /* ── Page ── */

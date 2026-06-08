@@ -15,13 +15,16 @@ import { PublicUserMenu } from "@/components/public/public-user-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+type NavItem = { href: string; label: string; featured?: boolean };
+
+const navItems: NavItem[] = [
+  { href: "/tour", label: "Tour", featured: true },
   { href: "/lab", label: "AI Lab" },
   { href: "/showcases", label: "Showcases" },
   { href: "/projects", label: "Projects" },
   { href: "/blog", label: "Blog" },
   { href: "/ai-news", label: "AI News" },
-] as const;
+];
 
 type PublicLandingHeaderProps = {
   currentPath?: string;
@@ -72,9 +75,11 @@ export function PublicLandingHeader({ currentPath }: PublicLandingHeaderProps) {
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold tracking-tight transition-all duration-200",
-                  isActive
-                    ? "bg-brand/10 text-brand shadow-sm ring-1 ring-brand/25"
-                    : "text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
+                  item.featured && !isActive
+                    ? "bg-brand/12 text-brand ring-1 ring-brand/30 hover:bg-brand hover:text-white hover:ring-brand"
+                    : isActive
+                      ? "bg-brand/10 text-brand shadow-sm ring-1 ring-brand/25"
+                      : "text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
                 )}
                 href={item.href}
               >
@@ -117,9 +122,11 @@ export function PublicLandingHeader({ currentPath }: PublicLandingHeaderProps) {
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "flex items-center px-5 py-3 text-sm font-semibold transition-colors",
-                        isActive
-                          ? "bg-brand/10 text-brand"
-                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        item.featured && !isActive
+                          ? "text-brand"
+                          : isActive
+                            ? "bg-brand/10 text-brand"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                       )}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}

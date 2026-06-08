@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 
 import { AdminBackLink } from "@/components/admin/admin-back-link";
+import type { StageStats, Stats } from "./helpers";
+import { emptyStats, formatTime, stageLabel } from "./helpers";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { adminPageStackClass } from "@/components/admin/admin-ui";
 import { createAdminBoundaryHeaders } from "@/lib/admin/fastapi-boundary";
@@ -11,24 +13,6 @@ const backendBaseUrl =
   process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
 // ── Types ───────────────────────────────────────────────────────
-
-type StageStats = {
-  count: number;
-  avg_latency_ms: number;
-  avg_total_tokens: number;
-  total_tokens: number;
-};
-
-type Stats = {
-  total_runs: number;
-  completed: number;
-  failed: number;
-  success_rate: number;
-  avg_latency_ms: number;
-  avg_total_tokens: number;
-  total_tokens: number;
-  stages: Record<string, StageStats>;
-};
 
 type AiRun = {
   id: string;
@@ -48,6 +32,15 @@ type AiRun = {
   created_at: string;
 };
 
+type CostStats = {
+  total_cost: number;
+  avg_cost_per_run: number;
+  cost_by_model: Record<string, number>;
+  cost_by_stage: Record<string, number>;
+  cost_by_month: Record<string, number>;
+  top_entities: { entity: string; cost: number }[];
+};
+
 async function adminFetch(path: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
@@ -62,14 +55,23 @@ async function adminFetch(path: string) {
   return response;
 }
 
+function formatCost(cents: number): string {
+  if (cents < 0.01) return "$0.00";
+  if (cents < 1) return `$${cents.toFixed(4)}`;
+  if (cents < 100) return `$${cents.toFixed(2)}`;
+  return `$${cents.toFixed(2)}`;
+}
+
 export default async function AiObservabilityPage() {
-  const [statsRes, runsRes] = await Promise.all([
+  const [statsRes, runsRes, costRes] = await Promise.all([
     adminFetch("/admin/ai-observability/stats"),
     adminFetch("/admin/ai-observability/runs?limit=30"),
+    adminFetch("/admin/ai-observability/cost-stats"),
   ]);
 
   const stats: Stats = statsRes.ok ? await statsRes.json() : emptyStats();
   const runs: AiRun[] = runsRes.ok ? await runsRes.json() : [];
+  const costStats: CostStats | null = costRes.ok ? await costRes.json() : null;
 
   const stageNames = Object.keys(stats.stages).sort();
   const maxLatency = Math.max(
@@ -81,11 +83,29 @@ export default async function AiObservabilityPage() {
     1,
   );
 
+  // Cost chart helpers
+  const costModelEntries = costStats
+    ? Object.entries(costStats.cost_by_model).sort(([, a], [, b]) => b - a)
+    : [];
+  const maxModelCost = costModelEntries.length > 0 ? costModelEntries[0][1] : 1;
+
+  const costStageEntries = costStats
+    ? Object.entries(costStats.cost_by_stage).sort(([, a], [, b]) => b - a)
+    : [];
+  const maxStageCost = costStageEntries.length > 0 ? costStageEntries[0][1] : 1;
+
+  const costMonthEntries = costStats
+    ? Object.entries(costStats.cost_by_month).sort(([a], [b]) => a.localeCompare(b))
+    : [];
+  const maxMonthCost = costMonthEntries.length > 0
+    ? Math.max(...costMonthEntries.map(([, c]) => c))
+    : 1;
+
   return (
     <div className={adminPageStackClass}>
       <AdminPageHeader
         title="AI Observability"
-        description="AI run metrics, latency, and token usage across all pipeline stages"
+        description="AI run metrics, latency, token usage, and cost across all pipeline stages"
         actions={<AdminBackLink href="/admin">Back to dashboard</AdminBackLink>}
       />
 
@@ -191,6 +211,184 @@ export default async function AiObservabilityPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Cost Dashboard ── */}
+      {costStats && (
+        <>
+          {/* Cost stat cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Total AI cost"
+              value={formatCost(costStats.total_cost)}
+              color="text-amber-600 dark:text-amber-400"
+            />
+            <StatCard
+              label="Avg cost per run"
+              value={formatCost(costStats.avg_cost_per_run)}
+              color="text-foreground"
+            />
+            <StatCard
+              label="Models used"
+              value={String(costModelEntries.length)}
+              color="text-foreground"
+            />
+            <StatCard
+              label="Stages billed"
+              value={String(costStageEntries.length)}
+              color="text-foreground"
+            />
+          </div>
+
+          {/* Cost charts */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Cost by model */}
+            <div className="rounded-xl border border-border/70 bg-card p-5">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <span className="size-2 rounded-full bg-amber-400" />
+                Cost by model
+              </h3>
+              <div className="space-y-3">
+                {costModelEntries.length === 0 ? (
+                  <NoDataMessage />
+                ) : (
+                  costModelEntries.map(([model, cost]) => {
+                    const pct = (cost / maxModelCost) * 100;
+                    return (
+                      <div key={model}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="font-medium text-foreground">{model}</span>
+                          <span className="font-mono text-muted-foreground">
+                            {formatCost(cost)}
+                          </span>
+                        </div>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-amber-400 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Cost by stage */}
+            <div className="rounded-xl border border-border/70 bg-card p-5">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <span className="size-2 rounded-full bg-violet-400" />
+                Cost by stage
+              </h3>
+              <div className="space-y-3">
+                {costStageEntries.length === 0 ? (
+                  <NoDataMessage />
+                ) : (
+                  costStageEntries.map(([stage, cost]) => {
+                    const pct = (cost / maxStageCost) * 100;
+                    return (
+                      <div key={stage}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="font-medium text-foreground">
+                            {stageLabel(stage)}
+                          </span>
+                          <span className="font-mono text-muted-foreground">
+                            {formatCost(cost)}
+                          </span>
+                        </div>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-violet-400 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Cost trend over time */}
+          {costMonthEntries.length > 0 && (
+            <div className="rounded-xl border border-border/70 bg-card p-5">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <span className="size-2 rounded-full bg-emerald-400" />
+                Cost trend
+              </h3>
+              <div className="flex items-end gap-2 h-32">
+                {costMonthEntries.map(([month, cost]) => {
+                  const pct = (cost / maxMonthCost) * 100;
+                  return (
+                    <div
+                      key={month}
+                      className="group relative flex flex-1 flex-col items-center"
+                    >
+                      <div
+                        className="w-full max-w-10 rounded-t-md bg-emerald-400/60 transition-all hover:bg-emerald-400"
+                        style={{ height: `${Math.max(pct, 4)}%` }}
+                        title={`${month}: ${formatCost(cost)}`}
+                      />
+                      <span className="mt-1 text-[9px] text-muted-foreground">
+                        {month.slice(5)}
+                      </span>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full mb-1 hidden rounded bg-foreground px-2 py-1 text-[10px] text-background shadow group-hover:block whitespace-nowrap">
+                        {month}: {formatCost(cost)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Top entities by cost */}
+          {costStats.top_entities.length > 0 && (
+            <div className="rounded-xl border border-border/70 bg-card">
+              <div className="border-b border-border/50 px-5 py-4">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="size-2 rounded-full bg-rose-400" />
+                  Top entities by cost
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border/30 text-xs text-muted-foreground">
+                      <th className="px-5 py-3 font-medium">Entity</th>
+                      <th className="px-5 py-3 font-medium text-right">Cost</th>
+                      <th className="px-5 py-3 font-medium text-right">% of total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {costStats.top_entities.map((item) => {
+                      const pct = (item.cost / costStats.total_cost) * 100;
+                      return (
+                        <tr
+                          key={item.entity}
+                          className="border-b border-border/20 transition-colors hover:bg-muted/30"
+                        >
+                          <td className="px-5 py-3 font-medium text-foreground">
+                            {item.entity}
+                          </td>
+                          <td className="px-5 py-3 text-right font-mono text-muted-foreground">
+                            {formatCost(item.cost)}
+                          </td>
+                          <td className="px-5 py-3 text-right text-muted-foreground">
+                            {pct.toFixed(1)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* ── Stage summary table ── */}
       <div className="rounded-xl border border-border/70 bg-card">
@@ -362,43 +560,4 @@ function NoDataMessage() {
       No data yet
     </p>
   );
-}
-
-// ── Helpers ────────────────────────────────────────────────────
-
-function emptyStats(): Stats {
-  return {
-    total_runs: 0,
-    completed: 0,
-    failed: 0,
-    success_rate: 0,
-    avg_latency_ms: 0,
-    avg_total_tokens: 0,
-    total_tokens: 0,
-    stages: {},
-  };
-}
-
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function stageLabel(name: string): string {
-  const labels: Record<string, string> = {
-    blog_idea: "Idea",
-    blog_outline: "Outline",
-    draft_writer: "Draft",
-    draft_section_writer: "Draft (section)",
-    technical_review: "Review",
-    marketing_metadata: "Marketing",
-    claim_extraction: "Claims",
-    ai_news_scoring: "News scoring",
-  };
-  return labels[name] ?? name;
 }
