@@ -25,8 +25,15 @@ and use `harness_friction: none` unless something changed. See
 
 ### Trace Recording Checklist & Template
 
-Before recording a trace, ensure all **Standard-tier** fields are filled
-(required for normal-lane tasks; tiny-lane may use Minimal per TRACE_SPEC.md):
+Before recording a trace:
+
+1. **Ensure an intake was recorded** (if the work wasn't classified yet, run
+   `scripts/bin/harness-cli intake --type <type> --summary "<text>" --lane <lane>` first).
+   The trace's `--intake` field links back to the intake record, enabling
+   feature-granular trace queries.
+
+2. Fill all **Standard-tier** fields (required for normal-lane tasks;
+   tiny-lane may use Minimal per TRACE_SPEC.md):
 
 - [ ] `--summary` — one sentence naming outcome or attempted outcome
 - [ ] `--outcome` — one of: `completed`, `blocked`, `partial`, `failed`

@@ -2,6 +2,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 import pg from "pg";
 
 const { Client } = pg;
+const e2eBaseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:13100";
 const e2eDatabaseUrl =
   process.env.AUTH_DATABASE_URL ??
   "postgresql://ai_lab:ai_lab_dev_password@localhost:15432/ai_lab_portal";
@@ -21,17 +22,21 @@ async function dbQuery(query: string, values: unknown[] = []) {
 }
 
 async function signInAdmin(context: BrowserContext, email: string, password: string) {
-  const signUpResponse = await context.request.post("/api/auth/sign-up/email", {
-    headers: { Origin: "http://127.0.0.1:13100" },
+  // Sign-up is best-effort (user may already exist). Sign-in is what matters.
+  await context.request.post("/api/auth/sign-up/email", {
+    headers: { Origin: e2eBaseUrl },
     data: { email, password, name: "AI Lab Admin" },
-  });
-  const signInResponse = await context.request.post("/api/auth/sign-in/email", {
-    headers: { Origin: "http://127.0.0.1:13100" },
-    data: { email, password },
-  });
+  }).catch(() => {});
 
-  expect(signUpResponse.ok(), await signUpResponse.text()).toBeTruthy();
-  expect(signInResponse.ok(), await signInResponse.text()).toBeTruthy();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const signInResponse = await context.request.post("/api/auth/sign-in/email", {
+      headers: { Origin: e2eBaseUrl },
+      data: { email, password },
+    });
+    if (signInResponse.ok()) return;
+    await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 15000)));
+  }
+  throw new Error("signInAdmin failed");
 }
 
 async function cleanupAdmin(email: string) {

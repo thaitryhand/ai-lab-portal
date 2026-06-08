@@ -36,25 +36,25 @@ export async function signInAdmin(
   password: string,
   retries = 5,
 ) {
+  // Sign-up is best-effort (user may already exist). Sign-in is what matters.
+  await context.request.post("/api/auth/sign-up/email", {
+    headers: { Origin: e2eOrigin },
+    data: { email, password, name: "AI Lab Admin" },
+  }).catch(() => {});
+
   for (let attempt = 0; attempt < retries; attempt++) {
-    const signUpResponse = await context.request.post("/api/auth/sign-up/email", {
-      headers: { Origin: e2eOrigin },
-      data: { email, password, name: "AI Lab Admin" },
-    });
     const signInResponse = await context.request.post("/api/auth/sign-in/email", {
       headers: { Origin: e2eOrigin },
       data: { email, password },
     });
 
-    if (signUpResponse.ok() && signInResponse.ok()) return;
+    if (signInResponse.ok()) return;
 
-    const body = await signUpResponse.text();
-    if (signUpResponse.status() === 429 || signUpResponse.status() >= 500) {
+    if (signInResponse.status() === 429 || signInResponse.status() >= 500) {
       const delay = Math.min(1000 * 2 ** attempt, 15_000);
       await new Promise((r) => setTimeout(r, delay));
       continue;
     }
-    expect(signUpResponse.ok(), body).toBeTruthy();
     expect(signInResponse.ok(), await signInResponse.text()).toBeTruthy();
   }
   throw new Error(`signInAdmin failed after ${retries} retries`);
