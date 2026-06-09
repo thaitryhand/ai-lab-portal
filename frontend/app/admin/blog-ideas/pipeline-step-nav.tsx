@@ -15,6 +15,7 @@ export type PipelineStepDef = {
 
 export const PIPELINE_STEPS: PipelineStepDef[] = [
   { id: "idea", label: "Idea", anchor: "pipeline-section-idea" },
+  { id: "collect", label: "Context", anchor: "pipeline-section-collect" },
   { id: "outline", label: "Outline", anchor: "pipeline-section-outline" },
   { id: "draft", label: "Draft", anchor: "pipeline-section-draft" },
   { id: "review", label: "Review", anchor: "pipeline-section-review" },
@@ -30,6 +31,7 @@ function stepVisualState(
   activeId: PipelineStageId,
   idea: {
     status: string;
+    knowledge_context_status: string | null;
     outline_status: string | null;
     draft_status: string | null;
     technical_review_status: string | null;
@@ -56,6 +58,7 @@ function stepVisualState(
 type Props = {
   idea: {
     status: string;
+    knowledge_context_status: string | null;
     outline_status: string | null;
     draft_status: string | null;
     technical_review_status: string | null;

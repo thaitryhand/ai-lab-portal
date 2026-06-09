@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
+import { FormSubmitButton } from "@/components/ui/form-submit-button";
 
 import {
   CheckCircle,
@@ -17,7 +17,6 @@ import {
   MessageSquare,
   Send,
   ExternalLink,
-  Loader2,
   Activity,
 } from "lucide-react";
 
@@ -107,6 +106,7 @@ export type BlogIdeaDetail = {
   seo_audit_status: string | null;
   published_blog_post_id: string | null;
   scheduled_at: string | null;
+  knowledge_context_status: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -316,7 +316,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                   {idea.positioning_notes.map((note, i) => (
                     <li
                       key={`note-${note.slice(0, 24)}-${i}`}
-                      className="text-sm leading-snug text-foreground [overflow-wrap:anywhere]"
+                      className="text-sm leading-snug text-foreground wrap-anywhere"
                     >
                       {note}
                     </li>
@@ -325,7 +325,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
               </div>
             ) : null}
             {idea.feedback ? (
-              <p className="mt-4 text-sm italic text-muted-foreground [overflow-wrap:anywhere]">{idea.feedback}</p>
+              <p className="mt-4 text-sm italic text-muted-foreground wrap-anywhere">{idea.feedback}</p>
             ) : null}
           </PipelineStepShell>
 
@@ -397,7 +397,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                     {section.points.map((point, j) => (
                       <li
                         key={`${section.section}-point-${j}`}
-                        className="text-sm leading-snug text-muted-foreground [overflow-wrap:anywhere]"
+                        className="text-sm leading-snug text-muted-foreground wrap-anywhere"
                       >
                         {point}
                       </li>
@@ -411,7 +411,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={3}
+            stepNumber={4}
             title="Draft"
             sectionId="pipeline-section-draft"
             state={draftStepState}
@@ -474,7 +474,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                 label="Regenerate draft"
               />
             ) : null}
-            <div className="max-h-[32rem] overflow-y-auto overflow-x-auto rounded-lg border border-border/70 bg-muted/20 p-5">
+            <div className="max-h-128 overflow-y-auto overflow-x-auto rounded-lg border border-border/70 bg-muted/20 p-5">
               {idea.draft_markdown.split("\n").map((line, i) => {
                 if (line.startsWith("## ")) {
                   return (
@@ -534,7 +534,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={4}
+            stepNumber={5}
             title="Technical review"
             sectionId="pipeline-section-review"
             state={reviewStepState}
@@ -658,19 +658,19 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                         </div>
                       </div>
                       <div className="mt-3 grid gap-2">
-                        <p className="text-sm leading-snug text-foreground [overflow-wrap:anywhere]">
+                        <p className="text-sm leading-snug text-foreground wrap-anywhere">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                             Text:
                           </span>{" "}
                           {issue.text}
                         </p>
-                        <p className="text-sm leading-snug text-muted-foreground [overflow-wrap:anywhere]">
+                        <p className="text-sm leading-snug text-muted-foreground wrap-anywhere">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                             Issue:
                           </span>{" "}
                           {issue.reason}
                         </p>
-                        <p className="text-sm leading-snug italic text-brand [overflow-wrap:anywhere]">
+                        <p className="text-sm leading-snug italic text-brand wrap-anywhere">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground not-italic">
                             Suggestion:
                           </span>{" "}
@@ -687,7 +687,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={5}
+            stepNumber={6}
             title="Marketing"
             sectionId="pipeline-section-marketing"
             state={marketingStepState}
@@ -778,7 +778,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={6}
+            stepNumber={7}
             title="SEO Audit"
             sectionId="pipeline-section-seo"
             state={seoStepState}
@@ -871,7 +871,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
               </p>
             ) : (
               <div className="grid gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Issues ({idea.seo_audit.issues.length})
                 </p>
                 {idea.seo_audit.issues.map((issue, i) => {
@@ -915,10 +915,10 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
                         </div>
                       </div>
                       <div className="mt-3 grid gap-2">
-                        <p className="text-sm leading-snug text-foreground [overflow-wrap:anywhere]">
+                        <p className="text-sm leading-snug text-foreground wrap-anywhere">
                           {issue.text}
                         </p>
-                        <p className="text-sm leading-snug italic text-brand [overflow-wrap:anywhere]">
+                        <p className="text-sm leading-snug italic text-brand wrap-anywhere">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground not-italic">
                             Suggestion:
                           </span>{" "}
@@ -932,10 +932,27 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
             )}
           </div>
         )}
+
+        {/* Auto-optimize SEO button — visible after audit completes */}
+        {idea.seo_audit_status === "approved" && (
+          <div className="mt-4 rounded-lg border border-border/60 bg-muted/20 p-4">
+            <p className="mb-3 text-sm font-medium">AI Auto-Optimize</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Use AI to automatically improve title, meta description, heading structure,
+              internal links, and keyword placement based on the SEO audit results.
+            </p>
+            <a
+              href={`/admin/blog-ideas/${idea.id}/optimize-seo`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand/90"
+            >
+              Auto-optimize SEO
+            </a>
+          </div>
+        )}
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={7}
+            stepNumber={8}
             title="Claims"
             sectionId="pipeline-section-claims"
             state={claimsStepState}
@@ -962,7 +979,7 @@ export function BlogIdeaDetailView({ idea, claims = [], aiRuns = [], operational
           </PipelineStepShell>
 
           <PipelineStepShell
-            stepNumber={8}
+            stepNumber={9}
             title="Publish"
             sectionId="pipeline-section-publish"
             state={publishStepState}
@@ -1107,7 +1124,7 @@ function MetaField({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1.5 text-sm leading-snug text-foreground [overflow-wrap:anywhere]">{value}</p>
+      <p className="mt-1.5 text-sm leading-snug text-foreground wrap-anywhere">{value}</p>
     </div>
   );
 }
@@ -1169,25 +1186,19 @@ function ActionSubmitButton({
   label: string;
   variant: "default" | "outline";
 }) {
-  const { pending } = useFormStatus();
-
   return (
-    <button
-      disabled={pending || disabled}
+    <FormSubmitButton
+      disabled={disabled}
       className={cn(
         buttonVariants({ size: "sm", variant: variant === "default" ? "default" : "outline" }),
-        "flex items-center gap-1.5",
-        pending && "pointer-events-none opacity-60"
+        "flex items-center gap-1.5"
       )}
-      type="submit"
     >
-      {pending ? (
-        <Loader2 className="size-3.5 animate-spin" aria-hidden />
-      ) : (
+      <span className="flex items-center gap-1.5">
         <Icon className="size-3.5" aria-hidden />
-      )}
-      {pending ? `${label}…` : label}
-    </button>
+        {label}
+      </span>
+    </FormSubmitButton>
   );
 }
 
@@ -1316,7 +1327,7 @@ function SeoAnalysisField({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium text-muted-foreground">
         {label}
       </p>
-      <p className="mt-1.5 text-sm leading-snug text-foreground [overflow-wrap:anywhere]">
+      <p className="mt-1.5 text-sm leading-snug text-foreground wrap-anywhere">
         {value}
       </p>
     </div>

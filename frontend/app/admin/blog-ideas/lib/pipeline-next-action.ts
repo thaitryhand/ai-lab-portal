@@ -5,6 +5,7 @@ import {
 
 export type PipelineStageId =
   | "idea"
+  | "collect"
   | "outline"
   | "draft"
   | "review"
@@ -24,6 +25,7 @@ export type PipelineActionKind =
 
 export type IdeaPipelineSnapshot = {
   status: "pending" | "approved" | "rejected";
+  knowledge_context_status: string | null;  // "collected" | "approved" | null
   outline_sections: unknown[];
   outline_status: string | null;
   draft_markdown: string | null;
@@ -54,6 +56,7 @@ export type PipelineNextAction = {
 
 const PROCESSING_LABELS: Record<string, string> = {
   idea: "Generating blog idea",
+  collect: "Collecting knowledge context",
   outline: "Generating outline",
   draft: "Writing draft",
   "technical-review": "Running technical review",
@@ -116,6 +119,29 @@ export function getPipelineNextAction(
     };
   }
 
+  // ── Knowledge Collection step ──
+  if (idea.knowledge_context_status === null) {
+    return {
+      kind: "generate",
+      stageId: "collect",
+      title: "Collect context",
+      description: "Gather project data, related posts, and news to ground AI generation.",
+      sectionAnchor: "pipeline-section-collect",
+    };
+  }
+
+  if (idea.knowledge_context_status === "collected") {
+    return {
+      kind: "approve",
+      stageId: "collect",
+      title: "Review collected context",
+      description: "Review the knowledge sources before generating the outline.",
+      approveGate: "collect",
+      sectionAnchor: "pipeline-section-collect",
+    };
+  }
+
+  // ── Outline step ──
   if (idea.outline_status === "pending" && idea.outline_sections.length > 0) {
     return {
       kind: "approve",
@@ -287,6 +313,8 @@ export function getPipelineNextAction(
 
 function stageToStageId(stage: string): PipelineStageId {
   switch (stage) {
+    case "collect":
+      return "collect";
     case "outline":
       return "outline";
     case "draft":
@@ -306,6 +334,8 @@ function stageToStageId(stage: string): PipelineStageId {
 
 function stageToAnchor(stage: string): string {
   switch (stage) {
+    case "collect":
+      return "pipeline-section-collect";
     case "outline":
       return "pipeline-section-outline";
     case "draft":

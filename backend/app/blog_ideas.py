@@ -104,6 +104,7 @@ class BlogIdea(BaseModel):
     seo_audit_status: str | None = None
     published_blog_post_id: str | None = None
     scheduled_at: datetime | None = None
+    knowledge_context_status: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -829,6 +830,24 @@ def create_blog_idea_routes(
         idea = repository.get_by_id(idea_id)
         if idea is None:
             raise HTTPException(status_code=404, detail="Blog idea not found")
+        # Merge knowledge_context_status from knowledge_contexts table
+        if settings.database_url is not None and idea.knowledge_context_status is None:
+            try:
+                from sqlalchemy import create_engine, select
+                engine = create_engine(str(settings.database_url))
+                from backend.app.database import knowledge_contexts
+                with engine.begin() as conn:
+                    row = conn.execute(
+                        select(knowledge_contexts.c.approved_at, knowledge_contexts.c.blog_idea_id)
+                        .where(knowledge_contexts.c.blog_idea_id == idea_id)
+                    ).mappings().first()
+                    if row:
+                        if row["approved_at"]:
+                            idea.knowledge_context_status = "approved"
+                        else:
+                            idea.knowledge_context_status = "collected"
+            except Exception:
+                pass
         return idea
 
     @router.post("")

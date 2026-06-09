@@ -487,3 +487,54 @@ blog_series_posts = Table(
     UniqueConstraint("series_id", "part_number", name="uq_series_part"),
     Index("ix_series_posts_series", "series_id"),
 )
+
+knowledge_contexts = Table(
+    "knowledge_contexts",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("blog_idea_id", String(64), ForeignKey("blog_ideas.id", ondelete="CASCADE"), unique=True, nullable=False),
+    Column("project_name", String(255), nullable=True),
+    Column("project_summary", Text, nullable=True),
+    Column("project_content", Text, nullable=True),
+    Column("related_blog_posts", Text, nullable=True),
+    Column("related_showcases", Text, nullable=True),
+    Column("recent_news", Text, nullable=True),
+    Column("raw_collected_at", DateTime(timezone=True), nullable=False),
+    Column("approved_at", DateTime(timezone=True), nullable=True),
+    Column("approved_by", String(255), nullable=True),
+    Column("edited_at", DateTime(timezone=True), nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Index("ix_knowledge_contexts_idea", "blog_idea_id"),
+)
+
+
+page_views = Table(
+    "page_views",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("path", Text, nullable=False),
+    Column("referrer", Text, nullable=True),
+    Column("user_agent", Text, nullable=True),
+    Column("ip_hash", String(64), nullable=True),
+    Column("session_id", String(64), nullable=False),
+    Column("viewport_width", Integer, nullable=True),
+    Column("viewport_height", Integer, nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Index("ix_page_views_created", "created_at"),
+    Index("ix_page_views_path_created", "path", "created_at"),
+)
+
+
+events = Table(
+    "events",
+    metadata,
+    Column("id", String(64), primary_key=True),
+    Column("path", Text, nullable=False),
+    Column("event_type", String(32), nullable=False),
+    Column("event_metadata", Text, nullable=True),
+    Column("session_id", String(64), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Index("ix_events_type_created", "event_type", "created_at"),
+    Index("ix_events_path_created", "path", "created_at"),
+)

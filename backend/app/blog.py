@@ -75,6 +75,7 @@ class AdminBlogPostSummary(BaseModel):
     id: str
     slug: str
     title: str
+    excerpt: str = ""
     status: BlogStatus
     published_at: datetime | None
     image_url: str | None = None
@@ -172,6 +173,7 @@ class BlogRepository:
                 id=post.id,
                 slug=post.slug,
                 title=post.title,
+                excerpt=post.excerpt,
                 status=post.status,
                 published_at=post.published_at,
             )
@@ -431,6 +433,7 @@ class PostgresBlogRepository:
                     id=row["id"],
                     slug=row["slug"],
                     title=row["title"],
+                    excerpt=row.get("excerpt", ""),
                     status=row["status"],
                     published_at=row["published_at"],
                 )

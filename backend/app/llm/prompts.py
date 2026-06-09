@@ -272,6 +272,83 @@ SEO_AUDIT_PROMPT = PromptTemplate(
 )
 
 
+REPURPOSE_TWITTER_PROMPT = PromptTemplate(
+    system=(
+        "You are a social media expert. Transform a blog post into an engaging Twitter thread. "
+        "Each tweet must be under 280 characters."
+    ),
+    user_template=(
+        "Create a Twitter thread (5-10 tweets) from this blog post.\n\n"
+        "Title: {title}\n"
+        "Excerpt: {excerpt}\n"
+        "Content: {content}\n"
+    ),
+    version="1",
+)
+
+REPURPOSE_LINKEDIN_PROMPT = PromptTemplate(
+    system=(
+        "You are a LinkedIn content strategist. Transform a blog post into a compelling "
+        "LinkedIn article with headline, summary, and key takeaways."
+    ),
+    user_template=(
+        "Create a LinkedIn article from this blog post.\n\n"
+        "Title: {title}\n"
+        "Excerpt: {excerpt}\n"
+        "Content: {content}"
+    ),
+    version="1",
+)
+
+SEO_OPTIMIZE_PROMPT = PromptTemplate(
+    system=(
+        "You are an SEO specialist. Analyze a blog post and its SEO audit results "
+        "to suggest concrete improvements. Return changes as before/after diffs "
+        "with rationale for each suggestion. Focus on: title, meta description, "
+        "headings, internal links, and keyword placement."
+    ),
+    user_template=(
+        "Suggest SEO improvements for this blog post.\n\n"
+        "Title: {title}\n"
+        "Content: {content}\n"
+        "SEO Audit: {seo_audit}\n"
+    ),
+    version="1",
+)
+
+
+SCHEDULING_SUGGEST_PROMPT = PromptTemplate(
+    system=(
+        "You are a publishing strategist. Analyze content readiness, calendar context, "
+        "and engagement data to suggest the optimal publishing time for a blog post. "
+        "Return a date in YYYY-MM-DD format and time in HH:MM format (UTC)."
+    ),
+    user_template=(
+        "Suggest the best publishing time for this blog post.\n\n"
+        "Title: {title}\n"
+        "Status: {status}\n"
+        "Current day: {day_of_week}\n"
+        "Already scheduled dates: {existing_scheduled}\n"
+        "Engagement data: {engagement_data}\n"
+    ),
+    version="1",
+)
+
+
+REPURPOSE_SUMMARY_PROMPT = PromptTemplate(
+    system=(
+        "You write concise, engaging social media summaries. "
+        "Summarize a blog post in 2-3 sentences (max 500 chars)."
+    ),
+    user_template=(
+        "Write a short social media summary for this blog post.\n\n"
+        "Title: {title}\n"
+        "Excerpt: {excerpt}"
+    ),
+    version="1",
+)
+
+
 CLAIM_EXTRACTION_PROMPT = PromptTemplate(
     system=(
         "You extract factual claims from a B2B blog draft. "
@@ -306,4 +383,9 @@ PROMPT_REGISTRY: dict[str, PromptTemplate] = {
     "claim_extraction": CLAIM_EXTRACTION_PROMPT,
     "seo_audit": SEO_AUDIT_PROMPT,
     "ai_news_scoring": AI_NEWS_SCORING_PROMPT,
+    "repurpose_twitter": REPURPOSE_TWITTER_PROMPT,
+    "repurpose_linkedin": REPURPOSE_LINKEDIN_PROMPT,
+    "repurpose_summary": REPURPOSE_SUMMARY_PROMPT,
+    "scheduling_suggest": SCHEDULING_SUGGEST_PROMPT,
+    "seo_optimize": SEO_OPTIMIZE_PROMPT,
 }

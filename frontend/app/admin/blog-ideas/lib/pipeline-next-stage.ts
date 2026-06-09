@@ -1,4 +1,4 @@
-export type ApproveGate = "idea" | "outline" | "draft" | "review" | "marketing" | "seo";
+export type ApproveGate = "idea" | "collect" | "outline" | "draft" | "review" | "marketing" | "seo";
 
 export type PipelineOpStage =
   | "outline"
@@ -23,6 +23,12 @@ const NEXT_AFTER_APPROVE: Record<ApproveGate, NextPipelineStep> = {
     opStage: "outline",
     endpoint: (ideaId) => `/admin/blog-ideas/${ideaId}/generate-outline`,
     completedMessage: "Outline generation completed.",
+  },
+  collect: {
+    gate: "collect",
+    opStage: "outline",
+    endpoint: (ideaId) => `/admin/blog-ideas/${ideaId}/generate-outline`,
+    completedMessage: "Knowledge context approved. Generating outline.",
   },
   outline: {
     gate: "outline",
@@ -64,6 +70,8 @@ export function nextStepAfterApprove(gate: ApproveGate): NextPipelineStep {
 export function approveButtonLabel(gate: ApproveGate): string {
   switch (gate) {
     case "idea":
+      return "Approve & generate outline";
+    case "collect":
       return "Approve & generate outline";
     case "outline":
       return "Approve & generate draft";

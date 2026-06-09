@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Annotated, Any, cast
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from sqlalchemy import create_engine
 
 from backend.app.admin_boundary import (
     ADMIN_IDENTITY_HEADER,
@@ -25,6 +26,26 @@ from backend.app.notifications import (
     InMemoryNotificationRepository,
     PostgresNotificationRepository,
     create_notification_routes,
+)
+from backend.app.page_views import (
+    InMemoryPageViewRepository,
+    PostgresPageViewRepository,
+    set_repository as set_page_view_repository,
+    router as page_view_router,
+)
+from backend.app.analytics_api import AnalyticsService, create_analytics_routes
+from backend.app.related_posts_routes import create_related_posts_routes
+from backend.app.content_repurpose import FakeContentRepurposeService
+from backend.app.content_repurpose_routes import create_content_repurpose_routes
+from backend.app.scheduling_agent import FakeSchedulingService
+from backend.app.scheduling_routes import create_scheduling_routes
+from backend.app.seo_optimizer import FakeSeoOptimizerService
+from backend.app.seo_optimizer_routes import create_seo_optimizer_routes
+from backend.app.events import (
+    EventRepository,
+    InMemoryEventRepository,
+    PostgresEventRepository,
+    create_event_routes,
 )
 from backend.app.blog import (
     AdminBlogPostDetail,
@@ -105,6 +126,12 @@ from backend.app.blog_series import (
 from backend.app.pipeline_dashboard import create_pipeline_dashboard_routes
 from backend.app.seo_analytics import create_seo_analytics_routes
 from backend.app.content_calendar import create_content_calendar_routes
+from backend.app.knowledge_context import (
+    InMemoryKnowledgeContextRepository,
+    KnowledgeContextRepository,
+    PostgresKnowledgeContextRepository,
+    create_knowledge_context_routes,
+)
 from backend.app.news_submitted_links import (
     InMemorySubmittedLinkRepository,
     PostgresSubmittedLinkRepository,
@@ -1028,6 +1055,18 @@ def create_app(
     seed_router = create_admin_seed_router(resolved_settings)
     app.include_router(seed_router)
 
+    # Knowledge context routes
+    if resolved_settings.database_url is not None:
+        from backend.app.knowledge_collector import KnowledgeService as CollectorService
+        kc_engine = create_database_engine(resolved_settings)
+        kc_repo = PostgresKnowledgeContextRepository(kc_engine)
+        kc_service = CollectorService(kc_engine)
+    else:
+        kc_repo = InMemoryKnowledgeContextRepository()
+        kc_service = None
+    kc_router = create_knowledge_context_routes(kc_repo, kc_service, resolved_settings)
+    app.include_router(kc_router)
+
     # Pipeline dashboard routes
     pipeline_router = create_pipeline_dashboard_routes(
         resolved_settings,
@@ -1035,6 +1074,58 @@ def create_app(
         blog_repository=repository,
     )
     app.include_router(pipeline_router)
+
+    # ── Page Views (public, no auth) ──
+    page_view_repo: InMemoryPageViewRepository | PostgresPageViewRepository
+    if resolved_settings.database_url is not None:
+        engine = create_engine(str(resolved_settings.database_url))
+        page_view_repo = PostgresPageViewRepository(engine)
+    else:
+        page_view_repo = InMemoryPageViewRepository()
+    set_page_view_repository(page_view_repo)
+    app.include_router(page_view_router)
+
+    # ── Events + CSV Export (before analytics, so analytics can include event counts) ──
+    event_repo: EventRepository
+    if resolved_settings.database_url is not None:
+        engine = create_engine(str(resolved_settings.database_url))
+        event_repo = PostgresEventRepository(engine)
+    else:
+        event_repo = InMemoryEventRepository()
+    event_router = create_event_routes(event_repo, page_view_repo, resolved_settings)
+    app.include_router(event_router)
+
+    # ── Analytics Dashboard (admin, uses page_view_repo + event_repo) ──
+    analytics_service = AnalyticsService(page_view_repo, event_repo)
+    analytics_router = create_analytics_routes(analytics_service, resolved_settings, event_repo)
+    app.include_router(analytics_router)
+
+    # ── Related Posts (public, no auth) ──
+    related_router = create_related_posts_routes(
+        repository, tag_repo, page_view_repo
+    )
+    app.include_router(related_router)
+
+    # ── Content Repurpose Agent (uses fake service by default; LLM-backed when API key set) ──
+    repurpose_service = FakeContentRepurposeService()
+    repurpose_router = create_content_repurpose_routes(
+        repurpose_service, repository, resolved_settings
+    )
+    app.include_router(repurpose_router)
+
+    # ── Scheduling Agent ──
+    scheduling_service = FakeSchedulingService()
+    scheduling_router = create_scheduling_routes(
+        scheduling_service, repository, resolved_settings
+    )
+    app.include_router(scheduling_router)
+
+    # ── SEO Optimizer Agent ──
+    seo_service = FakeSeoOptimizerService()
+    seo_router = create_seo_optimizer_routes(
+        seo_service, ideas_repo, resolved_settings
+    )
+    app.include_router(seo_router)
 
     return app
 

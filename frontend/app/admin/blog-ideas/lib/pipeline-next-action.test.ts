@@ -5,6 +5,7 @@ import { getPipelineNextAction } from "./pipeline-next-action";
 
 const approvedIdea = {
   status: "approved" as const,
+  knowledge_context_status: "approved" as const,
   outline_sections: [{ section: "Intro", points: ["Hook"] }],
   outline_status: "approved",
   draft_markdown: "# Draft",

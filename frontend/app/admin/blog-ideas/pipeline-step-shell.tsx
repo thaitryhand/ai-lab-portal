@@ -86,7 +86,9 @@ export function PipelineStepShell({
         </div>
       </div>
 
-      {isOpen ? <div className="px-4 py-4 sm:px-5 sm:py-5">{children}</div> : null}
+      <div className={cn("px-4 py-4 sm:px-5 sm:py-5", !isOpen && "hidden")}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -98,6 +100,7 @@ export function stepShellState(
 ): StepShellState {
   const order = [
     "idea",
+    "collect",
     "outline",
     "draft",
     "review",
