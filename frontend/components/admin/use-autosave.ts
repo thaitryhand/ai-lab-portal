@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 type SaveStatus = "saved" | "saving" | "unsaved" | "error";
 
@@ -63,7 +63,9 @@ export function useAutosave({
   serverDelay = 3000,
   localDelay = 1000,
 }: UseAutosaveOptions): UseAutosaveReturn {
+  const [, startTransition] = useTransition();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(postId ? "saved" : "unsaved");
+  const [isDirty, setIsDirty] = useState(false);
   const [hasLocalDraft, setHasLocalDraft] = useState(() => {
     if (typeof window === "undefined") return false;
     return getLocalDraft(postId) !== null;
@@ -73,30 +75,40 @@ export function useAutosave({
     return getLocalDraft(postId);
   });
 
+  const serverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
   const titleRef = useRef(title);
   const slugRef = useRef(slug);
-  const isDirtyRef = useRef(false);
   const saveActionRef = useRef(saveAction);
-  saveActionRef.current = saveAction;
-  const serverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const localTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep refs in sync
+  // Sync refs — allowed in useEffect (side effect, not render)
   useEffect(() => {
     contentRef.current = content;
     titleRef.current = title;
     slugRef.current = slug;
-  }, [content, title, slug]);
+    saveActionRef.current = saveAction;
+  }, [content, title, slug, saveAction]);
 
-  // Mark as unsaved on content change
+  // Track previous content/title to detect changes via refs instead of direct comparison
+  const prevContentRef = useRef(content);
+  const prevTitleRef = useRef(title);
+
+  // Mark as unsaved when content or title changes
   useEffect(() => {
     if (!postId) return;
-    if (saveStatus === "saved") {
-      setSaveStatus("unsaved");
+    const contentChanged = content !== prevContentRef.current;
+    const titleChanged = title !== prevTitleRef.current;
+    prevContentRef.current = content;
+    prevTitleRef.current = title;
+
+    if (contentChanged || titleChanged) {
+      startTransition(() => {
+        setSaveStatus("unsaved");
+      });
+      setIsDirty(true);
     }
-    isDirtyRef.current = true;
-  }, [content, title]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [content, title, postId, startTransition]);
 
   // localStorage backup (debounced)
   useEffect(() => {
@@ -121,7 +133,9 @@ export function useAutosave({
     if (!postId) return;
     if (serverTimerRef.current) clearTimeout(serverTimerRef.current);
     serverTimerRef.current = setTimeout(async () => {
-      setSaveStatus("saving");
+      startTransition(() => {
+        setSaveStatus("saving");
+      });
       try {
         const fd = new FormData();
         fd.set("contentMarkdown", contentRef.current);
@@ -130,8 +144,10 @@ export function useAutosave({
         fd.set("excerpt", "");
         fd.set("authorName", "");
         await saveActionRef.current(fd);
-        setSaveStatus("saved");
-        isDirtyRef.current = false;
+        startTransition(() => {
+          setSaveStatus("saved");
+        });
+        setIsDirty(false);
         // Clear localStorage after successful save
         try {
           localStorage.removeItem(storageKey(postId));
@@ -141,17 +157,21 @@ export function useAutosave({
         setHasLocalDraft(false);
         setLocalDraft(null);
       } catch {
-        setSaveStatus("error");
+        startTransition(() => {
+          setSaveStatus("error");
+        });
       }
     }, serverDelay);
     return () => {
       if (serverTimerRef.current) clearTimeout(serverTimerRef.current);
     };
-  }, [content, title, slug, postId, serverDelay]);
+  }, [content, title, slug, postId, serverDelay, startTransition]);
 
   const save = useCallback(async () => {
     if (!postId) return;
-    setSaveStatus("saving");
+    startTransition(() => {
+      setSaveStatus("saving");
+    });
     try {
       const fd = new FormData();
       fd.set("contentMarkdown", contentRef.current);
@@ -160,12 +180,16 @@ export function useAutosave({
       fd.set("excerpt", "");
       fd.set("authorName", "");
       await saveActionRef.current(fd);
-      setSaveStatus("saved");
-      isDirtyRef.current = false;
+      startTransition(() => {
+        setSaveStatus("saved");
+      });
+      setIsDirty(false);
     } catch {
-      setSaveStatus("error");
+      startTransition(() => {
+        setSaveStatus("error");
+      });
     }
-  }, [postId, saveAction]);
+  }, [postId, startTransition]);
 
   const restoreFromLocal = useCallback(() => {
     // Re-read from localStorage in case it changed
@@ -189,7 +213,7 @@ export function useAutosave({
 
   return {
     saveStatus,
-    isDirty: isDirtyRef.current,
+    isDirty,
     save,
     hasLocalDraft,
     localDraft,

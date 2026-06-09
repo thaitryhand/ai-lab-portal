@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { Clock, History, RotateCcw, X } from "lucide-react";
 
 type Revision = {
@@ -36,28 +36,41 @@ export function BlogRevisionPanel({ postId, open, onClose, onRestore }: Props) {
   const [selected, setSelected] = useState<Revision | null>(null);
   const [restoring, setRestoring] = useState(false);
 
-  const fetchRevisions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/blog-posts/${postId}/revisions`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: Revision[] = await res.json();
-      setRevisions(data);
-      if (data.length > 0) setSelected(data[0]);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load revisions");
-    } finally {
-      setLoading(false);
-    }
-  }, [postId]);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    if (open) fetchRevisions();
-  }, [open, fetchRevisions]);
+    if (!open) return;
+    let cancelled = false;
+    startTransition(() => { setLoading(true); });
+    startTransition(() => { setError(null); });
+
+    fetch(`/api/admin/blog-posts/${postId}/revisions`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<Revision[]>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        startTransition(() => { setRevisions(data); });
+        if (data.length > 0) startTransition(() => { setSelected(data[0]); });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        startTransition(() => {
+          setError(e instanceof Error ? e.message : "Failed to load revisions");
+        });
+      })
+      .finally(() => {
+        if (!cancelled) startTransition(() => { setLoading(false); });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, postId]);
 
   const handleRestore = useCallback(async () => {
     if (!selected) return;

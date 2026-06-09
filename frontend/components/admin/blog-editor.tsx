@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
-import { Globe, History, Pencil, Save, FileText } from "lucide-react";
+import { Globe, Pencil, Save, FileText } from "lucide-react";
 
 import { AdminCard, AdminCardBody, AdminCardSection, AdminWorkflowCard } from "@/components/admin/admin-card";
 import { AdminFormField, AdminInput, AdminTextarea } from "@/components/admin/admin-form";
@@ -13,7 +13,6 @@ import {
   adminStatusPanelClass,
   adminWorkflowStatusClass,
 } from "@/components/admin/admin-ui";
-import { BlogRevisionPanel } from "@/components/admin/blog-revision-panel";
 import { PendingSubmitButton } from "@/components/admin/pending-submit-button";
 import { useAutosave } from "@/components/admin/use-autosave";
 import { hasPendingBlogImages, stripBrokenBlogImages } from "@/lib/sanitize-blog-markdown";
@@ -126,6 +125,7 @@ export function BlogEditor({
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     titleRef.current = newTitle;
+    setCurrentTitle(newTitle);
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     titleTimerRef.current = setTimeout(() => {
       dispatchSlug({ type: "title_changed", title: newTitle });
@@ -137,14 +137,16 @@ export function BlogEditor({
   // editor content regardless of React batching timing.
   const contentMarkdownRef = useRef(initialContentMarkdown);
   useEffect(() => { contentMarkdownRef.current = contentMarkdown; }, [contentMarkdown]);
-  const [revisionPanelOpen, setRevisionPanelOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
 
+  // Track current title value from the input (avoids ref access during render)
+  const [currentTitle, setCurrentTitle] = useState(initialTitle);
+
   // ── Autosave ──
-  const { saveStatus, hasLocalDraft, restoreFromLocal, clearLocalDraft } = useAutosave({
+  const { saveStatus } = useAutosave({
     postId: initialPostId || undefined,
     content: contentMarkdown,
-    title: titleRef.current,
+    title: currentTitle,
     slug: slugState.slug,
     saveAction: async (fd) => {
       startTransition(() => {

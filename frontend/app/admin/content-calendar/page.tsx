@@ -16,18 +16,22 @@ async function getCalendarData(): Promise<CalendarData> {
     return { published: [], pipeline: [], scheduled: [], month_counts: {} };
   }
 
-  const response = await fetch(
-    `${backendBaseUrl}/admin/content-calendar/posts`,
-    {
-      headers: createAdminBoundaryHeaders({
-        user: { id: session.user.id, email: session.user.email },
-      }),
-      cache: "no-store",
-    },
-  );
+  try {
+    const response = await fetch(
+      `${backendBaseUrl}/admin/content-calendar/posts`,
+      {
+        headers: createAdminBoundaryHeaders({
+          user: { id: session.user.id, email: session.user.email },
+        }),
+        cache: "no-store",
+      },
+    );
 
-  if (!response.ok) return { published: [], pipeline: [], scheduled: [], month_counts: {} };
-  return response.json();
+    if (!response.ok) return { published: [], pipeline: [], scheduled: [], month_counts: {} };
+    return response.json();
+  } catch {
+    return { published: [], pipeline: [], scheduled: [], month_counts: {} };
+  }
 }
 
 export default async function ContentCalendarPage() {

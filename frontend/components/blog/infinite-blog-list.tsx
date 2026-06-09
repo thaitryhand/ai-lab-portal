@@ -69,7 +69,6 @@ export function InfiniteBlogList({
 }: Props) {
   // Stable reset key derived only from filter params (not post data)
   const filterKey = `${feed}:${tag ?? ""}:${query ?? ""}`;
-  const initialKey = useRef(filterKey);
   const [listState, setListState] = useState<ListState>({
     hasMore: initialHasMore,
     page: 1,
@@ -79,18 +78,20 @@ export function InfiniteBlogList({
   const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const inFlightRef = useRef(false);
-  const loadingRef = useRef(false);
+  const prevFilterKeyRef = useRef(filterKey);
 
   // Reset when filters change, only once per filter change
-  if (filterKey !== initialKey.current) {
-    initialKey.current = filterKey;
-    setListState({
-      hasMore: initialHasMore,
-      page: 1,
-      posts: initialPosts,
-      resetKey: filterKey,
-    });
-  }
+  useEffect(() => {
+    if (filterKey !== prevFilterKeyRef.current) {
+      prevFilterKeyRef.current = filterKey;
+      setListState({
+        hasMore: initialHasMore,
+        page: 1,
+        posts: initialPosts,
+        resetKey: filterKey,
+      });
+    }
+  }, [filterKey, initialHasMore, initialPosts]);
 
   const { hasMore, page, posts } = listState;
 
