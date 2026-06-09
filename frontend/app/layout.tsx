@@ -6,6 +6,7 @@ import { ReducedMotionProvider } from "@/components/reduced-motion-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { PageViewTracker } from "@/lib/use-page-view";
 
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider>
           <SessionProvider>
             <ReducedMotionProvider>{children}</ReducedMotionProvider>
+            <PageViewTracker />
             <Toaster position="bottom-right" richColors />
           </SessionProvider>
         </ThemeProvider>
