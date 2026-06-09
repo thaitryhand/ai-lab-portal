@@ -1,2 +1,3 @@
 # Normalize Python sources to LF on checkout (backlog #15).
 *.py text eol=lf
+backend/tests/*.py text eol=lf
