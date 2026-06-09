@@ -9,6 +9,7 @@ import {
   FileText,
   Globe,
   Search,
+  Share2,
 } from "lucide-react";
 
 import {
@@ -156,15 +157,23 @@ export function BlogPostCardList({
                     </AdminListActionForm>
 
                     {post.status === "published" ? (
-                      <AdminListActionLink
-                        href={`/blog/${post.slug}`}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        variant="ghost"
-                      >
-                        <ExternalLink className="size-3" aria-hidden />
-                        View
-                      </AdminListActionLink>
+                      <>
+                        <AdminListActionLink
+                          href={`/admin/blog/${post.id}/repurpose`}
+                        >
+                          <Share2 className="size-3.5" aria-hidden />
+                          Repurpose
+                        </AdminListActionLink>
+                        <AdminListActionLink
+                          href={`/blog/${post.slug}`}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          variant="ghost"
+                        >
+                          <ExternalLink className="size-3" aria-hidden />
+                          View
+                        </AdminListActionLink>
+                      </>
                     ) : null}
                   </AdminListActions>
                 }
