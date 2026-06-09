@@ -23,13 +23,13 @@ function toTag(tag: ApiBlogTag): BlogTag {
 }
 
 export async function listPublicBlogTags(): Promise<BlogTag[]> {
-  const response = await fetch(`${backendBaseUrl}/public/blog-tags`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/blog-tags`);
   if (!response.ok) throw new Error(`Failed to fetch blog tags: ${response.status}`);
   return ((await response.json()) as ApiBlogTag[]).map(toTag);
 }
 
 export async function listPublicPostTags(slug: string): Promise<BlogTag[]> {
-  const response = await fetch(`${backendBaseUrl}/public/blog-posts/${slug}/tags`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/blog-posts/${slug}/tags`);
   if (response.status === 404) return [];
   if (!response.ok) throw new Error(`Failed to fetch post tags: ${response.status}`);
   return ((await response.json()) as ApiBlogTag[]).map(toTag);

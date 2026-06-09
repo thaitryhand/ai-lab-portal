@@ -45,7 +45,7 @@ function toDetail(item: ApiProjectDetail): ProjectDetail {
 }
 
 export async function listPublishedProjects(): Promise<ProjectSummary[]> {
-  const response = await fetch(`${backendBaseUrl}/public/projects`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/projects`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published projects: ${response.status}`);
@@ -58,9 +58,7 @@ export async function listPublishedProjects(): Promise<ProjectSummary[]> {
 export async function getPublishedProject(
   slug: string,
 ): Promise<ProjectDetail | undefined> {
-  const response = await fetch(`${backendBaseUrl}/public/projects/${slug}`, {
-    cache: "no-store",
-  });
+  const response = await fetch(`${backendBaseUrl}/public/projects/${slug}`);
 
   if (response.status === 404) {
     return undefined;

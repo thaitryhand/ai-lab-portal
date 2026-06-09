@@ -65,7 +65,7 @@ export async function listPublishedAiNews(topic?: string, q?: string): Promise<A
     url.searchParams.set("q", q);
   }
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published AI news: ${response.status}`);
@@ -76,7 +76,7 @@ export async function listPublishedAiNews(topic?: string, q?: string): Promise<A
 }
 
 export async function getPublishedAiNewsItem(slug: string): Promise<AiNewsDetail | undefined> {
-  const response = await fetch(`${backendBaseUrl}/public/ai-news/${slug}`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/ai-news/${slug}`);
 
   if (response.status === 404) {
     return undefined;

@@ -51,7 +51,7 @@ function toDetail(item: ApiShowcaseDetail): ShowcaseDetail {
 }
 
 export async function listPublishedShowcases(): Promise<ShowcaseSummary[]> {
-  const response = await fetch(`${backendBaseUrl}/public/showcases`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/showcases`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch published showcases: ${response.status}`);
@@ -62,7 +62,7 @@ export async function listPublishedShowcases(): Promise<ShowcaseSummary[]> {
 }
 
 export async function getPublishedShowcase(slug: string): Promise<ShowcaseDetail | undefined> {
-  const response = await fetch(`${backendBaseUrl}/public/showcases/${slug}`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/showcases/${slug}`);
 
   if (response.status === 404) {
     return undefined;

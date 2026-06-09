@@ -74,7 +74,6 @@ export async function listPublishedBlogPosts(options?: { tag?: string; feed?: Bl
   if (options?.feed) url.searchParams.set("feed", options.feed);
   if (options?.q) url.searchParams.set("q", options.q);
   const response = await fetch(url.toString(), {
-    cache: "no-store",
     headers: options?.session ? createUserBoundaryHeaders(options.session) : undefined,
   });
 
@@ -96,7 +95,6 @@ export async function listPublishedBlogPostsPage(options?: { tag?: string; feed?
   url.searchParams.set("limit", String(options?.limit ?? 8));
 
   const response = await fetch(url.toString(), {
-    cache: "no-store",
     headers: options?.session ? createUserBoundaryHeaders(options.session) : undefined,
   });
 
@@ -122,7 +120,7 @@ export async function listPublishedBlogPostsPage(options?: { tag?: string; feed?
 }
 
 export async function getPublishedBlogPost(slug: string): Promise<BlogPostDetail | undefined> {
-  const response = await fetch(`${backendBaseUrl}/public/blog-posts/${slug}`, { cache: "no-store" });
+  const response = await fetch(`${backendBaseUrl}/public/blog-posts/${slug}`);
 
   if (response.status === 404) {
     return undefined;
