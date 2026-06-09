@@ -4,28 +4,28 @@ import { notFound } from "next/navigation";
 import { BookOpen, ChevronLeft } from "lucide-react";
 
 import { PublicPageShell } from "@/components/public/public-page-shell";
-import { PublicProse } from "@/components/public/public-prose";
+import { createPublicMetadata } from "@/lib/seo/metadata";
 
 const backendBaseUrl = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:18000";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const res = await fetch(`${backendBaseUrl}/public/blog-series/${slug}`, { cache: "no-store" });
+    const res = await fetch(`${backendBaseUrl}/public/blog-series/${slug}`);
     if (res.ok) {
       const series = await res.json();
-      return {
+      return createPublicMetadata({
         title: `${series.title} — Blog Series`,
         description: series.description || `A multi-part blog series: ${series.title}`,
-        openGraph: {
-          title: `${series.title} — Blog Series`,
-          description: series.description || undefined,
-          type: "website",
-        },
-      };
+        path: `/blog/series/${slug}`,
+      });
     }
   } catch { /* ignore */ }
-  return { title: "Blog Series" };
+  return createPublicMetadata({
+    title: "Blog Series | AI Lab Portal",
+    description: "Multi-part blog series from AI Lab.",
+    path: `/blog/series/${slug}`,
+  });
 }
 
 type SeriesPost = {
@@ -46,9 +46,7 @@ type BlogSeriesDetail = {
 
 async function fetchSeries(slug: string): Promise<BlogSeriesDetail | null> {
   try {
-    const res = await fetch(`${backendBaseUrl}/public/blog-series/${slug}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`${backendBaseUrl}/public/blog-series/${slug}`);
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -83,7 +81,7 @@ export default async function BlogSeriesPage({
         <div className="mb-8 flex items-center gap-3">
           <BookOpen className="h-6 w-6 text-brand" />
           <div>
-            <h1 className="font-[family-name:var(--font-gt-super)] text-2xl font-normal tracking-[-0.03em]">
+            <h1 className="font-(family-name:--font-gt-super) text-2xl font-normal tracking-[-0.03em]">
               {series.title}
             </h1>
             {series.description && (
