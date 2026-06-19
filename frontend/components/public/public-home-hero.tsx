@@ -94,9 +94,9 @@ export function PublicHomeHero() {
           animate="show"
           variants={fadeUp}
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-accent px-3 py-1">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-accent px-3 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
-            <p className={cn(publicEyebrowClass, "tracking-[0.18em] sm:tracking-[0.26em]")}>AI Lab Platform</p>
+            <p className={cn(publicEyebrowClass, "font-medium tracking-[0.18em] sm:tracking-[0.26em]")}>AI Lab Platform</p>
           </div>
 
           <h1 className={cn(publicHeroTitleClass, "mt-8 sm:mt-10")}>
@@ -118,7 +118,7 @@ export function PublicHomeHero() {
             <Link className={publicSecondaryCtaClass} href="/lab">
               Explore the AI Lab
             </Link>
-            <Link className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/8 px-5 py-2.5 text-sm font-semibold tracking-tight text-brand transition-all duration-200 hover:bg-brand hover:text-white" href="/blog">
+            <Link className={cn(publicSecondaryCtaClass, "border-brand/30 bg-brand/8 text-brand hover:bg-brand/12 hover:border-brand/40")} href="/blog">
               Read the blog
             </Link>
           </div>
@@ -130,10 +130,10 @@ export function PublicHomeHero() {
               { label: "Published", value: "98+ stories" },
             ].map((stat) => (
               <div key={stat.label}>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                <dt className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                   {stat.label}
                 </dt>
-                <dd className="mt-1.5 font-(family-name:--font-gt-super) text-xl tracking-[-0.03em] text-foreground">
+                <dd className="mt-2 font-(family-name:--font-gt-super) text-xl tracking-[-0.03em] text-foreground">
                   {stat.value}
                 </dd>
               </div>

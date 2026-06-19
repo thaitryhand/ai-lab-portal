@@ -11,6 +11,7 @@
     "prepare": "node ../scripts/setup-git-hooks.mjs",
     "quality:precommit": "lint-staged && npm run typecheck",
     "quality:full": "lint-staged && npm run typecheck && npm run build",
+    "quality:e2e-flakiness": "node -e \"process.platform === 'win32' ? require('child_process').execSync('..\\scripts\\e2e-flakiness-check.bat', {stdio:'inherit'}) : require('child_process').execSync('bash ../scripts/e2e-flakiness-check.sh', {stdio:'inherit'})\"",
     "test": "node ../scripts/test-frontend.cjs",
     "test:component": "vitest run",
     "test:e2e": "playwright test",

@@ -13,59 +13,7 @@ export type AdminModuleCardProps = {
   title: string;
 };
 
-/* ── Per-module accent system ── */
-const moduleAccents: Record<
-  string,
-  { gradient: string; iconBg: string; badge: string; glow: string }
-> = {
-  "Blog posts": {
-    gradient: "from-emerald-500/8 to-emerald-500/0",
-    iconBg: "from-emerald-500 to-emerald-600",
-    badge:
-      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20",
-    glow: "shadow-emerald-500/5",
-  },
-  Compose: {
-    gradient: "from-blue-500/8 to-blue-500/0",
-    iconBg: "from-blue-500 to-blue-600",
-    badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-blue-500/20",
-    glow: "shadow-blue-500/5",
-  },
-  "Blog ideas": {
-    gradient: "from-amber-500/8 to-amber-500/0",
-    iconBg: "from-amber-500 to-amber-600",
-    badge:
-      "bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/20",
-    glow: "shadow-amber-500/5",
-  },
-  Projects: {
-    gradient: "from-violet-500/8 to-violet-500/0",
-    iconBg: "from-violet-500 to-violet-600",
-    badge:
-      "bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-violet-500/20",
-    glow: "shadow-violet-500/5",
-  },
-  Showcases: {
-    gradient: "from-rose-500/8 to-rose-500/0",
-    iconBg: "from-rose-500 to-rose-600",
-    badge:
-      "bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-500/20",
-    glow: "shadow-rose-500/5",
-  },
-  "AI News review": {
-    gradient: "from-sky-500/8 to-sky-500/0",
-    iconBg: "from-sky-500 to-sky-600",
-    badge: "bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-sky-500/20",
-    glow: "shadow-sky-500/5",
-  },
-  "AI News sources": {
-    gradient: "from-cyan-500/8 to-cyan-500/0",
-    iconBg: "from-cyan-500 to-cyan-600",
-    badge:
-      "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 ring-cyan-500/20",
-    glow: "shadow-cyan-500/5",
-  },
-};
+/* ── Simplified accent system following design system's "one accent ≤10%" rule ── */
 
 function getAccent(title: string, isLive: boolean) {
   if (!isLive)
@@ -75,14 +23,14 @@ function getAccent(title: string, isLive: boolean) {
       badge: "bg-muted/30 text-muted-foreground/60 ring-border/30",
       glow: "shadow-transparent",
     };
-  return (
-    moduleAccents[title] ?? {
-      gradient: "from-brand/8 to-transparent",
-      iconBg: "from-brand to-brand/90",
-      badge: "bg-brand/10 text-brand ring-brand/20",
-      glow: "shadow-brand/5",
-    }
-  );
+  
+  // Live modules use neutral colors with subtle brand accent only on hover
+  return {
+    gradient: "from-brand/6 to-transparent",
+    iconBg: "from-foreground to-foreground/90",
+    badge: "bg-brand/10 text-brand ring-brand/20",
+    glow: "shadow-brand/3",
+  };
 }
 
 /* ── Shared render args ── */

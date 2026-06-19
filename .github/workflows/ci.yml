@@ -1,0 +1,313 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Use example values for CI (no real secrets)
+  POSTGRES_DB: ai_lab_portal_test
+  POSTGRES_USER: ai_lab_test
+  POSTGRES_PASSWORD: ai_lab_test_password
+  POSTGRES_HOST_PORT: 5432
+  REDIS_HOST_PORT: 6379
+  AI_LAB_ENVIRONMENT: testing
+  AI_LAB_APP_NAME: AI Lab Portal API (Test)
+  AI_LAB_SERVICE_NAME: ai-lab-portal-api-test
+  AI_LAB_ADMIN_BOUNDARY_SECRET: ci-test-admin-boundary-secret-at-least-32-chars
+  AI_LAB_LLM_OPENAI_API_KEY: fake-openai-key-for-testing
+  AI_LAB_LLM_MODEL: gpt-4o
+  DOCKER_AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+  DOCKER_AI_LAB_REDIS_URL: redis://localhost:6379/0
+
+jobs:
+  validate-harness:
+    name: Validate Harness State
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate harness matrix
+        run: |
+          # Check if harness-cli.exe exists and is executable
+          if [ -f "scripts/bin/harness-cli.exe" ]; then
+            echo "✅ harness-cli.exe found"
+            # On Linux, we can't run .exe files directly, but we can validate the file exists
+            ls -la scripts/bin/harness-cli.exe
+          else
+            echo "❌ harness-cli.exe not found at scripts/bin/harness-cli.exe"
+            exit 1
+          fi
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: ai_lab_portal_test
+          POSTGRES_USER: ai_lab_test
+          POSTGRES_PASSWORD: ai_lab_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ai_lab_test -d ai_lab_portal_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Wait for services
+        run: |
+          # Wait for PostgreSQL
+          until pg_isready -h localhost -p 5432 -U ai_lab_test; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          
+          # Wait for Redis
+          until redis-cli -h localhost -p 6379 ping; do
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+
+      - name: Run database migrations
+        env:
+          AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+        run: |
+          python -m alembic -c backend/alembic.ini upgrade head
+
+      - name: Run backend tests
+        env:
+          AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+          AI_LAB_REDIS_URL: redis://localhost:6379/0
+        run: |
+          pytest backend/tests/ -v
+
+  frontend-quality:
+    name: Frontend Quality Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  frontend-unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:component
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e'))
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps
+
+      - name: Start services with Docker Compose
+        env:
+          POSTGRES_HOST_PORT: 5432
+          REDIS_HOST_PORT: 6379
+          BACKEND_HOST_PORT: 8000
+          FRONTEND_HOST_PORT: 3000
+          AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+          AI_LAB_REDIS_URL: redis://localhost:6379/0
+          ALLOW_ADMIN_SEED: 1
+          E2E_ADMIN_EMAIL: admin@test.com
+          E2E_ADMIN_PASSWORD: test-admin-password-123456
+          E2E_ADMIN_NAME: Test Admin
+        run: |
+          # Start only the required services for E2E
+          docker compose up -d postgres redis
+          
+          # Wait for services to be healthy
+          timeout 60 bash -c 'until docker compose ps postgres | grep healthy; do sleep 2; done'
+          timeout 60 bash -c 'until docker compose ps redis | grep healthy; do sleep 2; done'
+
+      - name: Run database migrations for E2E
+        env:
+          AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+        run: |
+          python -m alembic -c backend/alembic.ini upgrade head
+
+      - name: Start backend for E2E
+        env:
+          AI_LAB_DATABASE_URL: postgresql+psycopg://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+          AI_LAB_REDIS_URL: redis://localhost:6379/0
+        run: |
+          python -m uvicorn backend.app.main:create_app --factory --host 0.0.0.0 --port 8000 &
+          # Wait for backend to be ready
+          timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+
+      - name: Start frontend for E2E
+        working-directory: ./frontend
+        env:
+          DATABASE_URL: postgresql://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+          AUTH_DATABASE_URL: postgresql://ai_lab_test:ai_lab_test_password@localhost:5432/ai_lab_portal_test
+          BACKEND_INTERNAL_URL: http://localhost:8000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: ci-test-better-auth-secret-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3000
+          ADMIN_BOUNDARY_SECRET: ci-test-admin-boundary-secret-at-least-32-chars
+          ALLOW_ADMIN_SEED: 1
+        run: |
+          npm run build
+          npm start &
+          # Wait for frontend to be ready
+          timeout 30 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
+  docker-health-check:
+    name: Docker Compose Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test Docker Compose services startup
+        env:
+          POSTGRES_HOST_PORT: 5432
+          REDIS_HOST_PORT: 6379
+          AI_LAB_LLM_OPENAI_API_KEY: fake-key-for-testing
+        run: |
+          # Test basic services startup
+          docker compose up -d postgres redis
+          
+          # Wait for health checks
+          timeout 120 bash -c 'until docker compose ps postgres | grep healthy; do sleep 5; done'
+          timeout 120 bash -c 'until docker compose ps redis | grep healthy; do sleep 5; done'
+          
+          echo "✅ Core services (PostgreSQL, Redis) started successfully"
+          
+          # Cleanup
+          docker compose down -v
+
+      - name: Test backend service build
+        env:
+          AI_LAB_LLM_OPENAI_API_KEY: fake-key-for-testing
+        run: |
+          # Test backend builds without starting full stack
+          docker compose build backend
+          echo "✅ Backend service builds successfully"

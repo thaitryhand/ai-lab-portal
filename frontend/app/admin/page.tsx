@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   Activity,
-  BarChart3,
   Briefcase,
   Calendar,
   FileText,
@@ -82,7 +81,7 @@ export default async function AdminDashboardPage() {
       <AdminDashboardStatGrid stats={statCards} />
 
       {/* ── Live workflows ── */}
-      <section className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+      <section className="rounded-2xl border border-border/40 bg-card">
         <div className="flex items-center gap-3 border-b border-border/30 px-6 py-4">
           <span className="flex size-7 items-center justify-center rounded-lg bg-green-500/10">
             <span className="size-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(80,179,58,0.3)]" aria-hidden />
@@ -107,7 +106,7 @@ export default async function AdminDashboardPage() {
       <div className="grid gap-5 lg:grid-cols-[1fr_26rem]">
         {/* Left: Recent activity */}
         {stats.recentActivity.length > 0 ? (
-          <section className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+          <section className="rounded-2xl border border-border/40 bg-card">
             <div className="flex items-center gap-3 border-b border-border/30 px-6 py-4">
               <span className="flex size-7 items-center justify-center rounded-lg bg-muted/30">
                 <Activity className="size-3.5 text-muted-foreground/70" aria-hidden />
@@ -151,7 +150,7 @@ export default async function AdminDashboardPage() {
         {/* Right column: Roadmap + Health + Human review */}
         <div className="flex flex-col gap-5">
           {/* Roadmap card */}
-          <section className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+          <section className="rounded-2xl border border-border/40 bg-card">
             <div className="flex items-center gap-3 border-b border-border/30 px-6 py-4">
               <span className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10">
                 <Sparkles className="size-3.5 text-amber-500" aria-hidden />
@@ -176,7 +175,7 @@ export default async function AdminDashboardPage() {
           <AdminHealthWidget />
 
           {/* Human review card */}
-          <section className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+          <section className="rounded-2xl border border-border/40 bg-card">
             <div className="flex items-center gap-3 border-b border-border/30 px-6 py-4">
               <span className="flex size-7 items-center justify-center rounded-lg bg-blue-500/10">
                 <Shield className="size-3.5 text-blue-500" aria-hidden />

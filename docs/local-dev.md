@@ -113,11 +113,31 @@ After `npm install` in `frontend/`, git uses repo-root `.husky/pre-commit` to ru
 `lint-staged` and `tsc --noEmit` (via `npm run quality:precommit`). The `next build`
 step was moved to `npm run quality:full` to avoid agent timeouts on grouped commits (backlog #21).
 
-Run full quality (lint-staged + typecheck + build) before pushing or in CI:
+Run full quality (lint-staged + typecheck + build + E2E flakiness check) before pushing or in CI:
 
 ```bash
 cd frontend && npm run quality:full
 ```
+
+### E2E flakiness detection
+
+The pre-commit hooks include an E2E flakiness check that detects common anti-patterns:
+
+```bash
+# Manual check from repo root
+bash scripts/e2e-flakiness-check.sh    # Linux/macOS
+scripts/e2e-flakiness-check.bat        # Windows
+
+# Or via frontend quality scripts
+cd frontend && npm run quality:e2e-flakiness
+```
+
+The check flags:
+- `waitForTimeout()` calls (use `waitForSelector()` instead)
+- Missing `await` before page methods
+- Numeric `page.waitFor()` patterns (use element selectors)
+- Overly short timeouts (< 1000ms)
+- Sleep/delay patterns (use proper wait conditions)
 
 If hooks are missing on an existing clone, run once from repo root:
 

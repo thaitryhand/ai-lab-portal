@@ -112,7 +112,7 @@ export function PublicLandingHeader({ currentPath }: PublicLandingHeaderProps) {
               {/* Dropdown panel */}
               <nav
                 aria-label="Mobile navigation"
-                className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border/50 bg-background shadow-xl"
+                className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-sm"
               >
                 {navItems.map((item) => {
                   const isActive = currentPath === item.href;
@@ -136,17 +136,17 @@ export function PublicLandingHeader({ currentPath }: PublicLandingHeaderProps) {
                   );
                 })}
                 {/* Mobile-only auth links */}
-                <div className="border-t border-border/40 px-5 py-3">
+                <div className="border-t border-border/40 px-5 py-4">
                   <Link
                     href="/login"
-                    className="flex items-center px-0 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center px-0 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Sign in
                   </Link>
                   <Link
                     href="/register"
-                    className="flex items-center px-0 py-2 text-sm font-medium text-brand hover:opacity-90 transition-colors"
+                    className="flex items-center px-0 py-2.5 text-sm font-medium text-brand hover:text-brand/80 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Create account
